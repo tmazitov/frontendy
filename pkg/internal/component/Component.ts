@@ -18,7 +18,7 @@ function getComponentUniqueName(){
     return "component-" + id;
 }
 
-class Component extends HTMLElement{
+class Component{
     
     static name: string = getComponentUniqueName();;
     static components: typeof Component[] = []
@@ -27,10 +27,10 @@ class Component extends HTMLElement{
     // State
 
     private oldVNode: VElem | null = null;
+    protected el: HTMLElement | null = null;
     protected state: Record<string, any>;
 
     constructor(){
-        super();
         this.state = this.createState();
     }
 
@@ -58,50 +58,33 @@ class Component extends HTMLElement{
         return undefined;
     }
 
-    public connectedCallback(){
-        console.log(`lifecycle | ${Component.name} connected`)
-        this.render();
-    }
-
-    public disconnectedCallback(){
-        console.log(`lifecycle | ${Component.name} disconnected`)
-        this.onUnmounted();
-    }
-
     public onMounted() {}
 
     public onUnmounted() {}
     
-    createReactiveState<T extends object>(initialState: T): T {
-        return new Proxy(initialState, {
-        set: (target, prop, value) => {
-            target[prop as keyof T] = value;
-            this.update(); // ⬅️ Автоматическое обновление VDOM
-            return true;
-        }
-        });
-    }
-    
-    
-    renderVDOM(): VElem | undefined {
-        return this.template();
-    }
-    
-    public render(target: HTMLElement = this) {
-        this.oldVNode = this.renderVDOM() ?? null;
+    public render(target: HTMLElement) {
+        this.oldVNode = this.template() ?? null;
         if (!this.oldVNode) {
+            this.el = null;
             return
         }
-        target.appendChild(this.oldVNode.createHTMLElement());
-        setTimeout(() => this.onMounted(), 100)
+        this.el = this.oldVNode.createHTMLElement();
+        target.appendChild(this.el);
+        this.onMounted();
     }
     
     update() {
-        const newVNode = this.renderVDOM();
+        if (!this.el) {
+            this.render(document.body);
+            return;
+        }
+
+        const newVNode = this.template();
         if (!newVNode) {
             return;
         }
-        updateElement(this, this.oldVNode, newVNode);
+        console.log(newVNode)
+        updateElement(this.el, this.oldVNode, newVNode);
         this.oldVNode = newVNode; // Сохраняем VDOM для следующего сравнения
     }
 }

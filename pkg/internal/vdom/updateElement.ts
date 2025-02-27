@@ -50,8 +50,8 @@ function updateElement(parent: HTMLElement, oldVNode: VNode | null, newVNode: VN
     }
 
     // Compare children recursively
-    const newParent = parent.childNodes[index] as HTMLElement;
     for (let i = 0; i < newVNode.children!.length || i < oldVNode.children!.length; i++) {
+        const newParent = parent.childNodes[index] as HTMLElement;
 
         const oldChild = oldVNode.children?.[i] as VNode;
         const newChild = newVNode.children?.[i] as VNode;

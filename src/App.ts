@@ -16,15 +16,18 @@ export default class App extends Component {
     }
 
     valueInput(ev:any){
-        this.state.value = ev.target.value 
+        console.log('valueInput', this)
     }
 
     onMounted() {
-        this.querySelector('input')?.addEventListener('input', this.valueInput)
+        console.log('mounted', this.state.value)
+        this.el?.querySelector('input')?.addEventListener('input', (ev:any) => {
+            this.state.value = ev.target.value
+        })
     }
     
     onUnmounted() {
-        this.querySelector('input')?.removeEventListener('input', this.valueInput)
+        this.el?.querySelector('input')?.removeEventListener('input', this.valueInput)
     }
 
     template() {
@@ -34,7 +37,7 @@ export default class App extends Component {
                 elem("h1").addChild("Hello, World!"),
                 elem("p").addChild(this.valueLength()),
                 elem("p").addChild(this.state.value),
-                elem("input").setProps({id: "test", value: this.state.value, oninput: (ev:any) => this.state.value = ev.target.value }),
+                elem("input").setProps({id: "test", value: this.state.value}),
                 elem("button").setProps({ onclick: () => console.log("Hello, World!") }).addChild("Click me!")
             ])
     }   
