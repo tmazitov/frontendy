@@ -1,60 +1,99 @@
 import createElement from "./createElement";
-import VNode from "./VNode";
+import VElem from "./VElem";
+import VText from "./VText";
 
 
-
-function addNewElement(parent: HTMLElement, newVNode: VNode|null, index: number) {
+function addNewElement(parent: HTMLElement, newVNode: VElem | VText, index: number) {
     parent.appendChild(createElement(newVNode));  
 }
 
-function removeNewElement(parent: HTMLElement, index: number) {
-    parent.removeChild(parent.childNodes[index]);
+function removeNewElement(parent: HTMLElement, oldVNode: VElem | VText, index: number) {
+
+    const child = parent.childNodes[index]
+    if (!child) {
+        console.log("update vdom erorr: child with index ", index, "not found in parent", parent)
+        return
+    }
+    parent.removeChild(child);
 }
 
-function replaceElement(parent: HTMLElement, newVNode: VNode, index: number) {
-    parent.replaceChild(createElement(newVNode), parent.childNodes[index]);
+function replaceElement(parent: HTMLElement, newVNode: VElem | VText, index: number) {
+    
+    const child = parent.childNodes[index]
+    if (!child) {
+        console.log("update vdom erorr: child with index ", index, "not found in parent", parent)
+        return
+    }
+
+    parent.replaceChild(createElement(newVNode), child);
 }
 
-function updateElement(parent: HTMLElement, oldVNode: VNode | null, newVNode: VNode | null, index = 0) {
+function updateElement(parent: HTMLElement | Text, oldVNode: VElem | VText | null, newVNode: VElem | VText | null, index = 0) {
 
-    if (!oldVNode) {
+    if (parent instanceof Text) {
+        if (newVNode instanceof VText) {
+            if (newVNode.value !== parent.nodeValue) {
+                parent.nodeValue = newVNode.value;
+            }
+        } else {
+            parent.replaceWith(createElement(newVNode));
+        }
+        return
+    }
+
+    if (!oldVNode && !newVNode) {
+        return
+    }
+
+
+    if (!oldVNode && newVNode) {
         addNewElement(parent, newVNode, index);
         return
     }
 
-    if (!newVNode) {
-        removeNewElement(parent, index);
+    if (!newVNode && oldVNode) {
+        removeNewElement(parent, oldVNode, index);
         return
     }
 
-    if (newVNode !== oldVNode && (typeof newVNode === "string" || typeof oldVNode === "string")) {
-        replaceElement(parent, newVNode as VNode, index);
+    if (newVNode instanceof VText || oldVNode instanceof VText) {
+        if (newVNode instanceof VText && oldVNode instanceof VText && newVNode.value !== oldVNode.value) {
+            parent.innerText = newVNode.value;
+        } else if (newVNode !== oldVNode) {
+            parent.replaceWith(createElement(newVNode));
+        }
         return
     } 
 
-    if (newVNode.tag !== oldVNode.tag) {
+    if (newVNode && oldVNode && newVNode.tag !== oldVNode.tag) {
         replaceElement(parent, newVNode, index);
         return
     }
     
     // Update props
+    if (!(parent.childNodes && parent.childNodes.length && oldVNode && newVNode)) {
+        return
+    }
+
+
     for (const key in oldVNode.props) {
         if (!(key in newVNode.props!)) {
-            (parent.childNodes[index] as HTMLElement).removeAttribute(key);
+            parent.removeAttribute(key);
         }
     }
+
     for (const key in newVNode.props) {
-        if (oldVNode.props?.[key] !== newVNode.props[key]) {
-            (parent.childNodes[index] as HTMLElement).setAttribute(key, newVNode.props[key]);
+        if (oldVNode.props?.[key] !== newVNode.props[key]) 
+        {
+            parent.setAttribute(key, newVNode.props[key]);
         }
     }
 
-    // Compare children recursively
     for (let i = 0; i < newVNode.children!.length || i < oldVNode.children!.length; i++) {
-        const newParent = parent.childNodes[index] as HTMLElement;
-
-        const oldChild = oldVNode.children?.[i] as VNode;
-        const newChild = newVNode.children?.[i] as VNode;
+        
+        const newParent = parent.childNodes[i] as HTMLElement;
+        const oldChild = oldVNode.children?.[i];
+        const newChild = newVNode.children?.[i];
 
         updateElement(newParent, oldChild, newChild, i);
     }

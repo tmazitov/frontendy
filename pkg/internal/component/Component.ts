@@ -27,7 +27,7 @@ class Component{
     // State
 
     private oldVNode: VElem | null = null;
-    protected el: HTMLElement | null = null;
+    protected el: HTMLElement | Text | null = null;
     protected state: Record<string, any>;
 
     constructor(){
@@ -69,6 +69,7 @@ class Component{
             return
         }
         this.el = this.oldVNode.createHTMLElement();
+        console.log("Rendered node : ", this.oldVNode)
         target.appendChild(this.el);
         this.onMounted();
     }
@@ -84,6 +85,10 @@ class Component{
             return;
         }
         console.log(newVNode)
+        console.log("New node : ")
+        newVNode.print()
+        console.log("Old node : ")
+        this.oldVNode?.print()
         updateElement(this.el, this.oldVNode, newVNode);
         this.oldVNode = newVNode; // Сохраняем VDOM для следующего сравнения
     }
