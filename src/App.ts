@@ -1,5 +1,6 @@
-import Component from "pkg/internal/component/Component";
-import { elem, text } from "pkg/internal/vdom/constructor";
+import Component from "../pkg/internal/component/Component";
+import { elem, text } from "../pkg/internal/vdom/constructor";
+import Counter from "./components/Counter";
 
 export default class App extends Component {
     
@@ -59,7 +60,8 @@ export default class App extends Component {
                     .setProps({id: "test", value: this.state.value}),
                 elem("button")
                     .setProps({ onclick: () => console.log("Hello, World!") })
-                    .addChild(text("Click me!"))
+                    .addChild(text("Click me!")),
+                (new Counter())
             ])
     }   
 }

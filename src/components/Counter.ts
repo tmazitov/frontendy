@@ -1,39 +1,39 @@
-// import Component from "../../pkg/internal/component/Component";
+import { elem, text } from "../../pkg/internal/vdom/constructor";
+import Component from "../../pkg/internal/component/Component";
 
-// export default class Counter extends Component {
+export default class Counter extends Component {
     
-//     static name: string = 'counter-button';
+    static name: string = 'counter-button';
     
 
-//     data() {
-//         return {
-//             count: this.getAttribute("count") ?? 0,
-//         }
-//     }
+    data() {
+        return {
+            count: 0,
+        }
+    }
+    increment() {
+        this.state.count++;
+    }
+    getStyles() {
+        if (this.state.count < 2) {
+            return "background: red";
+        } else if (this.state.count < 5) {
+            return "background: yellow";
+        }
+        return "background: green";
+    }
 
-
-//     // onMounted(){
-//     //     this.shadowRoot!.querySelector("button")?.addEventListener("click", this.methods.increment);
-//     // }
-    
-//     // onUnmounted() {
-//     //     this.shadowRoot!.querySelector("button")?.removeEventListener("click", this.methods.increment);
-//     // }
-
-//     // methods = {
-//     //     increment: () => {
-//     //         console.log("Incrementing");
-//     //         this.set("count", this.get("count") + 1);
-//     //     }
-//     // }
-
-
-//     template() {
-//         return `
-//             <style>
-//                 button { background: blue; color: white; padding: 10px; border: none; }
-//             </style>
-//             <div>${this.state.count}</div>
-//         `;
-//     }
-// }
+    template() {
+        return elem("div")
+        .setProps({ id: "counter" })
+        .setChild([
+            elem("p").addChild(text(`${this.state.count}`)),
+            elem("button")
+                .setProps({ id: "increment", style: this.getStyles()})
+                .addChild(text("Increment!"))
+                .addEventListener("click", () => {
+                    this.increment();
+                }),
+        ])
+    }
+}

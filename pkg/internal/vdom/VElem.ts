@@ -1,12 +1,14 @@
+import Component from "../component/Component";
 import createElement from "./createElement";
 import VText from "./VText";
 
 class VElem{
     public tag:string;
     public props:Record<string, any> = {};
-    public children:(VElem | VText)[] = [];
+    public children:(VElem | VText | Component)[] = [];
     public show:boolean = true;
     public styles:Record<string, any> = {};
+    public events:Record<string, EventListener> = {};
 
     constructor(tag:string) {
         this.tag = tag;
@@ -21,14 +23,22 @@ class VElem{
         return this.props;
     }
 
-    setChild(child: Array<VElem | VText | null>) {
-        const filtered:Array<VElem | VText> = child.filter(c => c != null)
+    setChild(child: Array<VElem | VText | Component | null>) {
+        const filtered:Array<VElem | VText | Component> = child.filter(c => c != null)
         this.children.push(...filtered);
         return this;
     }
 
     addChild(child: VElem | VText) {
         this.children.push(child);
+        return this;
+    }
+    
+    addEventListener(event:string, callback:EventListener) {
+        if (!event || !callback) {
+            throw new Error("event and callback are required");
+        }
+        this.events[event] = callback;
         return this;
     }
     

@@ -38,6 +38,10 @@ class Component{
         return {};
     }
 
+    print(){
+        console.log("Component : ", Component.name)
+    }
+
     private createState<T extends object>() : T {
 
         const initialState = this.data() as T;
@@ -72,9 +76,11 @@ class Component{
         console.log("Rendered node : ", this.oldVNode)
         target.appendChild(this.el);
         this.onMounted();
+        return this.el;
     }
     
     update() {
+        console.log("el", this.el)
         if (!this.el) {
             this.render(document.body);
             return;
