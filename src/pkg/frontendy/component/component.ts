@@ -1,27 +1,11 @@
-import { elem } from "../vdom/constructor";
 import updateElement from "../vdom/updateElement";
 import VElem from "../vdom/VElem";
+import { getComponentUniqueName } from "./name";
 
-function getCounter(){
-    let count = 0;
-    return {
-        getValue: () => ++count
-    }
-}
-
-const counter = getCounter();
-
-function getComponentUniqueName(){
+class FrontendyComponent{
     
-    const id = counter.getValue()
-    
-    return "component-" + id;
-}
-
-class Component{
-    
-    static name: string = getComponentUniqueName();;
-    static components: typeof Component[] = []
+    static componentName: string = getComponentUniqueName();
+    static components: typeof FrontendyComponent[] = []
     static methods: { [key: string]: Function } = {};
     
     // State
@@ -39,7 +23,7 @@ class Component{
     }
 
     print(){
-        console.log("Component : ", Component.name)
+        console.log("Component : ", FrontendyComponent.componentName)
     }
 
     private createState<T extends object>() : T {
@@ -100,4 +84,4 @@ class Component{
     }
 }
 
-export default Component;
+export default FrontendyComponent;

@@ -1,4 +1,4 @@
-import Component from "../component/Component";
+import Component from "../component/component";
 import createElement from "./createElement";
 import VText from "./VText";
 

@@ -1,10 +1,9 @@
-import Component from "../pkg/internal/component/Component";
-import { elem, text } from "../pkg/internal/vdom/constructor";
-import Counter from "./components/Counter";
+import Component from "../pkg/frontendy/component/component";
+import { elem, text } from "../pkg/frontendy/vdom/constructor";
 
-export default class App extends Component {
+export default class AppComponent extends Component {
     
-    static name: string = 'app-container';
+    static componentName: string = 'app-container';
     
     data() {
         return {
@@ -61,7 +60,6 @@ export default class App extends Component {
                 elem("button")
                     .setProps({ onclick: () => console.log("Hello, World!") })
                     .addChild(text("Click me!")),
-                (new Counter())
             ])
     }   
 }

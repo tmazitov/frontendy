@@ -1,4 +1,4 @@
-import Component from "../component/Component";
+import Component from "../component/component";
 import VElem from "./VElem";
 import VText from "./VText";
 
