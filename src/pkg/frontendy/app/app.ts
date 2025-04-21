@@ -1,14 +1,14 @@
-import Component from '../component/component.js';
+import FrontendyComponent from '../component/component.js';
 
-function createApp(component:typeof Component) {
+function createApp(component:typeof FrontendyComponent) {
     return new FrontendyAppInstance(component);
 }
 
 class FrontendyAppInstance {
     
-    private rootComponent:typeof Component;
+    private rootComponent:typeof FrontendyComponent;
 
-    constructor(component:typeof Component) {
+    constructor(component:typeof FrontendyComponent) {
         this.rootComponent = component;
     }
 

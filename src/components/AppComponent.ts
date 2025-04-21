@@ -1,4 +1,7 @@
+import NotFoundPage from "../pages/NotFoundPage";
+import router from "../pages/router";
 import Component from "../pkg/frontendy/component/component";
+import FrontendyRouterView from "../pkg/frontendy/router/RouterView";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
 
 export default class AppComponent extends Component {
@@ -43,23 +46,13 @@ export default class AppComponent extends Component {
 
     template() {
         return elem("div")
-            .setProps({ id: "app" })
+            .setProps({ id: "app-component" })
             .setChild([
                 elem("h1")
-                    .addChild(text("Hello, World!")),
+                    .addChild(text("Hello, from AppComponent!")),
                 elem("p")
-                    .addChild(text(this.valueLength())),
-                elem("p")
-                    .setChild([
-                        text(`Brother : ${this.state.value}`),
-                        elem("br"),
-                        text(`Sister : ${this.state.value}`),
-                    ]),
-                elem("input")
-                    .setProps({id: "test", value: this.state.value}),
-                elem("button")
-                    .setProps({ onclick: () => console.log("Hello, World!") })
-                    .addChild(text("Click me!")),
+                    .addChild(text("There will be router below...")),
+                new FrontendyRouterView(router)
             ])
     }   
 }

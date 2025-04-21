@@ -9,6 +9,26 @@ var FrontendyAppInstance = class {
   }
 };
 
+// src/pkg/frontendy/router/router.ts
+var RouterConfig = class {
+  constructor() {
+    this.NotFoundPage = void 0;
+  }
+};
+var FrontendyRouter = class {
+  constructor(routes2, config = void 0) {
+    this.routes = [];
+    this.config = config ?? new RouterConfig();
+    this.routes = routes2;
+  }
+  findRoute(path) {
+    return this.routes.find((route) => route.path === path);
+  }
+  getUndefinedMessageComponent() {
+    return this.config?.NotFoundPage;
+  }
+};
+
 // src/pkg/frontendy/vdom/VText.ts
 var VText = class {
   constructor(value) {
@@ -286,6 +306,107 @@ function text(value) {
   return new VText_default(value);
 }
 
+// src/components/ConterComponent.ts
+var CounterComponent = class extends component_default {
+  static {
+    this.componentName = "counter-component";
+  }
+  data() {
+    return {
+      count: 0
+    };
+  }
+  template() {
+    return elem("div").setProps({ id: "counter-component" }).setChild([
+      elem("h1").addChild(text(`Count: ${this.state.count}`)),
+      elem("button").setProps({ id: "increment-button" }).addChild(text("Increment")).addEventListener("click", this.increment.bind(this))
+    ]);
+  }
+  increment() {
+    console.log(this.state);
+    console.log(this.state.count);
+    this.state.count++;
+  }
+};
+
+// src/pages/HomePage.ts
+var HomePage = class extends component_default {
+  static {
+    this.componentName = "home-page";
+  }
+  data() {
+    return {
+      title: "Welcome to Frontendy",
+      description: "This is a simple example of a Frontendy component."
+    };
+  }
+  template() {
+    return elem("div").setProps({ id: "home-page" }).setChild([
+      elem("h1").addChild(text(this.state.title)),
+      elem("p").addChild(text(this.state.description)),
+      new CounterComponent()
+    ]);
+  }
+};
+
+// src/pages/NotFoundPage.ts
+var NotFoundPage = class extends component_default {
+  static {
+    this.componentName = "not-found-page";
+  }
+  data() {
+    return {
+      message: "404 Not Found"
+    };
+  }
+  template() {
+    return elem("div").setProps({ id: "not-found-page" }).setChild([
+      elem("h1").addChild(text(this.state.message)),
+      elem("p").addChild(text("The page you are looking for does not exist."))
+    ]);
+  }
+};
+
+// src/pages/router.ts
+var routes = [
+  { name: "home", path: "/home", component: HomePage }
+];
+var routerConfig = {
+  NotFoundPage
+};
+var router = new FrontendyRouter(routes, routerConfig);
+var router_default = router;
+
+// src/pkg/frontendy/router/RouterView.ts
+var FrontendyRouterView = class extends component_default {
+  static {
+    this.componentName = "router-view";
+  }
+  /**
+   *
+   */
+  constructor(router2) {
+    super();
+    this.router = router2;
+  }
+  data() {
+    return {
+      currentComponent: null
+    };
+  }
+  template() {
+    const currentUrl = window.location.pathname;
+    const currentRoute = this.router.findRoute(currentUrl);
+    const renderComponentType = currentRoute !== void 0 ? currentRoute.component : this.router.getUndefinedMessageComponent();
+    if (renderComponentType === void 0) {
+      throw new Error("RouterView error : No component found for the current route.");
+    }
+    return elem("div").setProps({ id: "router-view" }).setChild([
+      new renderComponentType()
+    ]);
+  }
+};
+
 // src/components/AppComponent.ts
 var AppComponent = class extends component_default {
   static {
@@ -320,16 +441,10 @@ var AppComponent = class extends component_default {
     this.el.querySelector("input")?.removeEventListener("input", this.valueInput);
   }
   template() {
-    return elem("div").setProps({ id: "app" }).setChild([
-      elem("h1").addChild(text("Hello, World!")),
-      elem("p").addChild(text(this.valueLength())),
-      elem("p").setChild([
-        text(`Brother : ${this.state.value}`),
-        elem("br"),
-        text(`Sister : ${this.state.value}`)
-      ]),
-      elem("input").setProps({ id: "test", value: this.state.value }),
-      elem("button").setProps({ onclick: () => console.log("Hello, World!") }).addChild(text("Click me!"))
+    return elem("div").setProps({ id: "app-component" }).setChild([
+      elem("h1").addChild(text("Hello, from AppComponent!")),
+      elem("p").addChild(text("There will be router below...")),
+      new FrontendyRouterView(router_default)
     ]);
   }
 };

@@ -7,7 +7,11 @@ const app = Fastify()
 
 async function main() {
 
-  app.get("/", async (request, reply) => {
+  app.get("/*", async (request, reply) => {
+    const url = request.url;
+    if (path.extname(url)) {
+      return reply.callNotFound();
+    }
     const html = await readFile('index.html', 'utf-8');
     return reply.type('text/html').send(html)
   })
