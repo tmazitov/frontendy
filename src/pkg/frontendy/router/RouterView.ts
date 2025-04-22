@@ -4,26 +4,32 @@ import FrontendyRouter from "./router";
 
 export default class FrontendyRouterView extends FrontendyComponent {
     static componentName: string = 'router-view';
-    private router: FrontendyRouter;
-    /**
-     *
-     */
-    constructor(router: FrontendyRouter, ) {
-        super();
-        this.router = router;
+
+
+    constructor(router: FrontendyRouter) {
+        super({router});
+        router.setRouterView(this);
     }
 
     data() {
         return {
-            currentComponent: null,
+            currentRoute: this.calcCurrentRoute(),
         }
     }
-    template() {
+
+    calcCurrentRoute(){
         const currentUrl = window.location.pathname;
-        const currentRoute = this.router.findRoute(currentUrl);
-        const renderComponentType = currentRoute !== undefined ?
-            currentRoute.component :
-            this.router.getUndefinedMessageComponent();
+        return this.props.router.findRoute(currentUrl)
+    }
+
+    updateCurrentRoute() {
+        this.state.currentRoute = this.calcCurrentRoute();
+    }
+
+    template() {
+        const renderComponentType = this.state.currentRoute !== undefined ?
+            this.state.currentRoute.component :
+            this.props.router.getUndefinedMessageComponent();
 
         if (renderComponentType === undefined) {
             throw new Error("RouterView error : No component found for the current route.");

@@ -52,6 +52,12 @@ export default class AppComponent extends Component {
                     .addChild(text("Hello, from AppComponent!")),
                 elem("p")
                     .addChild(text("There will be router below...")),
+                elem("a")
+                    .setProps({ href: "/home" })
+                    .addChild(text("Home")),
+                elem("a")
+                    .setProps({ href: "/about" })
+                    .addChild(text("About")),
                 new FrontendyRouterView(router)
             ])
     }   

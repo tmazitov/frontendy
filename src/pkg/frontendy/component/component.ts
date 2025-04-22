@@ -5,17 +5,27 @@ import { getComponentUniqueName } from "./name";
 class FrontendyComponent{
     
     static componentName: string = getComponentUniqueName();
-    static components: typeof FrontendyComponent[] = []
-    static methods: { [key: string]: Function } = {};
     
     // State
 
     private oldVNode: VElem | null = null;
     protected el: HTMLElement | Text | null = null;
-    protected state: Record<string, any>;
+    protected state: Record<string, any> = {};
+    protected props: Record<string, any> = {};
 
-    constructor(){
+    constructor(props: Record<string, any> = {}){
+        this.initProps(props);
+        this.initData();
+    }
+
+    initData() {
+        this.script();
         this.state = this.createState();
+    }
+
+    private initProps(props: Record<string, any> = {}) {
+        this.props = props
+        console.log("Component props : ", this.props);
     }
 
     protected data(){
@@ -42,7 +52,7 @@ class FrontendyComponent{
 
     protected script(){}
 
-    protected template() : VElem | undefined{
+    public template() : VElem | undefined{
         return undefined;
     }
 
@@ -75,10 +85,8 @@ class FrontendyComponent{
             return;
         }
         console.log(newVNode)
-        console.log("New node : ")
-        newVNode.print()
-        console.log("Old node : ")
-        this.oldVNode?.print()
+        console.log("New node : ", newVNode)
+        console.log("Old node : ", this.oldVNode)
         updateElement(this.el, this.oldVNode, newVNode);
         this.oldVNode = newVNode; // Сохраняем VDOM для следующего сравнения
     }

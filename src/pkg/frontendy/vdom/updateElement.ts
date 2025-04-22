@@ -1,3 +1,4 @@
+import FrontendyComponent from "../component/component";
 import createElement from "./createElement";
 import VElem from "./VElem";
 import VText from "./VText";
@@ -27,6 +28,7 @@ function replaceElement(parent: HTMLElement, newVNode: VElem | VText, index: num
 
     parent.replaceChild(createElement(newVNode), child);
 }
+
 
 function updateElement(parent: HTMLElement | Text, oldVNode: VElem | VText | null, newVNode: VElem | VText | null, index = 0) {
 

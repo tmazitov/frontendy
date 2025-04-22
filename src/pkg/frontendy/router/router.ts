@@ -1,5 +1,6 @@
 import FrontendyComponent from "../component/component";
 import FrontendyRoute from "./route";
+import FrontendyRouterView from "./RouterView";
 
 class RouterConfig {
     NotFoundPage : typeof FrontendyComponent | undefined = undefined;
@@ -13,10 +14,20 @@ export default class FrontendyRouter {
 
     private routes: FrontendyRoute[] = [];
     private config: RouterConfig ;
+    private currentRoute: FrontendyRoute | undefined;
+    private routerView: FrontendyRouterView | undefined;
 
     constructor(routes: FrontendyRoute[], config: RouterConfig | undefined = undefined) {
         this.config = config ?? new RouterConfig();
         this.routes = routes;
+        this.currentRoute = this.findRoute(window.location.pathname);
+
+        document.addEventListener("click", this.handleLinkClick.bind(this));
+        window.addEventListener("popstate", () => this.setCurrentRoute());
+    }
+
+    setRouterView(routerView:FrontendyRouterView) {
+        this.routerView = routerView;
     }
 
     findRoute(path: string): FrontendyRoute | undefined {
@@ -25,5 +36,25 @@ export default class FrontendyRouter {
 
     getUndefinedMessageComponent(): typeof FrontendyComponent | undefined {
         return this.config?.NotFoundPage;
+    }
+
+    private handleLinkClick(event: MouseEvent) {
+        const target = event.target as HTMLElement;
+        if (target.tagName === "A") {
+            const anchor = target as HTMLAnchorElement;
+            const href = anchor.getAttribute("href");
+            if (href && href.startsWith("/")) {
+                event.preventDefault();
+                window.history.pushState({}, "", href);
+                this.setCurrentRoute();
+            }
+        }
+    }
+    private setCurrentRoute(){
+        if (!this.routerView ) {
+            throw new Error("Router error : routerView instance is not set");
+        } 
+
+        this.routerView.updateCurrentRoute()
     }
 }

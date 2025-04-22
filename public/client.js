@@ -20,12 +20,36 @@ var FrontendyRouter = class {
     this.routes = [];
     this.config = config ?? new RouterConfig();
     this.routes = routes2;
+    this.currentRoute = this.findRoute(window.location.pathname);
+    document.addEventListener("click", this.handleLinkClick.bind(this));
+    window.addEventListener("popstate", () => this.setCurrentRoute());
+  }
+  setRouterView(routerView) {
+    this.routerView = routerView;
   }
   findRoute(path) {
     return this.routes.find((route) => route.path === path);
   }
   getUndefinedMessageComponent() {
     return this.config?.NotFoundPage;
+  }
+  handleLinkClick(event) {
+    const target = event.target;
+    if (target.tagName === "A") {
+      const anchor = target;
+      const href = anchor.getAttribute("href");
+      if (href && href.startsWith("/")) {
+        event.preventDefault();
+        window.history.pushState({}, "", href);
+        this.setCurrentRoute();
+      }
+    }
+  }
+  setCurrentRoute() {
+    if (!this.routerView) {
+      throw new Error("Router error : routerView instance is not set");
+    }
+    this.routerView.updateCurrentRoute();
   }
 };
 
@@ -170,20 +194,25 @@ function getComponentUniqueName() {
 
 // src/pkg/frontendy/component/component.ts
 var FrontendyComponent = class _FrontendyComponent {
-  constructor() {
+  constructor(props = {}) {
     // State
     this.oldVNode = null;
     this.el = null;
-    this.state = this.createState();
+    this.state = {};
+    this.props = {};
+    this.initProps(props);
+    this.initData();
   }
   static {
     this.componentName = getComponentUniqueName();
   }
-  static {
-    this.components = [];
+  initData() {
+    this.script();
+    this.state = this.createState();
   }
-  static {
-    this.methods = {};
+  initProps(props = {}) {
+    this.props = props;
+    console.log("Component props : ", this.props);
   }
   data() {
     return {};
@@ -234,10 +263,8 @@ var FrontendyComponent = class _FrontendyComponent {
       return;
     }
     console.log(newVNode);
-    console.log("New node : ");
-    newVNode.print();
-    console.log("Old node : ");
-    this.oldVNode?.print();
+    console.log("New node : ", newVNode);
+    console.log("Old node : ", this.oldVNode);
     updateElement_default(this.el, this.oldVNode, newVNode);
     this.oldVNode = newVNode;
   }
@@ -323,9 +350,27 @@ var CounterComponent = class extends component_default {
     ]);
   }
   increment() {
-    console.log(this.state);
-    console.log(this.state.count);
     this.state.count++;
+  }
+};
+
+// src/pages/AboutPage.ts
+var AboutPage = class extends component_default {
+  static {
+    this.componentName = "about-page";
+  }
+  data() {
+    return {
+      title: "About Us",
+      description: "Example text about us."
+    };
+  }
+  template() {
+    return elem("div").setProps({ id: "about-page" }).setChild([
+      elem("h1").addChild(text(this.state.title)),
+      elem("p").addChild(text(this.state.description)),
+      new CounterComponent()
+    ]);
   }
 };
 
@@ -369,7 +414,8 @@ var NotFoundPage = class extends component_default {
 
 // src/pages/router.ts
 var routes = [
-  { name: "home", path: "/home", component: HomePage }
+  { name: "home", path: "/home", component: HomePage },
+  { name: "about", path: "/about", component: AboutPage }
 ];
 var routerConfig = {
   NotFoundPage
@@ -382,22 +428,24 @@ var FrontendyRouterView = class extends component_default {
   static {
     this.componentName = "router-view";
   }
-  /**
-   *
-   */
   constructor(router2) {
-    super();
-    this.router = router2;
+    super({ router: router2 });
+    router2.setRouterView(this);
   }
   data() {
     return {
-      currentComponent: null
+      currentRoute: this.calcCurrentRoute()
     };
   }
-  template() {
+  calcCurrentRoute() {
     const currentUrl = window.location.pathname;
-    const currentRoute = this.router.findRoute(currentUrl);
-    const renderComponentType = currentRoute !== void 0 ? currentRoute.component : this.router.getUndefinedMessageComponent();
+    return this.props.router.findRoute(currentUrl);
+  }
+  updateCurrentRoute() {
+    this.state.currentRoute = this.calcCurrentRoute();
+  }
+  template() {
+    const renderComponentType = this.state.currentRoute !== void 0 ? this.state.currentRoute.component : this.props.router.getUndefinedMessageComponent();
     if (renderComponentType === void 0) {
       throw new Error("RouterView error : No component found for the current route.");
     }
@@ -444,6 +492,8 @@ var AppComponent = class extends component_default {
     return elem("div").setProps({ id: "app-component" }).setChild([
       elem("h1").addChild(text("Hello, from AppComponent!")),
       elem("p").addChild(text("There will be router below...")),
+      elem("a").setProps({ href: "/home" }).addChild(text("Home")),
+      elem("a").setProps({ href: "/about" }).addChild(text("About")),
       new FrontendyRouterView(router_default)
     ]);
   }
