@@ -3,7 +3,7 @@ import { elem, text } from "../pkg/frontendy/vdom/constructor";
 import CounterComponent from "../components/ConterComponent";
 
 export default class AboutPage extends FrontendyComponent {
-    static componentName: string = 'about-page';
+    componentName: string = 'about-page';
 
     data() {
         return {

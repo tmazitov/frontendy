@@ -39,7 +39,7 @@ function createElement(node: VElem | VText |null): HTMLElement | Text {
     // Add children
     node.children?.forEach(child => {
         if (child instanceof Component) {
-            el.appendChild(child.render(el as HTMLElement) as HTMLElement);
+            el.appendChild(child.mount(el as HTMLElement) as HTMLElement);
         } else {
             el.appendChild(createElement(child));
         }

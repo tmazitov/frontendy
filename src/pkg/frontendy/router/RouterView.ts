@@ -3,7 +3,7 @@ import { elem } from "../vdom/constructor";
 import FrontendyRouter from "./router";
 
 export default class FrontendyRouterView extends FrontendyComponent {
-    static componentName: string = 'router-view';
+    componentName: string = 'router-view';
 
 
     constructor(router: FrontendyRouter) {

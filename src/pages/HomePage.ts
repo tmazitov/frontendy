@@ -4,7 +4,7 @@ import CounterComponent from "../components/ConterComponent";
 
 
 export default class HomePage extends FrontendyComponent {
-    static componentName: string = 'home-page';
+    componentName: string = 'home-page';
 
     data() {
         return {

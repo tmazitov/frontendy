@@ -6,7 +6,7 @@ import { elem, text } from "../pkg/frontendy/vdom/constructor";
 
 export default class AppComponent extends Component {
     
-    static componentName: string = 'app-container';
+    componentName: string = 'app-container';
     
     data() {
         return {

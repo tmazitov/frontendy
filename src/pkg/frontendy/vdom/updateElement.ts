@@ -1,43 +1,61 @@
 import FrontendyComponent from "../component/component";
 import createElement from "./createElement";
 import VElem from "./VElem";
+import VNode from "./VNode";
 import VText from "./VText";
 
 
-function addNewElement(parent: HTMLElement, newVNode: VElem | VText, index: number) {
-    parent.appendChild(createElement(newVNode));  
+function addNewElement(parent: HTMLElement, newVNode: VNode | FrontendyComponent | null) {
+    if (newVNode instanceof FrontendyComponent) {
+        newVNode.mount(parent)
+    } else {
+        parent.appendChild(createElement(newVNode));  
+    }
 }
 
-function removeNewElement(parent: HTMLElement, oldVNode: VElem | VText, index: number) {
+function removeNewElement(parent: HTMLElement, index: number) {
 
     const child = parent.childNodes[index]
     if (!child) {
         console.log("update vdom erorr: child with index ", index, "not found in parent", parent)
         return
     }
+    
     parent.removeChild(child);
 }
 
-function replaceElement(parent: HTMLElement, newVNode: VElem | VText, index: number) {
-    
+function replaceElement(parent: HTMLElement, newVNode: VNode | FrontendyComponent | null, index: number) {
+
     const child = parent.childNodes[index]
     if (!child) {
         console.log("update vdom erorr: child with index ", index, "not found in parent", parent)
         return
+    }
+
+    if (newVNode instanceof FrontendyComponent) {
+        const element = newVNode.mount(parent)
+        if (!element) {
+            console.log("after render component no element in replace...")
+            return
+        }
+        parent.replaceChild(element, child);
+        return ;
     }
 
     parent.replaceChild(createElement(newVNode), child);
 }
 
 
-function updateElement(parent: HTMLElement | Text, oldVNode: VElem | VText | null, newVNode: VElem | VText | null, index = 0) {
+function updateElement(parent: HTMLElement | Text, 
+    oldVNode: FrontendyComponent | VNode | null, 
+    newVNode: FrontendyComponent | VNode | null, index = 0) {
 
     if (parent instanceof Text) {
         if (newVNode instanceof VText) {
             if (newVNode.value !== parent.nodeValue) {
                 parent.nodeValue = newVNode.value;
             }
-        } else {
+        } else if (newVNode instanceof VElem){
             parent.replaceWith(createElement(newVNode));
         }
         return
@@ -47,25 +65,60 @@ function updateElement(parent: HTMLElement | Text, oldVNode: VElem | VText | nul
         return
     }
 
-
     if (!oldVNode && newVNode) {
-        addNewElement(parent, newVNode, index);
+        addNewElement(parent, newVNode);
         return
     }
 
     if (!newVNode && oldVNode) {
-        removeNewElement(parent, oldVNode, index);
+        removeNewElement(parent, index);
         return
     }
 
-    if (newVNode instanceof VText || oldVNode instanceof VText) {
-        if (newVNode instanceof VText && oldVNode instanceof VText && newVNode.value !== oldVNode.value) {
+    const newIsText = newVNode instanceof VText;
+    const oldIsText = oldVNode instanceof VText;
+    if (newIsText || oldIsText) {
+        if (newIsText && oldIsText && newVNode.value !== oldVNode.value) {
             parent.innerText = newVNode.value;
-        } else if (newVNode !== oldVNode) {
+        } else if (newVNode !== oldVNode && newVNode instanceof VElem) {
             parent.replaceWith(createElement(newVNode));
+        } else if (newVNode !== oldVNode && newVNode instanceof FrontendyComponent) {
+            const elem = newVNode.mount(parent)
+            if (elem) {
+                parent.replaceWith(elem);
+            } else {
+                removeNewElement(parent, index);
+                console.log("after render component no element...")
+            }
         }
         return
-    } 
+    }
+
+    const newIsComponent = newVNode instanceof FrontendyComponent;
+    const oldIsComponent = oldVNode instanceof FrontendyComponent;
+    if (newIsComponent || oldIsComponent) {
+        if (newIsComponent && oldIsComponent ) {
+
+            if (newVNode.componentName !== oldVNode.componentName)  {
+                console.log("UPD_ELEM : 2 different components", newVNode.componentName, "and", oldVNode.componentName);
+            } else {
+                console.log("UPD_ELEM : 2 same components ", newVNode.componentName);
+            }
+
+            const parentParent = parent.parentElement;
+            if (!parentParent) {
+                console.log("UPD_ELEM : parentParent is null", parent);
+                return
+            }
+            console.log("UPD_ELEM : before replace", parentParent);
+            newVNode.mount(parentParent)
+            oldVNode.unmount();
+            console.log("UPD_ELEM : after replace", parentParent);
+        } else {
+            addNewElement(parent, newVNode);
+        }
+        return ;
+    }
 
     if (newVNode && oldVNode && newVNode.tag !== oldVNode.tag) {
         replaceElement(parent, newVNode, index);

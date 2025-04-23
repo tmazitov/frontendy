@@ -4,11 +4,12 @@ import { getComponentUniqueName } from "./name";
 
 class FrontendyComponent{
     
-    static componentName: string = getComponentUniqueName();
+    public componentName: string = getComponentUniqueName();
     
     // State
 
     private oldVNode: VElem | null = null;
+    private isMounted: boolean = false;
     protected el: HTMLElement | Text | null = null;
     protected state: Record<string, any> = {};
     protected props: Record<string, any> = {};
@@ -18,7 +19,7 @@ class FrontendyComponent{
         this.initData();
     }
 
-    initData() {
+    private initData() {
         this.script();
         this.state = this.createState();
     }
@@ -33,7 +34,7 @@ class FrontendyComponent{
     }
 
     print(){
-        console.log("Component : ", FrontendyComponent.componentName)
+        console.log("Component : ", this.componentName)
     }
 
     private createState<T extends object>() : T {
@@ -52,31 +53,60 @@ class FrontendyComponent{
 
     protected script(){}
 
-    public template() : VElem | undefined{
+    protected template() : VElem | undefined{
         return undefined;
     }
 
-    public onMounted() {}
-
-    public onUnmounted() {}
+    protected onMounted() {}
     
-    public render(target: HTMLElement) {
+    protected onUpdated() {}
+
+    protected onUnmounted() {}
+    
+    public mount(target: HTMLElement) {
         this.oldVNode = this.template() ?? null;
+        
         if (!this.oldVNode) {
             this.el = null;
             return
         }
         this.el = this.oldVNode.createHTMLElement();
-        console.log("Rendered node : ", this.oldVNode)
+        console.log(`Rendered node : ${this.componentName}`, this.oldVNode)
         target.appendChild(this.el);
-        this.onMounted();
+        console.log("Rendered node elem : ", this.el)
+        if (!this.isMounted) {
+            this.onMounted();
+        } else {
+            this.onUpdated();
+        }
+        this.isMounted = true;
         return this.el;
     }
+
+    public unmount() {
+        console.log("Unmount component : ", this.componentName)
+        console.log("Unmount state : isMounted", this.isMounted)
+        console.log("Unmount state : el", this.el)
+        if (!this.el || !this.isMounted) {
+            return
+        }
+
+        const parent = this.el.parentElement
+        if (parent) {
+            parent.removeChild(this.el);
+        }
+        this.el = null;
+        this.oldVNode = null;
+        this.isMounted = false;
+        this.onUnmounted();
+    }
+
     
-    update() {
-        console.log("el", this.el)
-        if (!this.el) {
-            this.render(document.body);
+    public update() {
+        console.log("Update component : ", this.componentName)
+        console.log("Update state : isMounted", this.isMounted)
+        console.log("Update state : el", this.el)
+        if (!this.isMounted || !this.el) {
             return;
         }
 
@@ -89,6 +119,10 @@ class FrontendyComponent{
         console.log("Old node : ", this.oldVNode)
         updateElement(this.el, this.oldVNode, newVNode);
         this.oldVNode = newVNode; // Сохраняем VDOM для следующего сравнения
+    }
+    
+    public getIsMounted() {
+        return this.isMounted;
     }
 }
 

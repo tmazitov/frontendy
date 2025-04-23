@@ -2,7 +2,7 @@ import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
 
 export default class CounterComponent extends FrontendyComponent {
-    static componentName: string = 'counter-component';
+    componentName: string = 'counter-component';
 
     data() {
         return {

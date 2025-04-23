@@ -5,7 +5,7 @@ var FrontendyAppInstance = class {
   }
   mount(rootNode) {
     const instance = new this.rootComponent();
-    instance.render(rootNode);
+    instance.mount(rootNode);
   }
 };
 
@@ -94,7 +94,7 @@ function createElement(node) {
   }
   node.children?.forEach((child) => {
     if (child instanceof component_default) {
-      el.appendChild(child.render(el));
+      el.appendChild(child.mount(el));
     } else {
       el.appendChild(createElement(child));
     }
@@ -102,174 +102,6 @@ function createElement(node) {
   return el;
 }
 var createElement_default = createElement;
-
-// src/pkg/frontendy/vdom/updateElement.ts
-function addNewElement(parent, newVNode, index) {
-  parent.appendChild(createElement_default(newVNode));
-}
-function removeNewElement(parent, oldVNode, index) {
-  const child = parent.childNodes[index];
-  if (!child) {
-    console.log("update vdom erorr: child with index ", index, "not found in parent", parent);
-    return;
-  }
-  parent.removeChild(child);
-}
-function replaceElement(parent, newVNode, index) {
-  const child = parent.childNodes[index];
-  if (!child) {
-    console.log("update vdom erorr: child with index ", index, "not found in parent", parent);
-    return;
-  }
-  parent.replaceChild(createElement_default(newVNode), child);
-}
-function updateElement(parent, oldVNode, newVNode, index = 0) {
-  if (parent instanceof Text) {
-    if (newVNode instanceof VText_default) {
-      if (newVNode.value !== parent.nodeValue) {
-        parent.nodeValue = newVNode.value;
-      }
-    } else {
-      parent.replaceWith(createElement_default(newVNode));
-    }
-    return;
-  }
-  if (!oldVNode && !newVNode) {
-    return;
-  }
-  if (!oldVNode && newVNode) {
-    addNewElement(parent, newVNode, index);
-    return;
-  }
-  if (!newVNode && oldVNode) {
-    removeNewElement(parent, oldVNode, index);
-    return;
-  }
-  if (newVNode instanceof VText_default || oldVNode instanceof VText_default) {
-    if (newVNode instanceof VText_default && oldVNode instanceof VText_default && newVNode.value !== oldVNode.value) {
-      parent.innerText = newVNode.value;
-    } else if (newVNode !== oldVNode) {
-      parent.replaceWith(createElement_default(newVNode));
-    }
-    return;
-  }
-  if (newVNode && oldVNode && newVNode.tag !== oldVNode.tag) {
-    replaceElement(parent, newVNode, index);
-    return;
-  }
-  if (!(parent.childNodes && parent.childNodes.length && oldVNode && newVNode)) {
-    return;
-  }
-  for (const key in oldVNode.props) {
-    if (!(key in newVNode.props)) {
-      parent.removeAttribute(key);
-    }
-  }
-  for (const key in newVNode.props) {
-    if (oldVNode.props?.[key] !== newVNode.props[key]) {
-      parent.setAttribute(key, newVNode.props[key]);
-    }
-  }
-  for (let i = 0; i < newVNode.children.length || i < oldVNode.children.length; i++) {
-    const newParent = parent.childNodes[i];
-    const oldChild = oldVNode.children?.[i];
-    const newChild = newVNode.children?.[i];
-    updateElement(newParent, oldChild, newChild, i);
-  }
-}
-var updateElement_default = updateElement;
-
-// src/pkg/frontendy/component/name.ts
-function getCounter() {
-  let count = 0;
-  return {
-    getValue: () => ++count
-  };
-}
-var counter = getCounter();
-function getComponentUniqueName() {
-  const id = counter.getValue();
-  return "component-" + id;
-}
-
-// src/pkg/frontendy/component/component.ts
-var FrontendyComponent = class _FrontendyComponent {
-  constructor(props = {}) {
-    // State
-    this.oldVNode = null;
-    this.el = null;
-    this.state = {};
-    this.props = {};
-    this.initProps(props);
-    this.initData();
-  }
-  static {
-    this.componentName = getComponentUniqueName();
-  }
-  initData() {
-    this.script();
-    this.state = this.createState();
-  }
-  initProps(props = {}) {
-    this.props = props;
-    console.log("Component props : ", this.props);
-  }
-  data() {
-    return {};
-  }
-  print() {
-    console.log("Component : ", _FrontendyComponent.componentName);
-  }
-  createState() {
-    const initialState = this.data();
-    return new Proxy(initialState, {
-      set: (target, prop, value) => {
-        target[prop] = value;
-        console.log(`\u{1F504} State \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D: ${String(prop)} \u2192 ${value}`);
-        this.update();
-        return true;
-      }
-    });
-  }
-  script() {
-  }
-  template() {
-    return void 0;
-  }
-  onMounted() {
-  }
-  onUnmounted() {
-  }
-  render(target) {
-    this.oldVNode = this.template() ?? null;
-    if (!this.oldVNode) {
-      this.el = null;
-      return;
-    }
-    this.el = this.oldVNode.createHTMLElement();
-    console.log("Rendered node : ", this.oldVNode);
-    target.appendChild(this.el);
-    this.onMounted();
-    return this.el;
-  }
-  update() {
-    console.log("el", this.el);
-    if (!this.el) {
-      this.render(document.body);
-      return;
-    }
-    const newVNode = this.template();
-    if (!newVNode) {
-      return;
-    }
-    console.log(newVNode);
-    console.log("New node : ", newVNode);
-    console.log("Old node : ", this.oldVNode);
-    updateElement_default(this.el, this.oldVNode, newVNode);
-    this.oldVNode = newVNode;
-  }
-};
-var component_default = FrontendyComponent;
 
 // src/pkg/frontendy/vdom/VElem.ts
 var VElem = class {
@@ -325,6 +157,247 @@ var VElem = class {
 };
 var VElem_default = VElem;
 
+// src/pkg/frontendy/vdom/updateElement.ts
+function addNewElement(parent, newVNode) {
+  if (newVNode instanceof component_default) {
+    newVNode.mount(parent);
+  } else {
+    parent.appendChild(createElement_default(newVNode));
+  }
+}
+function removeNewElement(parent, index) {
+  const child = parent.childNodes[index];
+  if (!child) {
+    console.log("update vdom erorr: child with index ", index, "not found in parent", parent);
+    return;
+  }
+  parent.removeChild(child);
+}
+function replaceElement(parent, newVNode, index) {
+  const child = parent.childNodes[index];
+  if (!child) {
+    console.log("update vdom erorr: child with index ", index, "not found in parent", parent);
+    return;
+  }
+  if (newVNode instanceof component_default) {
+    const element = newVNode.mount(parent);
+    if (!element) {
+      console.log("after render component no element in replace...");
+      return;
+    }
+    parent.replaceChild(element, child);
+    return;
+  }
+  parent.replaceChild(createElement_default(newVNode), child);
+}
+function updateElement(parent, oldVNode, newVNode, index = 0) {
+  if (parent instanceof Text) {
+    if (newVNode instanceof VText_default) {
+      if (newVNode.value !== parent.nodeValue) {
+        parent.nodeValue = newVNode.value;
+      }
+    } else if (newVNode instanceof VElem_default) {
+      parent.replaceWith(createElement_default(newVNode));
+    }
+    return;
+  }
+  if (!oldVNode && !newVNode) {
+    return;
+  }
+  if (!oldVNode && newVNode) {
+    addNewElement(parent, newVNode);
+    return;
+  }
+  if (!newVNode && oldVNode) {
+    removeNewElement(parent, index);
+    return;
+  }
+  const newIsText = newVNode instanceof VText_default;
+  const oldIsText = oldVNode instanceof VText_default;
+  if (newIsText || oldIsText) {
+    if (newIsText && oldIsText && newVNode.value !== oldVNode.value) {
+      parent.innerText = newVNode.value;
+    } else if (newVNode !== oldVNode && newVNode instanceof VElem_default) {
+      parent.replaceWith(createElement_default(newVNode));
+    } else if (newVNode !== oldVNode && newVNode instanceof component_default) {
+      const elem2 = newVNode.mount(parent);
+      if (elem2) {
+        parent.replaceWith(elem2);
+      } else {
+        removeNewElement(parent, index);
+        console.log("after render component no element...");
+      }
+    }
+    return;
+  }
+  const newIsComponent = newVNode instanceof component_default;
+  const oldIsComponent = oldVNode instanceof component_default;
+  if (newIsComponent || oldIsComponent) {
+    if (newIsComponent && oldIsComponent) {
+      if (newVNode.componentName !== oldVNode.componentName) {
+        console.log("UPD_ELEM : 2 different components", newVNode.componentName, "and", oldVNode.componentName);
+      } else {
+        console.log("UPD_ELEM : 2 same components ", newVNode.componentName);
+      }
+      const parentParent = parent.parentElement;
+      if (!parentParent) {
+        console.log("UPD_ELEM : parentParent is null", parent);
+        return;
+      }
+      console.log("UPD_ELEM : before replace", parentParent);
+      newVNode.mount(parentParent);
+      oldVNode.unmount();
+      console.log("UPD_ELEM : after replace", parentParent);
+    } else {
+      addNewElement(parent, newVNode);
+    }
+    return;
+  }
+  if (newVNode && oldVNode && newVNode.tag !== oldVNode.tag) {
+    replaceElement(parent, newVNode, index);
+    return;
+  }
+  if (!(parent.childNodes && parent.childNodes.length && oldVNode && newVNode)) {
+    return;
+  }
+  for (const key in oldVNode.props) {
+    if (!(key in newVNode.props)) {
+      parent.removeAttribute(key);
+    }
+  }
+  for (const key in newVNode.props) {
+    if (oldVNode.props?.[key] !== newVNode.props[key]) {
+      parent.setAttribute(key, newVNode.props[key]);
+    }
+  }
+  for (let i = 0; i < newVNode.children.length || i < oldVNode.children.length; i++) {
+    const newParent = parent.childNodes[i];
+    const oldChild = oldVNode.children?.[i];
+    const newChild = newVNode.children?.[i];
+    updateElement(newParent, oldChild, newChild, i);
+  }
+}
+var updateElement_default = updateElement;
+
+// src/pkg/frontendy/component/name.ts
+function getCounter() {
+  let count = 0;
+  return {
+    getValue: () => ++count
+  };
+}
+var counter = getCounter();
+function getComponentUniqueName() {
+  const id = counter.getValue();
+  return "component-" + id;
+}
+
+// src/pkg/frontendy/component/component.ts
+var FrontendyComponent = class {
+  constructor(props = {}) {
+    this.componentName = getComponentUniqueName();
+    // State
+    this.oldVNode = null;
+    this.isMounted = false;
+    this.el = null;
+    this.state = {};
+    this.props = {};
+    this.initProps(props);
+    this.initData();
+  }
+  initData() {
+    this.script();
+    this.state = this.createState();
+  }
+  initProps(props = {}) {
+    this.props = props;
+    console.log("Component props : ", this.props);
+  }
+  data() {
+    return {};
+  }
+  print() {
+    console.log("Component : ", this.componentName);
+  }
+  createState() {
+    const initialState = this.data();
+    return new Proxy(initialState, {
+      set: (target, prop, value) => {
+        target[prop] = value;
+        console.log(`\u{1F504} State \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D: ${String(prop)} \u2192 ${value}`);
+        this.update();
+        return true;
+      }
+    });
+  }
+  script() {
+  }
+  template() {
+    return void 0;
+  }
+  onMounted() {
+  }
+  onUpdated() {
+  }
+  onUnmounted() {
+  }
+  mount(target) {
+    this.oldVNode = this.template() ?? null;
+    if (!this.oldVNode) {
+      this.el = null;
+      return;
+    }
+    this.el = this.oldVNode.createHTMLElement();
+    console.log(`Rendered node : ${this.componentName}`, this.oldVNode);
+    target.appendChild(this.el);
+    console.log("Rendered node elem : ", this.el);
+    if (!this.isMounted) {
+      this.onMounted();
+    } else {
+      this.onUpdated();
+    }
+    this.isMounted = true;
+    return this.el;
+  }
+  unmount() {
+    console.log("Unmount component : ", this.componentName);
+    console.log("Unmount state : isMounted", this.isMounted);
+    console.log("Unmount state : el", this.el);
+    if (!this.el || !this.isMounted) {
+      return;
+    }
+    const parent = this.el.parentElement;
+    if (parent) {
+      parent.removeChild(this.el);
+    }
+    this.el = null;
+    this.oldVNode = null;
+    this.isMounted = false;
+    this.onUnmounted();
+  }
+  update() {
+    console.log("Update component : ", this.componentName);
+    console.log("Update state : isMounted", this.isMounted);
+    console.log("Update state : el", this.el);
+    if (!this.isMounted || !this.el) {
+      return;
+    }
+    const newVNode = this.template();
+    if (!newVNode) {
+      return;
+    }
+    console.log(newVNode);
+    console.log("New node : ", newVNode);
+    console.log("Old node : ", this.oldVNode);
+    updateElement_default(this.el, this.oldVNode, newVNode);
+    this.oldVNode = newVNode;
+  }
+  getIsMounted() {
+    return this.isMounted;
+  }
+};
+var component_default = FrontendyComponent;
+
 // src/pkg/frontendy/vdom/constructor.ts
 function elem(tag) {
   return new VElem_default(tag);
@@ -335,7 +408,8 @@ function text(value) {
 
 // src/components/ConterComponent.ts
 var CounterComponent = class extends component_default {
-  static {
+  constructor() {
+    super(...arguments);
     this.componentName = "counter-component";
   }
   data() {
@@ -356,7 +430,8 @@ var CounterComponent = class extends component_default {
 
 // src/pages/AboutPage.ts
 var AboutPage = class extends component_default {
-  static {
+  constructor() {
+    super(...arguments);
     this.componentName = "about-page";
   }
   data() {
@@ -376,7 +451,8 @@ var AboutPage = class extends component_default {
 
 // src/pages/HomePage.ts
 var HomePage = class extends component_default {
-  static {
+  constructor() {
+    super(...arguments);
     this.componentName = "home-page";
   }
   data() {
@@ -425,11 +501,9 @@ var router_default = router;
 
 // src/pkg/frontendy/router/RouterView.ts
 var FrontendyRouterView = class extends component_default {
-  static {
-    this.componentName = "router-view";
-  }
   constructor(router2) {
     super({ router: router2 });
+    this.componentName = "router-view";
     router2.setRouterView(this);
   }
   data() {
@@ -457,7 +531,8 @@ var FrontendyRouterView = class extends component_default {
 
 // src/components/AppComponent.ts
 var AppComponent = class extends component_default {
-  static {
+  constructor() {
+    super(...arguments);
     this.componentName = "app-container";
   }
   data() {

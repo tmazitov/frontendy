@@ -14,7 +14,7 @@ class FrontendyAppInstance {
 
     public mount(rootNode:HTMLElement) {
         const instance = new this.rootComponent();
-        instance.render(rootNode);
+        instance.mount(rootNode);
     }
 }
 
