@@ -46,7 +46,7 @@ export default class AppComponent extends Component {
 
     template() {
         return elem("div")
-            .setProps({ id: "app-component" })
+            .setProps({ id: "app" })
             .setChild([
                 elem("h1")
                     .addChild(text("Hello, from AppComponent!")),

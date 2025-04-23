@@ -489,7 +489,7 @@ var AppComponent = class extends component_default {
     this.el.querySelector("input")?.removeEventListener("input", this.valueInput);
   }
   template() {
-    return elem("div").setProps({ id: "app-component" }).setChild([
+    return elem("div").setProps({ id: "app" }).setChild([
       elem("h1").addChild(text("Hello, from AppComponent!")),
       elem("p").addChild(text("There will be router below...")),
       elem("a").setProps({ href: "/home" }).addChild(text("Home")),
@@ -501,7 +501,7 @@ var AppComponent = class extends component_default {
 
 // src/client.ts
 console.log("I am client.ts");
-var rootElem = document.getElementById("app");
+var rootElem = document.querySelector("body");
 if (!rootElem) {
   throw new Error("Client error : root id not found");
 }

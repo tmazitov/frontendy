@@ -3,7 +3,7 @@ import AppComponent from "../src/components/AppComponent"
 
 console.log("I am client.ts");
 
-const rootElem = document.getElementById("app");
+const rootElem = document.querySelector("body");
 if (!rootElem) {
   throw new Error("Client error : root id not found");
 }
