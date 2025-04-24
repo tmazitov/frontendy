@@ -63,6 +63,9 @@ var FrontendyRouter = class {
     window.history.pushState({}, "", route.path);
     this.setCurrentRoute();
   }
+  getCurrentRoute() {
+    return this.currentRoute;
+  }
 };
 
 // src/pkg/frontendy/vdom/VText.ts
@@ -610,6 +613,19 @@ var NavBarLink = class {
   }
 };
 
+// src/components/NavBar/SignInButtonComponent.ts
+var SignInButtonComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "sign-in-button-component";
+  }
+  openSignInModalWindow() {
+  }
+  template() {
+    return elem("div").setProps({ class: "nav-link flex items-center cursor-pointer text-sm px-4 py-2 hover:bg-gray-100 active:bg-gray-200 duration-200 ease-in-out " }).addChild(text("Sign In")).addEventListener("click", () => this.openSignInModalWindow());
+  }
+};
+
 // src/components/NavBar/NavBarComponent.ts
 var NavBarComponent = class extends component_default {
   constructor(links) {
@@ -632,16 +648,27 @@ var NavBarComponent = class extends component_default {
         class: "max-w-2xl w-full rounded-xl navbar flex flex-row bg-white pr-4 shadow-lg"
       }).setChild([
         elem("h1").addChild(text("ft_transcendence")).setProps({ class: "text-l font-bold px-4 py-2" }),
-        ...elem("div").setProps({ class: "nav-link cursor-pointer px-4 py-2 hover:bg-gray-100 active:bg-gray-200 duration-200 ease-in-out " }).$vfor(this.props.links, (elem2, link) => {
-          elem2.addChild(text(link.label));
-          elem2.addEventListener("click", () => this.navigate(link));
-        })
+        elem("div").setProps({ class: "flex flex-row justify-between w-full" }).setChild([
+          // Main navbar links
+          elem("div").setProps({ class: "flex flex-row" }).setChild(
+            elem("div").setProps({ class: "nav-link text-sm flex items-center cursor-pointer px-4 py-2 hover:bg-gray-100 active:bg-gray-200 duration-200 ease-in-out " }).$vfor(this.props.links, (elem2, link) => {
+              elem2.addChild(text(link.label));
+              elem2.addEventListener("click", () => this.navigate(link));
+            })
+          ),
+          // Sign in button
+          new SignInButtonComponent()
+        ])
       ])
     ]);
   }
 };
 
 // src/components/AppComponent.ts
+var navBarLinks = [
+  new NavBarLink("Home", "home"),
+  new NavBarLink("About", "about")
+];
 var AppComponent = class extends component_default {
   constructor() {
     super(...arguments);
@@ -649,38 +676,18 @@ var AppComponent = class extends component_default {
   }
   data() {
     return {
-      navBarLinks: [
-        new NavBarLink("Home", "home"),
-        new NavBarLink("About", "about")
-      ]
+      currentRoute: router_default.getCurrentRoute()
     };
   }
-  valueLength() {
-    return `${this.state.value.length}`;
-  }
-  valueInput(ev) {
-    console.log("valueInput", this);
-  }
-  factCheck() {
-    console.log("factCheck", this.state.value);
-    return this.state.value.length > 10;
-  }
-  onMounted() {
-    if (!this.el || this.el instanceof Text)
-      return;
-    console.log("mounted", this.state.value);
-    this.el.querySelector("input")?.addEventListener("input", (ev) => {
-      this.state.value = ev.target.value;
-    });
-  }
-  onUnmounted() {
-    if (!this.el || this.el instanceof Text)
-      return;
-    this.el.querySelector("input")?.removeEventListener("input", this.valueInput);
+  isNavigatablePage() {
+    if (!this.state.currentRoute) {
+      return false;
+    }
+    return this.state.currentRoute.name != "auth";
   }
   template() {
     return elem("div").setProps({ id: "app" }).setChild([
-      new NavBarComponent(this.state.navBarLinks),
+      elem("span").$vif(this.isNavigatablePage()).addChild(new NavBarComponent(navBarLinks)),
       new FrontendyRouterView(router_default)
     ]);
   }

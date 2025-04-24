@@ -6,54 +6,34 @@ import { elem, text } from "../pkg/frontendy/vdom/constructor";
 import NavBarLink from "../types/NavBarLink";
 import NavBarComponent from "./NavBar/NavBarComponent";
 
+const navBarLinks =  [
+    new NavBarLink('Home', 'home'),
+    new NavBarLink('About', 'about'),
+]
+
 export default class AppComponent extends Component {
     
     componentName: string = 'app-container';
-    
-    data() {
+
+    protected data() {
         return {
-            navBarLinks: [
-                new NavBarLink('Home', 'home'),
-                new NavBarLink('About', 'about'),
-            ]
+            currentRoute : router.getCurrentRoute(),
         }
     }
 
-    valueLength(){
-        return `${this.state.value.length}` 
-    }
-
-    valueInput(ev:any){
-        console.log('valueInput', this)
-    }
-
-    factCheck(){
-        console.log('factCheck', this.state.value)
-        return this.state.value.length > 10
-    }
-
-    onMounted() {
-        if (!this.el || this.el instanceof Text) 
-            return
-
-        console.log('mounted', this.state.value)
-        this.el.querySelector('input')?.addEventListener('input', (ev:any) => {
-            this.state.value = ev.target.value
-        })
-    }
-    
-    onUnmounted() {
-        if (!this.el || this.el instanceof Text) 
-            return
-
-        this.el.querySelector('input')?.removeEventListener('input', this.valueInput)
+    isNavigatablePage() {
+        if (!this.state.currentRoute) {
+            return false;
+        }
+        return this.state.currentRoute.name != 'auth'
     }
 
     template() {
         return elem("div")
             .setProps({ id: "app" })
             .setChild([
-                new NavBarComponent(this.state.navBarLinks),
+                elem("span").$vif(this.isNavigatablePage())
+                    .addChild(new NavBarComponent(navBarLinks)),
                 new FrontendyRouterView(router)
             ])
     }   

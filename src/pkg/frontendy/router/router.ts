@@ -70,4 +70,8 @@ export default class FrontendyRouter {
         window.history.pushState({}, "", route.path);
         this.setCurrentRoute()
     }
+
+    public getCurrentRoute(): FrontendyRoute | undefined {
+        return this.currentRoute;
+    }
 }
