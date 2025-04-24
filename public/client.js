@@ -52,13 +52,13 @@ var FrontendyRouter = class {
     this.currentRoute = this.findRoute(window.location.pathname);
     this.routerView.updateCurrentRoute();
   }
-  push(name) {
-    const route = this.routes.find((route2) => route2.name === name);
+  push(name2) {
+    const route = this.routes.find((route2) => route2.name === name2);
     if (!route) {
-      throw new Error(`Router error: route ${name} not found`);
+      throw new Error(`Router error: route ${name2} not found`);
     }
     if (route.path === this.currentRoute?.path) {
-      throw new Error(`Router error: route ${name} already active`);
+      throw new Error(`Router error: route ${name2} already active`);
     }
     window.history.pushState({}, "", route.path);
     this.setCurrentRoute();
@@ -435,25 +435,27 @@ function text(value) {
   return new VText_default(value);
 }
 
-// src/components/ConterComponent.ts
-var CounterComponent = class extends component_default {
+// src/components/about-page-content/AboutInfoComponent.ts
+var AboutInfoComponent = class extends component_default {
   constructor() {
     super(...arguments);
-    this.componentName = "counter-component";
-  }
-  data() {
-    return {
-      count: 0
-    };
+    this.componentName = "home-dashboard-component";
   }
   template() {
-    return elem("div").setProps({ id: "counter-component" }).setChild([
-      elem("h1").addChild(text(`Count: ${this.state.count}`)),
-      elem("button").setProps({ id: "increment-button" }).addChild(text("Increment")).addEventListener("click", this.increment.bind(this))
+    return elem("div").setProps({
+      id: "home-dashboard-component",
+      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-lg bg-white p-6"
+    }).setChild([
+      elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`About us`)),
+      elem("p").setProps({ class: "text-gray-700 text-base mb-4" }).addChild(text("ft_transcendence is a project that aims to provide a platform for developers to learn and practice their skills in a collaborative environment.")),
+      elem("h2").setProps({ class: "text-xl font-bold mb-2" }).addChild(text("Our team:")),
+      elem("ul").setProps({ class: "list-disc list-inside mb-4" }).setChild([
+        elem("li").addChild(text("Timur Mazitov - Project Manager")),
+        elem("li").addChild(text("Valeria Lomakina - Backend Developer")),
+        elem("li").addChild(text("Sofia Abdulkina - Backend Developer")),
+        elem("li").addChild(text("Ibrohim Ganiev - Fullstack Developer"))
+      ])
     ]);
-  }
-  increment() {
-    this.state.count++;
   }
 };
 
@@ -471,10 +473,19 @@ var AboutPage = class extends component_default {
   }
   template() {
     return elem("div").setProps({ id: "about-page" }).setChild([
-      elem("h1").addChild(text(this.state.title)),
-      elem("p").addChild(text(this.state.description)),
-      new CounterComponent()
+      elem("div").setProps({ class: "flex flex-col items-center p-8" }).addChild(new AboutInfoComponent())
     ]);
+  }
+};
+
+// src/components/tools/InfoParagraphComponent.ts
+var InfoParagraphComponent = class extends component_default {
+  constructor(text5) {
+    super({ text: text5 });
+    this.componentName = "info-paragraph-component";
+  }
+  template() {
+    return elem("p").setProps({ class: "text-gray-700 text-base mb-2" }).addChild(text(this.props.text));
   }
 };
 
@@ -503,14 +514,12 @@ var DashboardComponent = class extends component_default {
   template() {
     return elem("div").setProps({
       id: "home-dashboard-component",
-      class: "max-w-xl rounded-lg overflow-hidden shadow-lg bg-white p-6"
+      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-lg bg-white p-6"
     }).setChild([
-      elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`ft_transcendence`)),
-      elem("div").setProps({ class: "flex flex-col gap-2" }).setChild([
-        elem("p").addChild(text("Welcome to the ft_transcendence dashboard!")),
-        elem("p").addChild(text("This is a simple example of a Frontendy component.")),
-        new PlayButtonComponent()
-      ])
+      elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`Home`)),
+      new InfoParagraphComponent("Welcome to the ft_transcendence!"),
+      new InfoParagraphComponent("There will be some tools and players statistics soon."),
+      new PlayButtonComponent()
     ]);
   }
 };
@@ -605,30 +614,30 @@ var NavBarLink = class {
 var NavBarComponent = class extends component_default {
   constructor(links) {
     super({ links });
-    this.componentName = "counter-component";
-  }
-  data() {
-    return {
-      count: 0
-    };
+    this.componentName = "nav-bar-component";
   }
   navigate(link) {
     console.log("navigate", link);
     router_default.push(link.routeName);
   }
-  template() {
-    return elem("div").setProps({
-      id: "nav-bar",
-      class: "navbar flex flex-row gap-4 bg-gray-800 text-white p-4"
-    }).setChild(
-      elem("div").setProps({ class: "nav-link cursor-pointer" }).$vfor(this.props.links, (elem2, link) => {
-        elem2.addChild(text(link.label));
-        elem2.addEventListener("click", () => this.navigate(link));
-      })
-    );
+  borderStyles() {
+    return [
+      "rounded-xl"
+    ].join(" ");
   }
-  increment() {
-    this.state.count++;
+  template() {
+    return elem("div").setProps({ class: "flex flex-col items-center p-2" }).setChild([
+      elem("div").setProps({
+        id: "nav-bar",
+        class: "max-w-2xl w-full rounded-xl navbar flex flex-row bg-white pr-4 shadow-lg"
+      }).setChild([
+        elem("h1").addChild(text("ft_transcendence")).setProps({ class: "text-l font-bold px-4 py-2" }),
+        ...elem("div").setProps({ class: "nav-link cursor-pointer px-4 py-2 hover:bg-gray-100 active:bg-gray-200 duration-200 ease-in-out " }).$vfor(this.props.links, (elem2, link) => {
+          elem2.addChild(text(link.label));
+          elem2.addEventListener("click", () => this.navigate(link));
+        })
+      ])
+    ]);
   }
 };
 

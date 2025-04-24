@@ -1,6 +1,7 @@
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
 import CounterComponent from "../components/ConterComponent";
+import AboutInfoComponent from "../components/about-page-content/AboutInfoComponent";
 
 export default class AboutPage extends FrontendyComponent {
     componentName: string = 'about-page';
@@ -16,9 +17,9 @@ export default class AboutPage extends FrontendyComponent {
         return elem("div")
             .setProps({ id: "about-page" })
             .setChild([
-                elem("h1").addChild(text(this.state.title)),
-                elem("p").addChild(text(this.state.description)),
-                new CounterComponent()
+                elem("div")
+                .setProps({ class : "flex flex-col items-center p-8" })
+                .addChild(new AboutInfoComponent())
             ])
     }
 }

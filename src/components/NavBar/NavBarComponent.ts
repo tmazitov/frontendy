@@ -5,16 +5,10 @@ import VElem from "../../pkg/frontendy/vdom/VElem";
 import NavBarLink from "../../types/NavBarLink";
 
 export default class NavBarComponent extends FrontendyComponent {
-    componentName: string = 'counter-component';
+    componentName: string = 'nav-bar-component';
 
     constructor(links:Array<NavBarLink>) {
         super({links})
-    }
-
-    data() {
-        return {
-            count: 0,
-        }
     }
 
     navigate(link:NavBarLink) {
@@ -22,23 +16,33 @@ export default class NavBarComponent extends FrontendyComponent {
         router.push(link.routeName)
     }
 
+    borderStyles(){
+        return [
+            "rounded-xl"
+        ].join(" ")
+    }
+
     template() {
         return elem("div")
+        .setProps({ class : "flex flex-col items-center p-2" })
+        .setChild([
+            elem("div")
             .setProps({ 
                 id: "nav-bar",
-                class: "navbar flex flex-row gap-4 bg-gray-800 text-white p-4" 
+                class: "max-w-2xl w-full rounded-xl navbar flex flex-row bg-white pr-4 shadow-lg" 
             })
-            .setChild(
-                elem("div")
-                .setProps({class : "nav-link cursor-pointer"})
+            .setChild([
+                elem("h1")
+                    .addChild(text("ft_transcendence"))
+                    .setProps({ class : "text-l font-bold px-4 py-2"}),
+                
+                ...elem("div")
+                .setProps({class : "nav-link cursor-pointer px-4 py-2 hover:bg-gray-100 active:bg-gray-200 duration-200 ease-in-out "})
                 .$vfor(this.props.links, (elem:VElem, link:NavBarLink) => {
                     elem.addChild(text(link.label))
                     elem.addEventListener("click", () => this.navigate(link))
-                })
-            );
-    }
-
-    increment() {
-        this.state.count++;
+                    })
+            ])
+        ])
     }
 }
