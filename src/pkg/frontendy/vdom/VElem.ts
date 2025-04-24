@@ -15,7 +15,15 @@ class VElem{
     }
 
     setProps(props:Record<string, any>) {
-        this.props = props;
+        if (!this.props) {
+            this.props = props;
+            return this;
+        }
+
+        Object.keys(props).forEach((key) => {
+            this.props[key] = props[key];
+        });
+
         return this;
     }
 
@@ -29,7 +37,7 @@ class VElem{
         return this;
     }
 
-    addChild(child: VElem | VText) {
+    addChild(child: VElem | VText | Component) {
         this.children.push(child);
         return this;
     }
@@ -65,6 +73,19 @@ class VElem{
         }
 
         return this
+    }
+
+    $vfor(array:Array<any>, callback:(elem:VElem, item:any) => void) {
+        if (!Array.isArray(array)) {
+            throw new Error("v-for expects an array");
+        }
+
+        return array.map((item) => {
+            const newElem = new VElem(this.tag);
+            newElem.setProps(this.props);
+            callback(newElem, item)
+            return newElem;
+        });
     }
 }
 

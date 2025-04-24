@@ -1,6 +1,7 @@
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
 import CounterComponent from "../components/ConterComponent";
+import DashboardComponent from "../components/home-page-content/DashboardComponent";
 
 
 export default class HomePage extends FrontendyComponent {
@@ -15,11 +16,11 @@ export default class HomePage extends FrontendyComponent {
 
     template() {
         return elem("div")
-            .setProps({ id: "home-page" })
+            .setProps({ id: "home-page"})
             .setChild([
-                elem("h1").addChild(text(this.state.title)),
-                elem("p").addChild(text(this.state.description)),
-                new CounterComponent()
-            ])
+                elem("div")
+                .setProps({ class : "flex flex-col items-center p-8" })
+                .addChild(new DashboardComponent())
+        ])
     }
 }

@@ -49,7 +49,19 @@ var FrontendyRouter = class {
     if (!this.routerView) {
       throw new Error("Router error : routerView instance is not set");
     }
+    this.currentRoute = this.findRoute(window.location.pathname);
     this.routerView.updateCurrentRoute();
+  }
+  push(name) {
+    const route = this.routes.find((route2) => route2.name === name);
+    if (!route) {
+      throw new Error(`Router error: route ${name} not found`);
+    }
+    if (route.path === this.currentRoute?.path) {
+      throw new Error(`Router error: route ${name} already active`);
+    }
+    window.history.pushState({}, "", route.path);
+    this.setCurrentRoute();
   }
 };
 
@@ -104,7 +116,7 @@ function createElement(node) {
 var createElement_default = createElement;
 
 // src/pkg/frontendy/vdom/VElem.ts
-var VElem = class {
+var VElem = class _VElem {
   constructor(tag) {
     this.props = {};
     this.children = [];
@@ -114,7 +126,13 @@ var VElem = class {
     this.tag = tag;
   }
   setProps(props) {
-    this.props = props;
+    if (!this.props) {
+      this.props = props;
+      return this;
+    }
+    Object.keys(props).forEach((key) => {
+      this.props[key] = props[key];
+    });
     return this;
   }
   getProps() {
@@ -153,6 +171,17 @@ var VElem = class {
       this.styles.display = null;
     }
     return this;
+  }
+  $vfor(array, callback) {
+    if (!Array.isArray(array)) {
+      throw new Error("v-for expects an array");
+    }
+    return array.map((item) => {
+      const newElem = new _VElem(this.tag);
+      newElem.setProps(this.props);
+      callback(newElem, item);
+      return newElem;
+    });
   }
 };
 var VElem_default = VElem;
@@ -449,6 +478,43 @@ var AboutPage = class extends component_default {
   }
 };
 
+// src/components/home-page-content/PlayButtonComponent.ts
+var PlayButtonComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "play-button-component";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("button").setProps({
+      class: "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-2 px-4 mt-2 rounded"
+    }).addChild(text("Play"));
+  }
+};
+
+// src/components/home-page-content/DashboardComponent.ts
+var DashboardComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "home-dashboard-component";
+  }
+  template() {
+    return elem("div").setProps({
+      id: "home-dashboard-component",
+      class: "max-w-xl rounded-lg overflow-hidden shadow-lg bg-white p-6"
+    }).setChild([
+      elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`ft_transcendence`)),
+      elem("div").setProps({ class: "flex flex-col gap-2" }).setChild([
+        elem("p").addChild(text("Welcome to the ft_transcendence dashboard!")),
+        elem("p").addChild(text("This is a simple example of a Frontendy component.")),
+        new PlayButtonComponent()
+      ])
+    ]);
+  }
+};
+
 // src/pages/HomePage.ts
 var HomePage = class extends component_default {
   constructor() {
@@ -463,9 +529,7 @@ var HomePage = class extends component_default {
   }
   template() {
     return elem("div").setProps({ id: "home-page" }).setChild([
-      elem("h1").addChild(text(this.state.title)),
-      elem("p").addChild(text(this.state.description)),
-      new CounterComponent()
+      elem("div").setProps({ class: "flex flex-col items-center p-8" }).addChild(new DashboardComponent())
     ]);
   }
 };
@@ -529,6 +593,45 @@ var FrontendyRouterView = class extends component_default {
   }
 };
 
+// src/types/NavBarLink.ts
+var NavBarLink = class {
+  constructor(label, routeName) {
+    this.label = label;
+    this.routeName = routeName;
+  }
+};
+
+// src/components/NavBar/NavBarComponent.ts
+var NavBarComponent = class extends component_default {
+  constructor(links) {
+    super({ links });
+    this.componentName = "counter-component";
+  }
+  data() {
+    return {
+      count: 0
+    };
+  }
+  navigate(link) {
+    console.log("navigate", link);
+    router_default.push(link.routeName);
+  }
+  template() {
+    return elem("div").setProps({
+      id: "nav-bar",
+      class: "navbar flex flex-row gap-4 bg-gray-800 text-white p-4"
+    }).setChild(
+      elem("div").setProps({ class: "nav-link cursor-pointer" }).$vfor(this.props.links, (elem2, link) => {
+        elem2.addChild(text(link.label));
+        elem2.addEventListener("click", () => this.navigate(link));
+      })
+    );
+  }
+  increment() {
+    this.state.count++;
+  }
+};
+
 // src/components/AppComponent.ts
 var AppComponent = class extends component_default {
   constructor() {
@@ -537,7 +640,10 @@ var AppComponent = class extends component_default {
   }
   data() {
     return {
-      value: "value"
+      navBarLinks: [
+        new NavBarLink("Home", "home"),
+        new NavBarLink("About", "about")
+      ]
     };
   }
   valueLength() {
@@ -565,10 +671,7 @@ var AppComponent = class extends component_default {
   }
   template() {
     return elem("div").setProps({ id: "app" }).setChild([
-      elem("h1").addChild(text("Hello, from AppComponent!")),
-      elem("p").addChild(text("There will be router below...")),
-      elem("a").setProps({ href: "/home" }).addChild(text("Home")),
-      elem("a").setProps({ href: "/about" }).addChild(text("About")),
+      new NavBarComponent(this.state.navBarLinks),
       new FrontendyRouterView(router_default)
     ]);
   }

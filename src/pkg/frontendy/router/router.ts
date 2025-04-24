@@ -54,7 +54,20 @@ export default class FrontendyRouter {
         if (!this.routerView ) {
             throw new Error("Router error : routerView instance is not set");
         } 
+        this.currentRoute = this.findRoute(window.location.pathname);
 
         this.routerView.updateCurrentRoute()
+    }
+
+    public push(name: string) {
+        const route = this.routes.find(route => route.name === name);
+        if (!route) {
+            throw new Error(`Router error: route ${name} not found`);
+        }
+        if (route.path === this.currentRoute?.path) {
+            throw new Error(`Router error: route ${name} already active`);
+        }
+        window.history.pushState({}, "", route.path);
+        this.setCurrentRoute()
     }
 }

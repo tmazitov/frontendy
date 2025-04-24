@@ -3,6 +3,8 @@ import router from "../pages/router";
 import Component from "../pkg/frontendy/component/component";
 import FrontendyRouterView from "../pkg/frontendy/router/RouterView";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
+import NavBarLink from "../types/NavBarLink";
+import NavBarComponent from "./NavBar/NavBarComponent";
 
 export default class AppComponent extends Component {
     
@@ -10,7 +12,10 @@ export default class AppComponent extends Component {
     
     data() {
         return {
-            value: "value",
+            navBarLinks: [
+                new NavBarLink('Home', 'home'),
+                new NavBarLink('About', 'about'),
+            ]
         }
     }
 
@@ -48,16 +53,7 @@ export default class AppComponent extends Component {
         return elem("div")
             .setProps({ id: "app" })
             .setChild([
-                elem("h1")
-                    .addChild(text("Hello, from AppComponent!")),
-                elem("p")
-                    .addChild(text("There will be router below...")),
-                elem("a")
-                    .setProps({ href: "/home" })
-                    .addChild(text("Home")),
-                elem("a")
-                    .setProps({ href: "/about" })
-                    .addChild(text("About")),
+                new NavBarComponent(this.state.navBarLinks),
                 new FrontendyRouterView(router)
             ])
     }   
