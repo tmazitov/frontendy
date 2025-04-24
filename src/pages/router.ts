@@ -5,7 +5,7 @@ import HomePage from "./HomePage";
 import NotFoundPage from "./NotFoundPage";
 
 const routes:Array<FrontendyRoute> = [
-    {name: "home", path: "/home", component: HomePage},
+    {name: "home", path: "/", component: HomePage},
     {name: "about", path: "/about", component: AboutPage},
 ]
 

@@ -1,12 +1,17 @@
-import router from "../../pages/router";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
 
-export default class SignInButtonComponent extends FrontendyComponent {
-    componentName: string = 'sign-in-button-component';
+type NavBarItemProps = {
+    label: string,
+    onClick: () => void,
+}
 
-    openSignInModalWindow() {
-        // router.push("auth")
+export default class NavBarItemComponent extends FrontendyComponent {
+    componentName: string = 'nav-bar-item-component';
+
+    constructor(props: NavBarItemProps) {
+        const { label, onClick } = props
+        super({label, onClick});
     }
 
     getStyles() {
@@ -21,7 +26,7 @@ export default class SignInButtonComponent extends FrontendyComponent {
     template() {
         return elem('div')
             .setProps({class : this.getStyles()})
-            .addChild(text("Sign In"))
-            .addEventListener("click", () => this.openSignInModalWindow())
+            .addChild(text(this.props.label))
+            .addEventListener("click", this.props.onClick)
     }   
 }

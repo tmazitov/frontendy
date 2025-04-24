@@ -18,7 +18,7 @@ export default class AboutPage extends FrontendyComponent {
             .setProps({ id: "about-page" })
             .setChild([
                 elem("div")
-                .setProps({ class : "flex flex-col items-center p-8" })
+                .setProps({ class : "flex flex-col items-center p-4 pt-8" })
                 .addChild(new AboutInfoComponent())
             ])
     }

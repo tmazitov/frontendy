@@ -19,7 +19,7 @@ export default class HomePage extends FrontendyComponent {
             .setProps({ id: "home-page"})
             .setChild([
                 elem("div")
-                .setProps({ class : "flex flex-col items-center p-8" })
+                .setProps({ class : "flex flex-col items-center p-4 pt-8" })
                 .addChild(new DashboardComponent())
         ])
     }

@@ -30,9 +30,9 @@ export default class AppComponent extends Component {
 
     template() {
         return elem("div")
-            .setProps({ id: "app" })
+            .setProps({ id: "app", class: "h-screen w-screen bg-gray-100 text-gray-800"})
             .setChild([
-                elem("span").$vif(this.isNavigatablePage())
+                elem("span").$vif(true)
                     .addChild(new NavBarComponent(navBarLinks)),
                 new FrontendyRouterView(router)
             ])

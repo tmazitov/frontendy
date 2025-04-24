@@ -3,7 +3,7 @@ import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
 import VElem from "../../pkg/frontendy/vdom/VElem";
 import NavBarLink from "../../types/NavBarLink";
-import SignInButtonComponent from "./SignInButtonComponent";
+import NavBarItemComponent from "./NavBarItemComponent";
 
 export default class NavBarComponent extends FrontendyComponent {
     componentName: string = 'nav-bar-component';
@@ -25,12 +25,12 @@ export default class NavBarComponent extends FrontendyComponent {
 
     template() {
         return elem("div")
-        .setProps({ class : "flex flex-col items-center p-2" })
+        .setProps({ class : "flex flex-col items-center p-4" })
         .setChild([
             elem("div")
             .setProps({ 
                 id: "nav-bar",
-                class: "max-w-2xl w-full rounded-xl navbar flex flex-row bg-white pr-4 shadow-lg" 
+                class: "max-w-2xl w-full rounded-lg navbar flex flex-row bg-white pr-4 shadow-md" 
             })
             .setChild([
                 elem("h1")
@@ -43,18 +43,23 @@ export default class NavBarComponent extends FrontendyComponent {
                         
                         // Main navbar links
 
-                        elem("div").setProps({ class : "flex flex-row" })
-                        .setChild(
-                            elem("div")
-                            .setProps({class : "nav-link text-sm flex items-center cursor-pointer px-4 py-2 hover:bg-gray-100 active:bg-gray-200 duration-200 ease-in-out "})
-                            .$vfor(this.props.links, (elem:VElem, link:NavBarLink) => {
-                                elem.addChild(text(link.label))
-                                elem.addEventListener("click", () => this.navigate(link))
+                        elem("div")
+                        .setProps({ class : "flex flex-row" })
+                        .setChild(this.props.links.map((link:NavBarLink) => {
+                            return new NavBarItemComponent({
+                                label: link.label,
+                                onClick: () => this.navigate(link)
+                            })
                         })),
 
                         // Sign in button
 
-                        new SignInButtonComponent(),
+                        new NavBarItemComponent({
+                            label: "Sign in",
+                            onClick: () => {
+                                console.log("Comming soon...")
+                            }
+                        }),
                     ])
             ])
         ])

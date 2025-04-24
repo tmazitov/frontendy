@@ -447,7 +447,7 @@ var AboutInfoComponent = class extends component_default {
   template() {
     return elem("div").setProps({
       id: "home-dashboard-component",
-      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-lg bg-white p-6"
+      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
     }).setChild([
       elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`About us`)),
       elem("p").setProps({ class: "text-gray-700 text-base mb-4" }).addChild(text("ft_transcendence is a project that aims to provide a platform for developers to learn and practice their skills in a collaborative environment.")),
@@ -476,7 +476,7 @@ var AboutPage = class extends component_default {
   }
   template() {
     return elem("div").setProps({ id: "about-page" }).setChild([
-      elem("div").setProps({ class: "flex flex-col items-center p-8" }).addChild(new AboutInfoComponent())
+      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(new AboutInfoComponent())
     ]);
   }
 };
@@ -517,7 +517,7 @@ var DashboardComponent = class extends component_default {
   template() {
     return elem("div").setProps({
       id: "home-dashboard-component",
-      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-lg bg-white p-6"
+      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
     }).setChild([
       elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`Home`)),
       new InfoParagraphComponent("Welcome to the ft_transcendence!"),
@@ -541,8 +541,33 @@ var HomePage = class extends component_default {
   }
   template() {
     return elem("div").setProps({ id: "home-page" }).setChild([
-      elem("div").setProps({ class: "flex flex-col items-center p-8" }).addChild(new DashboardComponent())
+      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(new DashboardComponent())
     ]);
+  }
+};
+
+// src/components/ButtonComponent.ts
+var ButtonComponent = class extends component_default {
+  constructor(props) {
+    const { label, type, onClick } = props;
+    super({ label, type, onClick });
+    this.componentName = "button-component";
+  }
+  getButtonColor() {
+    const type = this.props.type || "default";
+    switch (type) {
+      case "primary":
+        return "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white";
+      case "default":
+        return "bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-800";
+      default:
+        return "bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-800";
+    }
+  }
+  template() {
+    return elem("button").addChild(text(this.props.label)).addEventListener("click", this.props.onClick).setProps({
+      class: `${this.getButtonColor()} rounded-md px-4 py-2 transition duration-200 ease-in-out`
+    });
   }
 };
 
@@ -551,22 +576,30 @@ var NotFoundPage = class extends component_default {
   static {
     this.componentName = "not-found-page";
   }
-  data() {
-    return {
-      message: "404 Not Found"
-    };
+  goHome() {
+    router_default.push("home");
   }
   template() {
-    return elem("div").setProps({ id: "not-found-page" }).setChild([
-      elem("h1").addChild(text(this.state.message)),
-      elem("p").addChild(text("The page you are looking for does not exist."))
+    return elem("div").setProps({
+      id: "not-found-page",
+      class: "flex flex-col items-center justify-center h-full w-full p-8"
+    }).setChild([
+      elem("div").setProps({ class: "flex flex-col gap-4 p-4 rounded-lg max-w-lg w-full bg-white" }).setChild([
+        elem("h1").setProps({ class: "text-2xl font-bold text-gray-800" }).addChild(text("404 Oups! Page not found...")),
+        elem("p").setProps({ class: "text-gray-600" }).addChild(text("The page you are looking for does not exist.")),
+        new ButtonComponent({
+          label: "Main page",
+          type: "primary",
+          onClick: this.goHome
+        })
+      ])
     ]);
   }
 };
 
 // src/pages/router.ts
 var routes = [
-  { name: "home", path: "/home", component: HomePage },
+  { name: "home", path: "/", component: HomePage },
   { name: "about", path: "/about", component: AboutPage }
 ];
 var routerConfig = {
@@ -613,16 +646,23 @@ var NavBarLink = class {
   }
 };
 
-// src/components/NavBar/SignInButtonComponent.ts
-var SignInButtonComponent = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "sign-in-button-component";
+// src/components/NavBar/NavBarItemComponent.ts
+var NavBarItemComponent = class extends component_default {
+  constructor(props) {
+    const { label, onClick } = props;
+    super({ label, onClick });
+    this.componentName = "nav-bar-item-component";
   }
-  openSignInModalWindow() {
+  getStyles() {
+    const styles = {
+      animation: "hover:bg-gray-100 active:bg-gray200 duration-200 ease-in-out",
+      container: "flex items-center px-4 py-2",
+      text: "cursor-pointer text-sm"
+    };
+    return `nav-link ${styles.container} ${styles.text} ${styles.animation}`;
   }
   template() {
-    return elem("div").setProps({ class: "nav-link flex items-center cursor-pointer text-sm px-4 py-2 hover:bg-gray-100 active:bg-gray-200 duration-200 ease-in-out " }).addChild(text("Sign In")).addEventListener("click", () => this.openSignInModalWindow());
+    return elem("div").setProps({ class: this.getStyles() }).addChild(text(this.props.label)).addEventListener("click", this.props.onClick);
   }
 };
 
@@ -642,22 +682,27 @@ var NavBarComponent = class extends component_default {
     ].join(" ");
   }
   template() {
-    return elem("div").setProps({ class: "flex flex-col items-center p-2" }).setChild([
+    return elem("div").setProps({ class: "flex flex-col items-center p-4" }).setChild([
       elem("div").setProps({
         id: "nav-bar",
-        class: "max-w-2xl w-full rounded-xl navbar flex flex-row bg-white pr-4 shadow-lg"
+        class: "max-w-2xl w-full rounded-lg navbar flex flex-row bg-white pr-4 shadow-md"
       }).setChild([
         elem("h1").addChild(text("ft_transcendence")).setProps({ class: "text-l font-bold px-4 py-2" }),
         elem("div").setProps({ class: "flex flex-row justify-between w-full" }).setChild([
           // Main navbar links
-          elem("div").setProps({ class: "flex flex-row" }).setChild(
-            elem("div").setProps({ class: "nav-link text-sm flex items-center cursor-pointer px-4 py-2 hover:bg-gray-100 active:bg-gray-200 duration-200 ease-in-out " }).$vfor(this.props.links, (elem2, link) => {
-              elem2.addChild(text(link.label));
-              elem2.addEventListener("click", () => this.navigate(link));
-            })
-          ),
+          elem("div").setProps({ class: "flex flex-row" }).setChild(this.props.links.map((link) => {
+            return new NavBarItemComponent({
+              label: link.label,
+              onClick: () => this.navigate(link)
+            });
+          })),
           // Sign in button
-          new SignInButtonComponent()
+          new NavBarItemComponent({
+            label: "Sign in",
+            onClick: () => {
+              console.log("Comming soon...");
+            }
+          })
         ])
       ])
     ]);
@@ -686,8 +731,8 @@ var AppComponent = class extends component_default {
     return this.state.currentRoute.name != "auth";
   }
   template() {
-    return elem("div").setProps({ id: "app" }).setChild([
-      elem("span").$vif(this.isNavigatablePage()).addChild(new NavBarComponent(navBarLinks)),
+    return elem("div").setProps({ id: "app", class: "h-screen w-screen bg-gray-100 text-gray-800" }).setChild([
+      elem("span").$vif(true).addChild(new NavBarComponent(navBarLinks)),
       new FrontendyRouterView(router_default)
     ]);
   }

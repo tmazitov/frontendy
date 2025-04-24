@@ -11,7 +11,7 @@ export default class DashboardComponent extends FrontendyComponent {
         return elem("div")
             .setProps({ 
                 id: "home-dashboard-component",
-                class : "max-w-2xl w-full rounded-lg overflow-hidden shadow-lg bg-white p-6", 
+                class : "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6", 
             })
             .setChild([
                 elem("h1")
