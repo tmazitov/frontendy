@@ -1,7 +1,6 @@
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
-import CounterComponent from "../components/ConterComponent";
-import AboutInfoComponent from "../components/about-page-content/AboutInfoComponent";
+import AboutInfoComponent from "../components/content/about-page-content/AboutInfoComponent";
 
 export default class AboutPage extends FrontendyComponent {
     componentName: string = 'about-page';

@@ -1,13 +1,12 @@
 import ModalLayout from "../../layout/modal/ModalLayout";
 import FrontendyComponent from "../../pkg/frontendy/component/component"
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
-import InfoParagraphComponent from "../inputs/InfoParagraphComponent";
+import AuthForm from "../forms/AuthForm";
 
 export default class AuthModal extends FrontendyComponent {
 
     constructor() {
         super();
-        
     }
     
     data() {
@@ -23,13 +22,15 @@ export default class AuthModal extends FrontendyComponent {
     template() {
         return elem("span")
             .addChild(
-                new ModalLayout("auth-modal", () => this.state.show = false)
+                new ModalLayout("auth-modal", {
+                    onClose: () => this.state.show = false,
+                })
                 .setShow(this.state.show)
                 .setSlot("header", 
                     elem("h2")
-                    .addChild(text("Authorization"))
-                    .setProps({ class: "text-2xl font-bold text-center" }))
+                    .addChild(text("Sign in"))
+                    .setProps({ class: "text-xl font-bold text-center" }))
                 .setSlot("body",
-                    new InfoParagraphComponent("Please login to continue")))
+                    new AuthForm()))
     }
 }

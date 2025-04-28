@@ -52,13 +52,13 @@ var FrontendyRouter = class {
     this.currentRoute = this.findRoute(window.location.pathname);
     this.routerView.updateCurrentRoute();
   }
-  push(name2) {
-    const route = this.routes.find((route2) => route2.name === name2);
+  push(name) {
+    const route = this.routes.find((route2) => route2.name === name);
     if (!route) {
-      throw new Error(`Router error: route ${name2} not found`);
+      throw new Error(`Router error: route ${name} not found`);
     }
     if (route.path === this.currentRoute?.path) {
-      throw new Error(`Router error: route ${name2} already active`);
+      throw new Error(`Router error: route ${name} already active`);
     }
     window.history.pushState({}, "", route.path);
     this.setCurrentRoute();
@@ -342,9 +342,9 @@ function getComponentUniqueName() {
 
 // src/pkg/frontendy/component/slot.ts
 var FrontendySlot = class {
-  constructor(name2) {
+  constructor(name) {
     this.value = void 0;
-    this.name = name2;
+    this.name = name;
   }
   set(value) {
     this.value = value;
@@ -450,25 +450,25 @@ var FrontendyComponent = class extends lifecicle_default {
     updateElement_default(this.el, this.oldVNode, newVNode);
     this.oldVNode = newVNode;
   }
-  registerSlot(name2) {
-    if (this._slots[name2]) {
-      return this._slots[name2];
+  registerSlot(name) {
+    if (this._slots[name]) {
+      return this._slots[name];
     }
-    const slot = new slot_default(name2);
-    this._slots[name2] = slot;
+    const slot = new slot_default(name);
+    this._slots[name] = slot;
     return slot;
   }
-  useSlot(name2) {
-    if (!this._slots[name2]) {
-      throw new Error(`FrontendyComponent error : slot with name "${name2}" does not exist`);
+  useSlot(name) {
+    if (!this._slots[name]) {
+      throw new Error(`FrontendyComponent error : slot with name "${name}" does not exist`);
     }
-    return this._slots[name2].render();
+    return this._slots[name].render();
   }
-  setSlot(name2, value) {
-    if (!this._slots[name2]) {
-      throw new Error(`FrontendyComponent error : slot with name "${name2}" does not exist`);
+  setSlot(name, value) {
+    if (!this._slots[name]) {
+      throw new Error(`FrontendyComponent error : slot with name "${name}" does not exist`);
     }
-    this._slots[name2].set(value);
+    this._slots[name].set(value);
     return this;
   }
 };
@@ -482,7 +482,7 @@ function text(value) {
   return new VText_default(value);
 }
 
-// src/components/about-page-content/AboutInfoComponent.ts
+// src/components/content/about-page-content/AboutInfoComponent.ts
 var AboutInfoComponent = class extends component_default {
   constructor() {
     super(...arguments);
@@ -525,10 +525,10 @@ var AboutPage = class extends component_default {
   }
 };
 
-// src/components/tools/InfoParagraphComponent.ts
+// src/components/inputs/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
-  constructor(text5) {
-    super({ text: text5 });
+  constructor(text6) {
+    super({ text: text6 });
     this.componentName = "info-paragraph-component";
   }
   template() {
@@ -536,7 +536,7 @@ var InfoParagraphComponent = class extends component_default {
   }
 };
 
-// src/components/home-page-content/PlayButtonComponent.ts
+// src/components/content/home-page-content/PlayButtonComponent.ts
 var PlayButtonComponent = class extends component_default {
   constructor() {
     super(...arguments);
@@ -552,7 +552,7 @@ var PlayButtonComponent = class extends component_default {
   }
 };
 
-// src/components/home-page-content/DashboardComponent.ts
+// src/components/content/home-page-content/DashboardComponent.ts
 var DashboardComponent = class extends component_default {
   constructor() {
     super(...arguments);
@@ -590,12 +590,22 @@ var HomePage = class extends component_default {
   }
 };
 
-// src/components/ButtonComponent.ts
+// src/components/inputs/ButtonComponent.ts
 var ButtonComponent = class extends component_default {
   constructor(props) {
-    const { label, type, onClick } = props;
-    super({ label, type, onClick });
+    const { label, type } = props;
+    super({ label, type });
     this.componentName = "button-component";
+  }
+  data() {
+    return {
+      clickHandler: () => {
+      }
+    };
+  }
+  onClick(fn) {
+    this.state.clickHandler = fn;
+    return this;
   }
   getButtonColor() {
     const type = this.props.type || "default";
@@ -609,9 +619,16 @@ var ButtonComponent = class extends component_default {
     }
   }
   template() {
-    return elem("button").addChild(text(this.props.label)).addEventListener("click", this.props.onClick).setProps({
-      class: `${this.getButtonColor()} rounded-md px-4 py-2 transition duration-200 ease-in-out`
+    const buttonSize2 = "px-4 py-2 rounded-md w-full h-10 text-sm";
+    const buttonColor2 = this.getButtonColor();
+    const buttonAnime = "transition duration-200 ease-in-out";
+    const button = elem("button").addChild(text(this.props.label)).setProps({
+      class: `${buttonColor2} ${buttonSize2} ${buttonAnime} flex justify-center items-center`
     });
+    if (this.state.clickHandler) {
+      button.addEventListener("click", this.state.clickHandler);
+    }
+    return button;
   }
 };
 
@@ -633,9 +650,8 @@ var NotFoundPage = class extends component_default {
         elem("p").setProps({ class: "text-gray-600" }).addChild(text("The page you are looking for does not exist.")),
         new ButtonComponent({
           label: "Main page",
-          type: "primary",
-          onClick: this.goHome
-        })
+          type: "primary"
+        }).onClick(this.goHome.bind(this))
       ])
     ]);
   }
@@ -700,14 +716,18 @@ var ModalLayoutCloseButton = class extends component_default {
     this.componentName = "modal-layout-close-button";
   }
   template() {
-    return elem("button").setProps({ class: `${buttonSize} ${buttonColor} ${buttonInner}` }).addChild(elem("i").setProps({ class: "ti ti-x" })).addEventListener("click", this.props.onClick.bind(this));
+    const button = elem("button").setProps({ class: `${buttonSize} ${buttonColor} ${buttonInner}` }).addChild(elem("i").setProps({ class: "ti ti-x" }));
+    if (this.props.onClick) {
+      button.addEventListener("click", this.props.onClick.bind(this));
+    }
+    return button;
   }
 };
 
 // src/layout/modal/ModalLayout.ts
 var ModalLayout = class extends component_default {
-  constructor(name2, onClose) {
-    super({ name: name2, onClose });
+  constructor(name, opts = {}) {
+    super({ name, opts });
   }
   data() {
     return {
@@ -721,22 +741,177 @@ var ModalLayout = class extends component_default {
   slots() {
     return [
       "header",
-      "body"
+      "body",
+      "footer"
     ];
   }
   template() {
     const header = this.useSlot("header");
     const body = this.useSlot("body");
-    const cardSize = "min-h-20 min-w-20 rounded-lg shadow-lg bg-white";
+    const footer = this.useSlot("footer");
+    const cardSize = "min-h-20 min-w-20 max-w-80 rounded-lg shadow-lg bg-white";
     const cardPos = "absolute left-1/2 transform -translate-x-1/2";
+    const onCloseFuncion = this.props.opts.onClose;
+    const backdrop = elem("div").setProps({ class: "w-dvw h-dvh bg-black opacity-50 " });
+    if (this.props.opts.closeOnClickOutside && onCloseFuncion) {
+      backdrop.addEventListener("click", () => {
+        onCloseFuncion.bind(this)();
+      });
+    }
     return elem("div").$vif(this.state.show).setProps({ class: `fixed top-0 left-0 z-10 flex items-center` }).setChild([
       // Backdrop (outside click --> close)
-      elem("div").setProps({ class: "w-dvw h-dvh bg-black opacity-50 " }).addEventListener("click", this.props.onClose.bind(this)),
+      backdrop,
       // Modal Window (with header and body slots)
       elem("div").setProps({ class: ` ${cardSize} ${cardPos}` }).setChild([
-        elem("div").$vif(header !== null).setProps({ class: "p-4 flex gap-4 items-center pr-14" }).addChild(new ModalLayoutCloseButton(this.props.onClose.bind(this))).addChild(header),
-        elem("div").setProps({ class: "p-4" }).addChild(body)
+        // Header
+        elem("div").$vif(header !== null).setProps({ class: "px-6 py-4 flex gap-4 items-center " }).addChild(new ModalLayoutCloseButton(onCloseFuncion ? onCloseFuncion.bind(this) : void 0)).addChild(header),
+        // Body
+        elem("div").setProps({ class: "p-6 pt-0" }).addChild(body),
+        // Footer
+        elem("div").$vif(footer !== null).setProps({ class: "p-6 pt-0" }).addChild(footer)
       ])
+    ]);
+  }
+};
+
+// src/types/forms/signInForm.ts
+var SignInForm = class {
+  constructor(email, password) {
+    this.email = email;
+    this.password = password;
+  }
+  validate() {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!this.email.length || !emailRegex.test(this.email)) {
+      return "Invalid email address.";
+    }
+    if (!this.password.length) {
+      return "Password is required.";
+    }
+    if (this.password.length < 8) {
+      return "Password must be at least 8 characters long.";
+    }
+  }
+  toSubmit() {
+    return {
+      email: this.email,
+      password: this.password
+    };
+  }
+};
+
+// src/components/inputs/InputLabelComponent.ts
+var InputLabelComponent = class extends component_default {
+  constructor(label) {
+    super({ label });
+    this.componentName = "input-label-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "text-gray-700 text-sm" }).addChild(text(this.props.label));
+  }
+};
+
+// src/components/inputs/InputComponent.ts
+var InputComponent = class extends component_default {
+  constructor(value, opts = {}) {
+    super({ value, opts });
+    this.componentName = "input-component";
+  }
+  data() {
+    return {
+      inputHandler: null,
+      enterHandler: null
+    };
+  }
+  onInput(fn) {
+    this.state.inputHandler = fn;
+    return this;
+  }
+  onEnter(fn) {
+    this.state.enterHandler = fn;
+    return this;
+  }
+  focus() {
+    if (!this.el || this.el instanceof Text) {
+      return;
+    }
+    this.el.focus();
+    if (this.el.tagName === "input") {
+      this.el.focus();
+    } else {
+      this.el.querySelector("input")?.focus();
+    }
+  }
+  template() {
+    const elemBorder = "border-2 border-blue-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ease-in-out duration-200";
+    const elemSize = "w-full h-8";
+    const input = elem("input").setProps({
+      type: this.props.opts.type,
+      value: this.props.value,
+      class: `p-2 bg-transparent ${elemSize} ${elemBorder}`,
+      placeholder: this.props.opts.placeholder ?? ""
+    });
+    if (this.state.inputHandler) {
+      input.addEventListener("input", (event) => {
+        const target = event.target;
+        this.state.inputHandler(target.value);
+      });
+    }
+    if (this.state.enterHandler) {
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          this.state.enterHandler();
+        }
+      });
+    }
+    if (this.props.opts.label) {
+      return elem("div").setChild([
+        new InputLabelComponent(this.props.opts.label),
+        input
+      ]);
+    }
+    return input;
+  }
+};
+
+// src/components/forms/AuthForm.ts
+var AuthForm = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "auth-form";
+  }
+  data() {
+    return {
+      form: new SignInForm("", "")
+    };
+  }
+  submit() {
+    const err = this.state.form.validate();
+    if (err !== void 0) {
+      return;
+    }
+    console.log("Submit", this.state.form);
+  }
+  onChangePassword(value) {
+    this.state.form.password = value;
+  }
+  onChangeEmail(value) {
+    this.state.form.email = value;
+  }
+  template() {
+    const submitButton = new ButtonComponent({ label: "Submit", type: "primary" }).onClick(this.submit.bind(this));
+    const passwordInput = new InputComponent(this.state.form.password, {
+      type: "password",
+      label: "Password"
+    }).onInput((value) => this.state.form.password = value).onEnter(this.submit.bind(this));
+    const emailInput = new InputComponent(this.state.form.email, {
+      type: "email",
+      label: "Email"
+    }).onInput((value) => this.state.form.email = value).onEnter(() => passwordInput.focus());
+    return elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
+      emailInput,
+      passwordInput,
+      elem("div").setProps({ class: "mt-2 flex" }).addChild(submitButton)
     ]);
   }
 };
@@ -757,18 +932,21 @@ var AuthModal = class extends component_default {
   }
   template() {
     return elem("span").addChild(
-      new ModalLayout("auth-modal", () => this.state.show = false).setShow(this.state.show).setSlot(
+      new ModalLayout("auth-modal", {
+        onClose: () => this.state.show = false,
+        closeOnClickOutside: true
+      }).setShow(this.state.show).setSlot(
         "header",
-        elem("h2").addChild(text("Authorization")).setProps({ class: "text-2xl font-bold text-center" })
+        elem("h2").addChild(text("Sign in")).setProps({ class: "text-xl font-bold text-center" })
       ).setSlot(
         "body",
-        new InfoParagraphComponent("Please login to continue")
+        new AuthForm()
       )
     );
   }
 };
 
-// src/components/NavBar/NavBarItemComponent.ts
+// src/components/nav-bar/NavBarItemComponent.ts
 var NavBarItemComponent = class extends component_default {
   constructor(props) {
     const { label, onClick } = props;
@@ -788,7 +966,7 @@ var NavBarItemComponent = class extends component_default {
   }
 };
 
-// src/components/NavBar/NavBarComponent.ts
+// src/components/nav-bar/NavBarComponent.ts
 var NavBarComponent = class extends component_default {
   constructor(links) {
     super({ links });

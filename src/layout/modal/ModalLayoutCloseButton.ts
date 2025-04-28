@@ -13,9 +13,15 @@ export default class ModalLayoutCloseButton extends FrontendyComponent {
     }
 
     template() {
-        return elem('button')
-            .setProps({class : `${buttonSize} ${buttonColor} ${buttonInner}`})
-            .addChild(elem("i").setProps({class : "ti ti-x"}))
-            .addEventListener("click", this.props.onClick.bind(this))
+
+        const button = elem('button')
+        .setProps({class : `${buttonSize} ${buttonColor} ${buttonInner}`})
+        .addChild(elem("i").setProps({class : "ti ti-x"}))
+
+        if (this.props.onClick) {
+            button.addEventListener('click', this.props.onClick.bind(this))
+        }
+
+        return button
     }
 }

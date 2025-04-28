@@ -1,7 +1,7 @@
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
-import CounterComponent from "../components/ConterComponent";
-import DashboardComponent from "../components/home-page-content/DashboardComponent";
+import CounterComponent from "../components/inputs/ConterComponent";
+import DashboardComponent from "../components/content/home-page-content/DashboardComponent";
 
 
 export default class HomePage extends FrontendyComponent {

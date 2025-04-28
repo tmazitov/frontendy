@@ -1,9 +1,5 @@
-import FrontendyComponent from "../../pkg/frontendy/component/component";
-import { elem, text } from "../../pkg/frontendy/vdom/constructor";
-
-const teamMembers = [
-    { name}
-]
+import FrontendyComponent from "../../../pkg/frontendy/component/component";
+import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 
 export default class AboutInfoComponent extends FrontendyComponent {
     componentName: string = 'home-dashboard-component';

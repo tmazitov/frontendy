@@ -3,7 +3,7 @@ import Component from "../pkg/frontendy/component/component";
 import FrontendyRouterView from "../pkg/frontendy/router/RouterView";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
 import NavBarLink from "../types/NavBarLink";
-import NavBarComponent from "./NavBar/NavBarComponent";
+import NavBarComponent from "./nav-bar/NavBarComponent";
 
 const navBarLinks =  [
     new NavBarLink('Home', 'home'),

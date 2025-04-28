@@ -1,4 +1,4 @@
-import ButtonComponent from "../components/ButtonComponent";
+import ButtonComponent from "../components/inputs/ButtonComponent";
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
 import router from "./router";
@@ -31,8 +31,7 @@ export default class NotFoundPage extends FrontendyComponent {
                     new ButtonComponent({
                         label: "Main page",
                         type: "primary",
-                        onClick: this.goHome
-                    })
+                    }).onClick(this.goHome.bind(this))
                 ])
             ])
     }
