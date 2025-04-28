@@ -1,47 +1,41 @@
 import updateElement from "../vdom/updateElement";
 import VElem from "../vdom/VElem";
+import VText from "../vdom/VText";
+import FrontendyLifecicle from "./lifecicle";
 import { getComponentUniqueName } from "./name";
+import FrontendySlot from "./slot";
 
-class FrontendyComponent{
+class FrontendyComponent extends FrontendyLifecicle{
     
     public componentName: string = getComponentUniqueName();
     
     // State
+    
+    protected state: Record<string, any> = {};
+    private _props: Record<string, any> = {};
+    private _slots: Record<string, FrontendySlot > = {};
+
+    // VDOM
 
     private oldVNode: VElem | null = null;
     private isMounted: boolean = false;
-    protected el: HTMLElement | Text | null = null;
-    protected state: Record<string, any> = {};
-    protected props: Record<string, any> = {};
+    private _el: HTMLElement | Text | null = null;
 
     constructor(props: Record<string, any> = {}){
+        super();
         this.initProps(props);
-        this.initData();
-    }
-
-    private initData() {
-        this.script();
-        this.state = this.createState();
+        this.initState();
+        this.initSlots();
     }
 
     private initProps(props: Record<string, any> = {}) {
-        this.props = props
-        console.log("Component props : ", this.props);
+        this._props = props
     }
 
-    protected data(){
-        return {};
-    }
-
-    print(){
-        console.log("Component : ", this.componentName)
-    }
-
-    private createState<T extends object>() : T {
-
+    private initState<T extends object>() {
         const initialState = this.data() as T;
-
-        return new Proxy(initialState, {
+        
+        this.state = new Proxy(initialState, {
             set: (target, prop, value) => {
                 target[prop as keyof T] = value;
                 console.log(`🔄 State обновлен: ${String(prop)} → ${value}`);
@@ -49,31 +43,48 @@ class FrontendyComponent{
                 return true;
             }
         });
+        this.onCreated();
     }
 
-    protected script(){}
+    private initSlots() {
+        this.slots().forEach((slotName) => {
+            this.registerSlot(slotName);
+        })
+    }
+
+    protected get props() {
+        return this._props
+    }
+
+    protected get el() {
+        return this._el
+    }
+
+    protected data(){
+        return {};
+    }
+
+    protected slots() : Array<string>{
+        return []
+    }
+
+    public print(){
+        console.log("Component : ", this.componentName)
+    }
 
     protected template() : VElem | undefined{
         return undefined;
     }
-
-    protected onMounted() {}
-    
-    protected onUpdated() {}
-
-    protected onUnmounted() {}
     
     public mount(target: HTMLElement) {
         this.oldVNode = this.template() ?? null;
         
         if (!this.oldVNode) {
-            this.el = null;
+            this._el = null;
             return
         }
-        this.el = this.oldVNode.createHTMLElement();
-        console.log(`Rendered node : ${this.componentName}`, this.oldVNode)
-        target.appendChild(this.el);
-        console.log("Rendered node elem : ", this.el)
+        this._el = this.oldVNode.createHTMLElement();
+        target.appendChild(this._el);
         if (!this.isMounted) {
             this.onMounted();
         } else {
@@ -84,9 +95,6 @@ class FrontendyComponent{
     }
 
     public unmount() {
-        console.log("Unmount component : ", this.componentName)
-        console.log("Unmount state : isMounted", this.isMounted)
-        console.log("Unmount state : el", this.el)
         if (!this.el || !this.isMounted) {
             return
         }
@@ -95,7 +103,7 @@ class FrontendyComponent{
         if (parent) {
             parent.removeChild(this.el);
         }
-        this.el = null;
+        this._el = null;
         this.oldVNode = null;
         this.isMounted = false;
         this.onUnmounted();
@@ -103,9 +111,6 @@ class FrontendyComponent{
 
     
     public update() {
-        console.log("Update component : ", this.componentName)
-        console.log("Update state : isMounted", this.isMounted)
-        console.log("Update state : el", this.el)
         if (!this.isMounted || !this.el) {
             return;
         }
@@ -114,15 +119,33 @@ class FrontendyComponent{
         if (!newVNode) {
             return;
         }
-        console.log(newVNode)
-        console.log("New node : ", newVNode)
-        console.log("Old node : ", this.oldVNode)
         updateElement(this.el, this.oldVNode, newVNode);
         this.oldVNode = newVNode; // Сохраняем VDOM для следующего сравнения
     }
     
-    public getIsMounted() {
-        return this.isMounted;
+    private registerSlot(name: string) {
+        if (this._slots[name]) {
+            return this._slots[name];            
+        }
+        
+        const slot = new FrontendySlot(name);
+        this._slots[name] = slot;
+        return slot;
+    }
+
+    protected useSlot(name: string) : FrontendyComponent | VElem | VText | null {
+        if (!this._slots[name]) {
+            throw new Error(`FrontendyComponent error : slot with name "${name}" does not exist`);
+        }
+        return this._slots[name].render();
+    }
+
+    public setSlot(name: string, value: FrontendyComponent | VElem | VText): FrontendyComponent {
+        if (!this._slots[name]) {
+            throw new Error(`FrontendyComponent error : slot with name "${name}" does not exist`);
+        }
+        this._slots[name].set(value);
+        return this
     }
 }
 

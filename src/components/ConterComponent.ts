@@ -17,8 +17,8 @@ export default class CounterComponent extends FrontendyComponent {
                 elem("h1").addChild(text(`Count: ${this.state.count}`)),
                 elem("button")
                     .setProps({ id: "increment-button" })
-                    .addChild(text("Increment"))
                     .addEventListener("click", this.increment.bind(this))
+                    .addChild(text("Increment"))
             ]);
     }
 

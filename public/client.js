@@ -311,6 +311,19 @@ function updateElement(parent, oldVNode, newVNode, index = 0) {
 }
 var updateElement_default = updateElement;
 
+// src/pkg/frontendy/component/lifecicle.ts
+var FrontendyLifecicle = class {
+  onMounted() {
+  }
+  onUpdated() {
+  }
+  onUnmounted() {
+  }
+  onCreated() {
+  }
+};
+var lifecicle_default = FrontendyLifecicle;
+
 // src/pkg/frontendy/component/name.ts
 function getCounter() {
   let count = 0;
@@ -324,36 +337,44 @@ function getComponentUniqueName() {
   return "component-" + id;
 }
 
+// src/pkg/frontendy/component/slot.ts
+var FrontendySlot = class {
+  constructor(name2) {
+    this.value = void 0;
+    this.name = name2;
+  }
+  set(value) {
+    this.value = value;
+  }
+  render() {
+    return this.value ?? null;
+  }
+};
+var slot_default = FrontendySlot;
+
 // src/pkg/frontendy/component/component.ts
-var FrontendyComponent = class {
+var FrontendyComponent = class extends lifecicle_default {
   constructor(props = {}) {
+    super();
     this.componentName = getComponentUniqueName();
     // State
+    this.state = {};
+    this._props = {};
+    this._slots = {};
+    // VDOM
     this.oldVNode = null;
     this.isMounted = false;
-    this.el = null;
-    this.state = {};
-    this.props = {};
+    this._el = null;
     this.initProps(props);
-    this.initData();
-  }
-  initData() {
-    this.script();
-    this.state = this.createState();
+    this.initState();
+    this.initSlots();
   }
   initProps(props = {}) {
-    this.props = props;
-    console.log("Component props : ", this.props);
+    this._props = props;
   }
-  data() {
-    return {};
-  }
-  print() {
-    console.log("Component : ", this.componentName);
-  }
-  createState() {
+  initState() {
     const initialState = this.data();
-    return new Proxy(initialState, {
+    this.state = new Proxy(initialState, {
       set: (target, prop, value) => {
         target[prop] = value;
         console.log(`\u{1F504} State \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D: ${String(prop)} \u2192 ${value}`);
@@ -361,28 +382,39 @@ var FrontendyComponent = class {
         return true;
       }
     });
+    this.onCreated();
   }
-  script() {
+  initSlots() {
+    this.slots().forEach((slotName) => {
+      this.registerSlot(slotName);
+    });
+  }
+  get props() {
+    return this._props;
+  }
+  get el() {
+    return this._el;
+  }
+  data() {
+    return {};
+  }
+  slots() {
+    return [];
+  }
+  print() {
+    console.log("Component : ", this.componentName);
   }
   template() {
     return void 0;
   }
-  onMounted() {
-  }
-  onUpdated() {
-  }
-  onUnmounted() {
-  }
   mount(target) {
     this.oldVNode = this.template() ?? null;
     if (!this.oldVNode) {
-      this.el = null;
+      this._el = null;
       return;
     }
-    this.el = this.oldVNode.createHTMLElement();
-    console.log(`Rendered node : ${this.componentName}`, this.oldVNode);
-    target.appendChild(this.el);
-    console.log("Rendered node elem : ", this.el);
+    this._el = this.oldVNode.createHTMLElement();
+    target.appendChild(this._el);
     if (!this.isMounted) {
       this.onMounted();
     } else {
@@ -392,9 +424,6 @@ var FrontendyComponent = class {
     return this.el;
   }
   unmount() {
-    console.log("Unmount component : ", this.componentName);
-    console.log("Unmount state : isMounted", this.isMounted);
-    console.log("Unmount state : el", this.el);
     if (!this.el || !this.isMounted) {
       return;
     }
@@ -402,15 +431,12 @@ var FrontendyComponent = class {
     if (parent) {
       parent.removeChild(this.el);
     }
-    this.el = null;
+    this._el = null;
     this.oldVNode = null;
     this.isMounted = false;
     this.onUnmounted();
   }
   update() {
-    console.log("Update component : ", this.componentName);
-    console.log("Update state : isMounted", this.isMounted);
-    console.log("Update state : el", this.el);
     if (!this.isMounted || !this.el) {
       return;
     }
@@ -418,14 +444,29 @@ var FrontendyComponent = class {
     if (!newVNode) {
       return;
     }
-    console.log(newVNode);
-    console.log("New node : ", newVNode);
-    console.log("Old node : ", this.oldVNode);
     updateElement_default(this.el, this.oldVNode, newVNode);
     this.oldVNode = newVNode;
   }
-  getIsMounted() {
-    return this.isMounted;
+  registerSlot(name2) {
+    if (this._slots[name2]) {
+      return this._slots[name2];
+    }
+    const slot = new slot_default(name2);
+    this._slots[name2] = slot;
+    return slot;
+  }
+  slot(name2) {
+    if (!this._slots[name2]) {
+      throw new Error(`FrontendyComponent error : slot with name "${name2}" does not exist`);
+    }
+    return this._slots[name2].render();
+  }
+  setSlot(name2, value) {
+    if (!this._slots[name2]) {
+      throw new Error(`FrontendyComponent error : slot with name "${name2}" does not exist`);
+    }
+    this._slots[name2].set(value);
+    return this;
   }
 };
 var component_default = FrontendyComponent;
@@ -481,6 +522,34 @@ var AboutPage = class extends component_default {
   }
 };
 
+// src/components/ConterComponent.ts
+var CounterComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "counter-component";
+  }
+  data() {
+    return {
+      count: 0
+    };
+  }
+  slots() {
+    return [
+      "test"
+    ];
+  }
+  template() {
+    return elem("div").setProps({ id: "counter-component" }).setChild([
+      elem("h1").addChild(text(`Count: ${this.state.count}`)),
+      elem("button").setProps({ id: "increment-button" }).addEventListener("click", this.increment.bind(this)).addChild(text("Increment")),
+      this.slot("test")
+    ]);
+  }
+  increment() {
+    this.state.count++;
+  }
+};
+
 // src/components/tools/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
   constructor(text5) {
@@ -522,7 +591,8 @@ var DashboardComponent = class extends component_default {
       elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`Home`)),
       new InfoParagraphComponent("Welcome to the ft_transcendence!"),
       new InfoParagraphComponent("There will be some tools and players statistics soon."),
-      new PlayButtonComponent()
+      new PlayButtonComponent(),
+      new CounterComponent()
     ]);
   }
 };
