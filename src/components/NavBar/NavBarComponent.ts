@@ -1,8 +1,8 @@
 import router from "../../pages/router";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
-import VElem from "../../pkg/frontendy/vdom/VElem";
 import NavBarLink from "../../types/NavBarLink";
+import AuthModal from "../modals/AuthModal";
 import NavBarItemComponent from "./NavBarItemComponent";
 
 export default class NavBarComponent extends FrontendyComponent {
@@ -12,15 +12,15 @@ export default class NavBarComponent extends FrontendyComponent {
         super({links})
     }
 
+    data() {
+        return {
+            showAuthModal: false,
+        }
+    }
+
     navigate(link:NavBarLink) {
         console.log('navigate', link)
         router.push(link.routeName)
-    }
-
-    borderStyles(){
-        return [
-            "rounded-xl"
-        ].join(" ")
     }
 
     template() {
@@ -57,10 +57,15 @@ export default class NavBarComponent extends FrontendyComponent {
                         new NavBarItemComponent({
                             label: "Sign in",
                             onClick: () => {
-                                console.log("Comming soon...")
+                                this.state.showAuthModal = true;
                             }
                         }),
-                    ])
+                    ]),
+
+            // Sign in / up modal window
+
+            new AuthModal()
+                .setShow(this.state.showAuthModal),
             ])
         ])
     }

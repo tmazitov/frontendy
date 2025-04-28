@@ -1,5 +1,3 @@
-import FrontendyModal from "../layout/modal/modal";
-import NotFoundPage from "../pages/NotFoundPage";
 import router from "../pages/router";
 import Component from "../pkg/frontendy/component/component";
 import FrontendyRouterView from "../pkg/frontendy/router/RouterView";
@@ -39,15 +37,10 @@ export default class AppComponent extends Component {
             .setProps({ id: "app", class: "h-screen w-screen bg-gray-100 text-gray-800"})
             .setChild([
 
-                elem("button")
-                    .addChild(text("Test"))
-                    .addEventListener("click", this.toggleShowModal.bind(this)),
-
                 elem("span").$vif(true)
                     .addChild(new NavBarComponent(navBarLinks)),
+
                 new FrontendyRouterView(router),
-                new FrontendyModal("test", () => this.state.showRegModal = false)
-                    .setShow(this.state.showRegModal),
             ])
     }   
 }

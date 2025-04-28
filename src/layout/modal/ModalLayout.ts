@@ -1,7 +1,8 @@
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem } from "../../pkg/frontendy/vdom/constructor";
+import ModalLayoutCloseButton from "./ModalLayoutCloseButton";
 
-export default class FrontendyModal extends FrontendyComponent {
+export default class ModalLayout extends FrontendyComponent {
     constructor(name: string, onClose:Function) {
         super({name, onClose});
     }
@@ -12,7 +13,7 @@ export default class FrontendyModal extends FrontendyComponent {
         }
     }
 
-    public setShow(value: boolean) {
+    public setShow(value: boolean) : FrontendyComponent {
         this.state.show = value;
         return this
     }
@@ -29,25 +30,28 @@ export default class FrontendyModal extends FrontendyComponent {
         const header = this.useSlot("header");
         const body = this.useSlot("body");
 
-        const cardSize = 'h-20 w-20 rounded-lg shadow-lg bg-white'
-        const cardPos = 'absolute top-20 left-35 right-35 z-20'
+        const cardSize = 'min-h-20 min-w-20 rounded-lg shadow-lg bg-white'
+        const cardPos = 'absolute left-1/2 transform -translate-x-1/2'
 
         return elem("div").$vif(this.state.show)
-            .setProps({ class : `fixed top-0 left-0 z-10` })
+            .setProps({ class : `fixed top-0 left-0 z-10 flex items-center` })
             .setChild([
 
+                // Backdrop (outside click --> close)
                 elem("div")
-                .setProps({ class : "w-dvw h-dvh bg-black opacity-50" })
+                .setProps({ class : "w-dvw h-dvh bg-black opacity-50 " })
                 .addEventListener("click", this.props.onClose.bind(this)),
 
+                // Modal Window (with header and body slots)
                 elem("div")
                 .setProps({ class: ` ${cardSize} ${cardPos}` })
                 .setChild([
                     elem("div").$vif(header !== null)
-                    .setProps({ class: "modal-header" })
+                    .setProps({ class: "p-4 flex gap-4 items-center pr-14" })
+                    .addChild(new ModalLayoutCloseButton(this.props.onClose.bind(this)))
                     .addChild(header),
                 elem("div")
-                    .setProps({ class: "modal-body" })
+                    .setProps({ class: "p-4" })
                     .addChild(body),
                 ])
             ]);

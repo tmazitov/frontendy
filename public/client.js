@@ -9,6 +9,65 @@ var FrontendyAppInstance = class {
   }
 };
 
+// src/pkg/frontendy/router/router.ts
+var RouterConfig = class {
+  constructor() {
+    this.NotFoundPage = void 0;
+  }
+};
+var FrontendyRouter = class {
+  constructor(routes2, config = void 0) {
+    this.routes = [];
+    this.config = config ?? new RouterConfig();
+    this.routes = routes2;
+    this.currentRoute = this.findRoute(window.location.pathname);
+    document.addEventListener("click", this.handleLinkClick.bind(this));
+    window.addEventListener("popstate", () => this.setCurrentRoute());
+  }
+  setRouterView(routerView) {
+    this.routerView = routerView;
+  }
+  findRoute(path) {
+    return this.routes.find((route) => route.path === path);
+  }
+  getUndefinedMessageComponent() {
+    return this.config?.NotFoundPage;
+  }
+  handleLinkClick(event) {
+    const target = event.target;
+    if (target.tagName === "A") {
+      const anchor = target;
+      const href = anchor.getAttribute("href");
+      if (href && href.startsWith("/")) {
+        event.preventDefault();
+        window.history.pushState({}, "", href);
+        this.setCurrentRoute();
+      }
+    }
+  }
+  setCurrentRoute() {
+    if (!this.routerView) {
+      throw new Error("Router error : routerView instance is not set");
+    }
+    this.currentRoute = this.findRoute(window.location.pathname);
+    this.routerView.updateCurrentRoute();
+  }
+  push(name2) {
+    const route = this.routes.find((route2) => route2.name === name2);
+    if (!route) {
+      throw new Error(`Router error: route ${name2} not found`);
+    }
+    if (route.path === this.currentRoute?.path) {
+      throw new Error(`Router error: route ${name2} already active`);
+    }
+    window.history.pushState({}, "", route.path);
+    this.setCurrentRoute();
+  }
+  getCurrentRoute() {
+    return this.currentRoute;
+  }
+};
+
 // src/pkg/frontendy/vdom/VText.ts
 var VText = class {
   constructor(value) {
@@ -423,100 +482,6 @@ function text(value) {
   return new VText_default(value);
 }
 
-// src/layout/modal/modal.ts
-var FrontendyModal = class extends component_default {
-  constructor(name2, onClose) {
-    super({ name: name2, onClose });
-  }
-  data() {
-    return {
-      show: false
-    };
-  }
-  setShow(value) {
-    this.state.show = value;
-    return this;
-  }
-  slots() {
-    return [
-      "header",
-      "body"
-    ];
-  }
-  template() {
-    const header = this.useSlot("header");
-    const body = this.useSlot("body");
-    const cardSize = "h-20 w-20 rounded-lg shadow-lg bg-white";
-    const cardPos = "absolute top-20 left-35 right-35 z-20";
-    return elem("div").$vif(this.state.show).setProps({ class: `fixed top-0 left-0 z-10` }).setChild([
-      elem("div").setProps({ class: "w-dvw h-dvh bg-black opacity-50" }).addEventListener("click", this.props.onClose.bind(this)),
-      elem("div").setProps({ class: ` ${cardSize} ${cardPos}` }).setChild([
-        elem("div").$vif(header !== null).setProps({ class: "modal-header" }).addChild(header),
-        elem("div").setProps({ class: "modal-body" }).addChild(body)
-      ])
-    ]);
-  }
-};
-
-// src/pkg/frontendy/router/router.ts
-var RouterConfig = class {
-  constructor() {
-    this.NotFoundPage = void 0;
-  }
-};
-var FrontendyRouter = class {
-  constructor(routes2, config = void 0) {
-    this.routes = [];
-    this.config = config ?? new RouterConfig();
-    this.routes = routes2;
-    this.currentRoute = this.findRoute(window.location.pathname);
-    document.addEventListener("click", this.handleLinkClick.bind(this));
-    window.addEventListener("popstate", () => this.setCurrentRoute());
-  }
-  setRouterView(routerView) {
-    this.routerView = routerView;
-  }
-  findRoute(path) {
-    return this.routes.find((route) => route.path === path);
-  }
-  getUndefinedMessageComponent() {
-    return this.config?.NotFoundPage;
-  }
-  handleLinkClick(event) {
-    const target = event.target;
-    if (target.tagName === "A") {
-      const anchor = target;
-      const href = anchor.getAttribute("href");
-      if (href && href.startsWith("/")) {
-        event.preventDefault();
-        window.history.pushState({}, "", href);
-        this.setCurrentRoute();
-      }
-    }
-  }
-  setCurrentRoute() {
-    if (!this.routerView) {
-      throw new Error("Router error : routerView instance is not set");
-    }
-    this.currentRoute = this.findRoute(window.location.pathname);
-    this.routerView.updateCurrentRoute();
-  }
-  push(name2) {
-    const route = this.routes.find((route2) => route2.name === name2);
-    if (!route) {
-      throw new Error(`Router error: route ${name2} not found`);
-    }
-    if (route.path === this.currentRoute?.path) {
-      throw new Error(`Router error: route ${name2} already active`);
-    }
-    window.history.pushState({}, "", route.path);
-    this.setCurrentRoute();
-  }
-  getCurrentRoute() {
-    return this.currentRoute;
-  }
-};
-
 // src/components/about-page-content/AboutInfoComponent.ts
 var AboutInfoComponent = class extends component_default {
   constructor() {
@@ -562,8 +527,8 @@ var AboutPage = class extends component_default {
 
 // src/components/tools/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
-  constructor(text4) {
-    super({ text: text4 });
+  constructor(text5) {
+    super({ text: text5 });
     this.componentName = "info-paragraph-component";
   }
   template() {
@@ -725,6 +690,84 @@ var NavBarLink = class {
   }
 };
 
+// src/layout/modal/ModalLayoutCloseButton.ts
+var buttonSize = "w-6 h-6";
+var buttonColor = "bg-white hover:bg-gray-100 active:bg-gray-200 rounded-lg ease-in-out duration-200";
+var buttonInner = "flex items-center justify-center";
+var ModalLayoutCloseButton = class extends component_default {
+  constructor(onClick) {
+    super({ onClick });
+    this.componentName = "modal-layout-close-button";
+  }
+  template() {
+    return elem("button").setProps({ class: `${buttonSize} ${buttonColor} ${buttonInner}` }).addChild(elem("i").setProps({ class: "ti ti-x" })).addEventListener("click", this.props.onClick.bind(this));
+  }
+};
+
+// src/layout/modal/ModalLayout.ts
+var ModalLayout = class extends component_default {
+  constructor(name2, onClose) {
+    super({ name: name2, onClose });
+  }
+  data() {
+    return {
+      show: false
+    };
+  }
+  setShow(value) {
+    this.state.show = value;
+    return this;
+  }
+  slots() {
+    return [
+      "header",
+      "body"
+    ];
+  }
+  template() {
+    const header = this.useSlot("header");
+    const body = this.useSlot("body");
+    const cardSize = "min-h-20 min-w-20 rounded-lg shadow-lg bg-white";
+    const cardPos = "absolute left-1/2 transform -translate-x-1/2";
+    return elem("div").$vif(this.state.show).setProps({ class: `fixed top-0 left-0 z-10 flex items-center` }).setChild([
+      // Backdrop (outside click --> close)
+      elem("div").setProps({ class: "w-dvw h-dvh bg-black opacity-50 " }).addEventListener("click", this.props.onClose.bind(this)),
+      // Modal Window (with header and body slots)
+      elem("div").setProps({ class: ` ${cardSize} ${cardPos}` }).setChild([
+        elem("div").$vif(header !== null).setProps({ class: "p-4 flex gap-4 items-center pr-14" }).addChild(new ModalLayoutCloseButton(this.props.onClose.bind(this))).addChild(header),
+        elem("div").setProps({ class: "p-4" }).addChild(body)
+      ])
+    ]);
+  }
+};
+
+// src/components/modals/AuthModal.ts
+var AuthModal = class extends component_default {
+  constructor() {
+    super();
+  }
+  data() {
+    return {
+      show: false
+    };
+  }
+  setShow(value) {
+    this.state.show = value;
+    return this;
+  }
+  template() {
+    return elem("span").addChild(
+      new ModalLayout("auth-modal", () => this.state.show = false).setShow(this.state.show).setSlot(
+        "header",
+        elem("h2").addChild(text("Authorization")).setProps({ class: "text-2xl font-bold text-center" })
+      ).setSlot(
+        "body",
+        new InfoParagraphComponent("Please login to continue")
+      )
+    );
+  }
+};
+
 // src/components/NavBar/NavBarItemComponent.ts
 var NavBarItemComponent = class extends component_default {
   constructor(props) {
@@ -751,14 +794,14 @@ var NavBarComponent = class extends component_default {
     super({ links });
     this.componentName = "nav-bar-component";
   }
+  data() {
+    return {
+      showAuthModal: false
+    };
+  }
   navigate(link) {
     console.log("navigate", link);
     router_default.push(link.routeName);
-  }
-  borderStyles() {
-    return [
-      "rounded-xl"
-    ].join(" ");
   }
   template() {
     return elem("div").setProps({ class: "flex flex-col items-center p-4" }).setChild([
@@ -779,10 +822,12 @@ var NavBarComponent = class extends component_default {
           new NavBarItemComponent({
             label: "Sign in",
             onClick: () => {
-              console.log("Comming soon...");
+              this.state.showAuthModal = true;
             }
           })
-        ])
+        ]),
+        // Sign in / up modal window
+        new AuthModal().setShow(this.state.showAuthModal)
       ])
     ]);
   }
@@ -815,10 +860,8 @@ var AppComponent = class extends component_default {
   }
   template() {
     return elem("div").setProps({ id: "app", class: "h-screen w-screen bg-gray-100 text-gray-800" }).setChild([
-      elem("button").addChild(text("Test")).addEventListener("click", this.toggleShowModal.bind(this)),
       elem("span").$vif(true).addChild(new NavBarComponent(navBarLinks)),
-      new FrontendyRouterView(router_default),
-      new FrontendyModal("test", () => this.state.showRegModal = false).setShow(this.state.showRegModal)
+      new FrontendyRouterView(router_default)
     ]);
   }
 };

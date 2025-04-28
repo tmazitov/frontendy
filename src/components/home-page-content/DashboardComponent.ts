@@ -1,6 +1,6 @@
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
-import InfoParagraphComponent from "../tools/InfoParagraphComponent";
+import InfoParagraphComponent from "../inputs/InfoParagraphComponent";
 import PlayButtonComponent from "./PlayButtonComponent";
 
 export default class DashboardComponent extends FrontendyComponent {
