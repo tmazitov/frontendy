@@ -26,6 +26,7 @@ class FrontendyComponent extends FrontendyLifecicle{
         this.initProps(props);
         this.initState();
         this.initSlots();
+        this.onCreated();
     }
 
     private initProps(props: Record<string, any> = {}) {
@@ -43,7 +44,6 @@ class FrontendyComponent extends FrontendyLifecicle{
                 return true;
             }
         });
-        this.onCreated();
     }
 
     private initSlots() {
@@ -59,7 +59,7 @@ class FrontendyComponent extends FrontendyLifecicle{
     protected get el() {
         return this._el
     }
-
+    
     protected data(){
         return {};
     }

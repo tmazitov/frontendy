@@ -9,65 +9,6 @@ var FrontendyAppInstance = class {
   }
 };
 
-// src/pkg/frontendy/router/router.ts
-var RouterConfig = class {
-  constructor() {
-    this.NotFoundPage = void 0;
-  }
-};
-var FrontendyRouter = class {
-  constructor(routes2, config = void 0) {
-    this.routes = [];
-    this.config = config ?? new RouterConfig();
-    this.routes = routes2;
-    this.currentRoute = this.findRoute(window.location.pathname);
-    document.addEventListener("click", this.handleLinkClick.bind(this));
-    window.addEventListener("popstate", () => this.setCurrentRoute());
-  }
-  setRouterView(routerView) {
-    this.routerView = routerView;
-  }
-  findRoute(path) {
-    return this.routes.find((route) => route.path === path);
-  }
-  getUndefinedMessageComponent() {
-    return this.config?.NotFoundPage;
-  }
-  handleLinkClick(event) {
-    const target = event.target;
-    if (target.tagName === "A") {
-      const anchor = target;
-      const href = anchor.getAttribute("href");
-      if (href && href.startsWith("/")) {
-        event.preventDefault();
-        window.history.pushState({}, "", href);
-        this.setCurrentRoute();
-      }
-    }
-  }
-  setCurrentRoute() {
-    if (!this.routerView) {
-      throw new Error("Router error : routerView instance is not set");
-    }
-    this.currentRoute = this.findRoute(window.location.pathname);
-    this.routerView.updateCurrentRoute();
-  }
-  push(name2) {
-    const route = this.routes.find((route2) => route2.name === name2);
-    if (!route) {
-      throw new Error(`Router error: route ${name2} not found`);
-    }
-    if (route.path === this.currentRoute?.path) {
-      throw new Error(`Router error: route ${name2} already active`);
-    }
-    window.history.pushState({}, "", route.path);
-    this.setCurrentRoute();
-  }
-  getCurrentRoute() {
-    return this.currentRoute;
-  }
-};
-
 // src/pkg/frontendy/vdom/VText.ts
 var VText = class {
   constructor(value) {
@@ -147,6 +88,9 @@ var VElem = class _VElem {
     return this;
   }
   addChild(child) {
+    if (!child) {
+      return this;
+    }
     this.children.push(child);
     return this;
   }
@@ -368,6 +312,7 @@ var FrontendyComponent = class extends lifecicle_default {
     this.initProps(props);
     this.initState();
     this.initSlots();
+    this.onCreated();
   }
   initProps(props = {}) {
     this._props = props;
@@ -382,7 +327,6 @@ var FrontendyComponent = class extends lifecicle_default {
         return true;
       }
     });
-    this.onCreated();
   }
   initSlots() {
     this.slots().forEach((slotName) => {
@@ -455,7 +399,7 @@ var FrontendyComponent = class extends lifecicle_default {
     this._slots[name2] = slot;
     return slot;
   }
-  slot(name2) {
+  useSlot(name2) {
     if (!this._slots[name2]) {
       throw new Error(`FrontendyComponent error : slot with name "${name2}" does not exist`);
     }
@@ -478,6 +422,100 @@ function elem(tag) {
 function text(value) {
   return new VText_default(value);
 }
+
+// src/layout/modal/modal.ts
+var FrontendyModal = class extends component_default {
+  constructor(name2, onClose) {
+    super({ name: name2, onClose });
+  }
+  data() {
+    return {
+      show: false
+    };
+  }
+  setShow(value) {
+    this.state.show = value;
+    return this;
+  }
+  slots() {
+    return [
+      "header",
+      "body"
+    ];
+  }
+  template() {
+    const header = this.useSlot("header");
+    const body = this.useSlot("body");
+    const cardSize = "h-20 w-20 rounded-lg shadow-lg bg-white";
+    const cardPos = "absolute top-20 left-35 right-35 z-20";
+    return elem("div").$vif(this.state.show).setProps({ class: `fixed top-0 left-0 z-10` }).setChild([
+      elem("div").setProps({ class: "w-dvw h-dvh bg-black opacity-50" }).addEventListener("click", this.props.onClose.bind(this)),
+      elem("div").setProps({ class: ` ${cardSize} ${cardPos}` }).setChild([
+        elem("div").$vif(header !== null).setProps({ class: "modal-header" }).addChild(header),
+        elem("div").setProps({ class: "modal-body" }).addChild(body)
+      ])
+    ]);
+  }
+};
+
+// src/pkg/frontendy/router/router.ts
+var RouterConfig = class {
+  constructor() {
+    this.NotFoundPage = void 0;
+  }
+};
+var FrontendyRouter = class {
+  constructor(routes2, config = void 0) {
+    this.routes = [];
+    this.config = config ?? new RouterConfig();
+    this.routes = routes2;
+    this.currentRoute = this.findRoute(window.location.pathname);
+    document.addEventListener("click", this.handleLinkClick.bind(this));
+    window.addEventListener("popstate", () => this.setCurrentRoute());
+  }
+  setRouterView(routerView) {
+    this.routerView = routerView;
+  }
+  findRoute(path) {
+    return this.routes.find((route) => route.path === path);
+  }
+  getUndefinedMessageComponent() {
+    return this.config?.NotFoundPage;
+  }
+  handleLinkClick(event) {
+    const target = event.target;
+    if (target.tagName === "A") {
+      const anchor = target;
+      const href = anchor.getAttribute("href");
+      if (href && href.startsWith("/")) {
+        event.preventDefault();
+        window.history.pushState({}, "", href);
+        this.setCurrentRoute();
+      }
+    }
+  }
+  setCurrentRoute() {
+    if (!this.routerView) {
+      throw new Error("Router error : routerView instance is not set");
+    }
+    this.currentRoute = this.findRoute(window.location.pathname);
+    this.routerView.updateCurrentRoute();
+  }
+  push(name2) {
+    const route = this.routes.find((route2) => route2.name === name2);
+    if (!route) {
+      throw new Error(`Router error: route ${name2} not found`);
+    }
+    if (route.path === this.currentRoute?.path) {
+      throw new Error(`Router error: route ${name2} already active`);
+    }
+    window.history.pushState({}, "", route.path);
+    this.setCurrentRoute();
+  }
+  getCurrentRoute() {
+    return this.currentRoute;
+  }
+};
 
 // src/components/about-page-content/AboutInfoComponent.ts
 var AboutInfoComponent = class extends component_default {
@@ -522,38 +560,10 @@ var AboutPage = class extends component_default {
   }
 };
 
-// src/components/ConterComponent.ts
-var CounterComponent = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "counter-component";
-  }
-  data() {
-    return {
-      count: 0
-    };
-  }
-  slots() {
-    return [
-      "test"
-    ];
-  }
-  template() {
-    return elem("div").setProps({ id: "counter-component" }).setChild([
-      elem("h1").addChild(text(`Count: ${this.state.count}`)),
-      elem("button").setProps({ id: "increment-button" }).addEventListener("click", this.increment.bind(this)).addChild(text("Increment")),
-      this.slot("test")
-    ]);
-  }
-  increment() {
-    this.state.count++;
-  }
-};
-
 // src/components/tools/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
-  constructor(text5) {
-    super({ text: text5 });
+  constructor(text4) {
+    super({ text: text4 });
     this.componentName = "info-paragraph-component";
   }
   template() {
@@ -591,8 +601,7 @@ var DashboardComponent = class extends component_default {
       elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`Home`)),
       new InfoParagraphComponent("Welcome to the ft_transcendence!"),
       new InfoParagraphComponent("There will be some tools and players statistics soon."),
-      new PlayButtonComponent(),
-      new CounterComponent()
+      new PlayButtonComponent()
     ]);
   }
 };
@@ -791,8 +800,12 @@ var AppComponent = class extends component_default {
   }
   data() {
     return {
-      currentRoute: router_default.getCurrentRoute()
+      currentRoute: router_default.getCurrentRoute(),
+      showRegModal: false
     };
+  }
+  toggleShowModal() {
+    this.state.showRegModal = !this.state.showRegModal;
   }
   isNavigatablePage() {
     if (!this.state.currentRoute) {
@@ -802,8 +815,10 @@ var AppComponent = class extends component_default {
   }
   template() {
     return elem("div").setProps({ id: "app", class: "h-screen w-screen bg-gray-100 text-gray-800" }).setChild([
+      elem("button").addChild(text("Test")).addEventListener("click", this.toggleShowModal.bind(this)),
       elem("span").$vif(true).addChild(new NavBarComponent(navBarLinks)),
-      new FrontendyRouterView(router_default)
+      new FrontendyRouterView(router_default),
+      new FrontendyModal("test", () => this.state.showRegModal = false).setShow(this.state.showRegModal)
     ]);
   }
 };

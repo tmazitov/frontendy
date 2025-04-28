@@ -37,7 +37,10 @@ class VElem{
         return this;
     }
 
-    addChild(child: VElem | VText | Component) {
+    addChild(child: VElem | VText | Component | null) {
+        if (!child) {
+            return this;
+        }
         this.children.push(child);
         return this;
     }
