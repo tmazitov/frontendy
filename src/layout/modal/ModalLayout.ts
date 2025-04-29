@@ -5,6 +5,7 @@ import ModalLayoutCloseButton from "./ModalLayoutCloseButton";
 type ModalLayoutOptions = {
     onClose?: Function,
     closeOnClickOutside?: boolean,
+    customClasses?: string,
 }
 
 export default class ModalLayout extends FrontendyComponent {
@@ -32,12 +33,12 @@ export default class ModalLayout extends FrontendyComponent {
     }
 
     template() {
-
         const header = this.useSlot("header");
         const body = this.useSlot("body");
         const footer = this.useSlot("footer");
 
-        const cardSize = 'min-h-20 min-w-20 max-w-80 rounded-lg shadow-lg bg-white'
+        const defaultCardSize = 'min-h-20 min-w-20 max-w-80 rounded-lg shadow-lg bg-white'
+        const cardSize = this.props.opts.customClasses || defaultCardSize;
         const cardPos = 'absolute left-1/2 transform -translate-x-1/2'
 
         const onCloseFuncion = this.props.opts.onClose;

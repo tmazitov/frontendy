@@ -1,13 +1,13 @@
 import FrontendyComponent from "../../pkg/frontendy/component/component";
-import { elem, text } from "../../pkg/frontendy/vdom/constructor";
-import SignInForm from "../../types/forms/signInForm";
+import { elem } from "../../pkg/frontendy/vdom/constructor";
+import SignUpForm from "../../types/forms/registrationForm";
 import ButtonComponent from "../inputs/ButtonComponent";
 import InputComponent from "../inputs/InputComponent";
 
-export default class AuthForm extends FrontendyComponent {
-    componentName: string = 'auth-form';
+export default class RegistrationForm extends FrontendyComponent {
+    componentName: string = 'registration-form';
 
-    constructor(form: SignInForm, onSubmit: Function) {
+    constructor(form: SignUpForm, onSubmit: Function) {
         super({form, onSubmit});
     }
 
@@ -21,16 +21,19 @@ export default class AuthForm extends FrontendyComponent {
         this.props.onSubmit(this.state.form);
     }
 
-    onChangePassword(value: string) {
-        this.state.form.password = value;
+    onChangeNickname(value: string) {
+        this.state.form.nickname = value;
     }
 
     onChangeEmail(value: string) {
         this.state.form.email = value;
     }
 
-    template() {
+    onChangePassword(value: string) {
+        this.state.form.password = value;
+    }
 
+    template() {
         const submitButton = new ButtonComponent({label: "Submit", type: 'primary' })
             .onClick(this.submit.bind(this))
  
@@ -46,11 +49,19 @@ export default class AuthForm extends FrontendyComponent {
             label: 'Email',
         })
         .onInput((value: string) => this.state.form.email = value)
-        .onEnter(() => passwordInput.focus())
+        .onEnter(() => passwordInput.focus());
+
+        const nicknameInput = new InputComponent(this.state.form.nickname, {
+            type: 'text',
+            label: 'Nickname',
+        })
+        .onInput((value: string) => this.state.form.nickname = value)
+        .onEnter(() => emailInput.focus());
  
         return elem('div')
             .setProps({ class : "flex flex-col gap-4"})
             .setChild([
+                nicknameInput,
                 emailInput,
                 passwordInput,
 
@@ -59,4 +70,4 @@ export default class AuthForm extends FrontendyComponent {
                 .addChild(submitButton),
             ])
     }
-}
+} 

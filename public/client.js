@@ -749,7 +749,8 @@ var ModalLayout = class extends component_default {
     const header = this.useSlot("header");
     const body = this.useSlot("body");
     const footer = this.useSlot("footer");
-    const cardSize = "min-h-20 min-w-20 max-w-80 rounded-lg shadow-lg bg-white";
+    const defaultCardSize = "min-h-20 min-w-20 max-w-80 rounded-lg shadow-lg bg-white";
+    const cardSize = this.props.opts.customClasses || defaultCardSize;
     const cardPos = "absolute left-1/2 transform -translate-x-1/2";
     const onCloseFuncion = this.props.opts.onClose;
     const backdrop = elem("div").setProps({ class: "w-dvw h-dvh bg-black opacity-50 " });
@@ -771,6 +772,34 @@ var ModalLayout = class extends component_default {
         elem("div").$vif(footer !== null).setProps({ class: "p-6 pt-0" }).addChild(footer)
       ])
     ]);
+  }
+};
+
+// src/types/forms/registrationForm.ts
+var SignUpForm = class {
+  constructor(nickname, email, password) {
+    this.nickname = nickname;
+    this.email = email;
+    this.password = password;
+  }
+  validate() {
+    if (!this.nickname || this.nickname.length < 3) {
+      return "Nickname must be at least 3 characters long";
+    }
+    if (!this.email || !this.email.includes("@")) {
+      return "Please enter a valid email address";
+    }
+    if (!this.password || this.password.length < 6) {
+      return "Password must be at least 6 characters long";
+    }
+    return void 0;
+  }
+  toSubmit() {
+    return {
+      nickname: this.nickname,
+      email: this.email,
+      password: this.password
+    };
   }
 };
 
@@ -876,21 +905,17 @@ var InputComponent = class extends component_default {
 
 // src/components/forms/AuthForm.ts
 var AuthForm = class extends component_default {
-  constructor() {
-    super(...arguments);
+  constructor(form, onSubmit) {
+    super({ form, onSubmit });
     this.componentName = "auth-form";
   }
   data() {
     return {
-      form: new SignInForm("", "")
+      form: this.props.form
     };
   }
   submit() {
-    const err = this.state.form.validate();
-    if (err !== void 0) {
-      return;
-    }
-    console.log("Submit", this.state.form);
+    this.props.onSubmit(this.state.form);
   }
   onChangePassword(value) {
     this.state.form.password = value;
@@ -916,6 +941,52 @@ var AuthForm = class extends component_default {
   }
 };
 
+// src/components/forms/RegistrationForm.ts
+var RegistrationForm = class extends component_default {
+  constructor(form, onSubmit) {
+    super({ form, onSubmit });
+    this.componentName = "registration-form";
+  }
+  data() {
+    return {
+      form: this.props.form
+    };
+  }
+  submit() {
+    this.props.onSubmit(this.state.form);
+  }
+  onChangeNickname(value) {
+    this.state.form.nickname = value;
+  }
+  onChangeEmail(value) {
+    this.state.form.email = value;
+  }
+  onChangePassword(value) {
+    this.state.form.password = value;
+  }
+  template() {
+    const submitButton = new ButtonComponent({ label: "Submit", type: "primary" }).onClick(this.submit.bind(this));
+    const passwordInput = new InputComponent(this.state.form.password, {
+      type: "password",
+      label: "Password"
+    }).onInput((value) => this.state.form.password = value).onEnter(this.submit.bind(this));
+    const emailInput = new InputComponent(this.state.form.email, {
+      type: "email",
+      label: "Email"
+    }).onInput((value) => this.state.form.email = value).onEnter(() => passwordInput.focus());
+    const nicknameInput = new InputComponent(this.state.form.nickname, {
+      type: "text",
+      label: "Nickname"
+    }).onInput((value) => this.state.form.nickname = value).onEnter(() => emailInput.focus());
+    return elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
+      nicknameInput,
+      emailInput,
+      passwordInput,
+      elem("div").setProps({ class: "mt-2 flex" }).addChild(submitButton)
+    ]);
+  }
+};
+
 // src/components/modals/AuthModal.ts
 var AuthModal = class extends component_default {
   constructor() {
@@ -923,24 +994,54 @@ var AuthModal = class extends component_default {
   }
   data() {
     return {
-      show: false
+      show: false,
+      isLogin: true,
+      errorMessage: "",
+      signInForm: new SignInForm("", ""),
+      signUpForm: new SignUpForm("", "", "")
     };
   }
   setShow(value) {
     this.state.show = value;
     return this;
   }
+  onSubmit(form) {
+    const error = form.validate();
+    if (error) {
+      this.state.errorMessage = error;
+      return;
+    }
+    this.state.errorMessage = "";
+    console.log(form);
+  }
+  toggleForm() {
+    this.state.isLogin = !this.state.isLogin;
+    this.state.errorMessage = "";
+  }
   template() {
+    const form = this.state.isLogin ? new AuthForm(this.state.signInForm, this.onSubmit.bind(this)) : new RegistrationForm(this.state.signUpForm, this.onSubmit.bind(this));
+    const title = this.state.isLogin ? "Sign in" : "Sign up";
+    const toggleText = this.state.isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in";
     return elem("span").addChild(
       new ModalLayout("auth-modal", {
         onClose: () => this.state.show = false,
-        closeOnClickOutside: true
+        customClasses: "min-h-20 min-w-[300px] max-w-[400px] rounded-lg shadow-lg bg-white"
       }).setShow(this.state.show).setSlot(
         "header",
-        elem("h2").addChild(text("Sign in")).setProps({ class: "text-xl font-bold text-center" })
+        elem("h2").addChild(text(title)).setProps({ class: "text-xl font-bold text-center" })
       ).setSlot(
         "body",
-        new AuthForm()
+        elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
+          elem("div").setProps({ class: "h-6" }).addChild(
+            elem("div").$vif(this.state.errorMessage).setProps({ class: "text-red-500 text-sm text-center" }).addChild(text(this.state.errorMessage))
+          ),
+          form,
+          elem("div").setProps({ class: "text-center mt-2" }).addChild(
+            elem("button").setProps({
+              class: "text-blue-500 hover:text-blue-700 underline text-sm"
+            }).addChild(text(toggleText)).addEventListener("click", this.toggleForm.bind(this))
+          )
+        ])
       )
     );
   }
