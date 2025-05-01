@@ -1,6 +1,7 @@
 import EventBroker from "../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
+import GameSearcher from "../../pkg/game-launcher/gameSercher";
 import Game from "../../types/Game";
 import CancelButtonComponent from "./CancelButtonComponent";
 
@@ -51,7 +52,7 @@ export default class SearchGameBarComponent extends FrontendyComponent {
 
     onCancel() {
         console.log("Cancel button clicked, stopping the game search.");
-        EventBroker.getInstance().emit("deactivate-find-game-bar");
+        GameSearcher.stopGameSearching();
     }
 
     template() {
@@ -59,7 +60,7 @@ export default class SearchGameBarComponent extends FrontendyComponent {
         const toast = "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white py-2 px-4"
 
         return elem('div').$vif(this.state.show)
-            .setProps({ class: `${position} z-1000` })
+            .setProps({ class: `${position} z-5` })
             .setChild([
                 elem('div')
                 .setProps({ class: `${toast} flex gap-4 justify-between` })

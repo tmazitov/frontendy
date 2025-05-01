@@ -558,6 +558,83 @@ var EventBroker = class _EventBroker {
   }
 };
 
+// src/pkg/game-launcher/gameSercher.ts
+var GameSearcher = class {
+  static {
+    this.searchGameType = null;
+  }
+  static {
+    this.isConfirmed = false;
+  }
+  static startGameSearching(game, callback = null) {
+    if (this.searchGameType) {
+      return;
+    }
+    setTimeout(() => {
+      EventBroker.getInstance().emit("activate-search-game-bar", game);
+      this.searchGameType = game;
+      if (callback) {
+        callback();
+      }
+      setTimeout(() => {
+        this.foundGame();
+      }, 5e3);
+    }, 2e3);
+  }
+  static foundGame() {
+    EventBroker.getInstance().emit("deactivate-search-game-bar");
+    EventBroker.getInstance().emit("activate-confirmation-modal", this.searchGameType);
+  }
+  static stopGameSearching() {
+    this.searchGameType = null;
+    EventBroker.getInstance().emit("deactivate-search-game-bar");
+  }
+  static confirmGame(callback = null) {
+    if (!this.searchGameType) {
+      return;
+    }
+    setTimeout(() => {
+      this.isConfirmed = true;
+      if (callback) {
+        callback();
+      }
+    }, 200);
+  }
+  static cancelGame(callback = null) {
+    if (!this.searchGameType) {
+      return;
+    }
+    EventBroker.getInstance().emit("deactivate-confirmation-modal");
+    setTimeout(() => {
+      this.isConfirmed = false;
+      if (callback) {
+        callback();
+      }
+      console.log("Game search cancelled.", this.searchGameType);
+      if (!this.searchGameType) {
+        return;
+      }
+      const game = this.searchGameType;
+      this.searchGameType = null;
+      this.startGameSearching(game);
+    }, 200);
+  }
+  static getConfirmedPlayers() {
+    if (!this.isConfirmed || !this.searchGameType) {
+      return [];
+    }
+    const numberOfPlayers = this.searchGameType.players;
+    const players = Array.from({ length: numberOfPlayers }, (_, index) => index + 1).map((player) => {
+      return {
+        id: player,
+        isConfirmed: false
+      };
+    });
+    players[0].isConfirmed = true;
+    return players;
+  }
+};
+
 // src/layout/loading/LoadingLayout.ts
 var LoadingLayout = class extends component_default {
   constructor(props) {
@@ -637,13 +714,19 @@ var ModalLayout = class extends component_default {
         onCloseFuncion.bind(this)();
       });
     }
+    const headerComp = elem("div").$vif(header !== null).setProps({ class: "px-6 py-4 flex gap-4 items-center " });
+    if (this.props.opts.onClose) {
+      const closeHandler = onCloseFuncion ? onCloseFuncion.bind(this) : void 0;
+      headerComp.addChild(new ModalLayoutCloseButton(closeHandler));
+    }
+    headerComp.addChild(header);
     return elem("div").$vif(this.state.show).setProps({ class: `fixed top-0 left-0 z-10 flex items-center` }).setChild([
       // Backdrop (outside click --> close)
       backdrop,
       // Modal Window (with header and body slots)
       elem("div").setProps({ class: ` ${cardSize} ${cardPos}  overflow-hidden` }).setChild([
         // Header
-        elem("div").$vif(header !== null).setProps({ class: "px-6 py-4 flex gap-4 items-center " }).addChild(new ModalLayoutCloseButton(onCloseFuncion ? onCloseFuncion.bind(this) : void 0)).addChild(header),
+        headerComp,
         // Body
         elem("div").setProps({ class: "p-6 pt-0" }).addChild(body),
         // Footer
@@ -842,8 +925,8 @@ var GameLauchBodyComponent = class extends component_default {
   }
 };
 
-// src/components/modals/GameModal.ts
-var GameLaunchModal = class extends component_default {
+// src/components/modals/GameLauncherModal.ts
+var GameLauncherModal = class extends component_default {
   constructor() {
     super(...arguments);
     this.componentName = "game-launch-modal";
@@ -858,14 +941,12 @@ var GameLaunchModal = class extends component_default {
     this.state.show = value;
     return this;
   }
-  onSubmit(gameId) {
+  onSubmit(game) {
     this.state.isLoading = true;
-    setTimeout(() => {
-      console.log("Game ID: ", gameId);
+    GameSearcher.startGameSearching(game, () => {
       this.state.show = false;
       this.state.isLoading = false;
-      EventBroker.getInstance().emit("activate-find-game-bar", gameId);
-    }, 2e3);
+    });
   }
   template() {
     return elem("span").setChild([
@@ -874,7 +955,7 @@ var GameLaunchModal = class extends component_default {
         customClasses: "min-h-20 min-w-[300px] max-w-[400px] rounded-lg shadow-lg bg-white"
       }).setShow(this.state.show).setSlot(
         "header",
-        elem("h2").setProps({ class: "text-lg font-bold" }).addChild(text("Game Launch"))
+        elem("h2").setProps({ class: "text-lg font-bold" }).addChild(text("Game Launcher"))
       ).setSlot(
         "body",
         elem("span").setChild([
@@ -903,15 +984,15 @@ var PlayButtonComponent = class extends component_default {
     };
   }
   onOpenModal() {
+    GameSearcher.stopGameSearching();
     this.state.showGameLaunchModal = true;
-    EventBroker.getInstance().emit("deactivate-find-game-bar");
   }
   template() {
     return elem("span").setChild([
       elem("button").setProps({
         class: "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-2 px-4 mt-2 rounded"
       }).addEventListener("click", this.onOpenModal.bind(this)).addChild(text("Play")),
-      new GameLaunchModal().setShow(this.state.showGameLaunchModal)
+      new GameLauncherModal().setShow(this.state.showGameLaunchModal)
     ]);
   }
 };
@@ -1086,17 +1167,17 @@ var SearchGameBarComponent = class extends component_default {
   }
   onCancel() {
     console.log("Cancel button clicked, stopping the game search.");
-    EventBroker.getInstance().emit("deactivate-find-game-bar");
+    GameSearcher.stopGameSearching();
   }
   template() {
     const position = `fixed left-0 bottom-0 w-full h-20 bg-gray-200 flex items-center justify-center`;
     const toast = "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white py-2 px-4";
-    return elem("div").$vif(this.state.show).setProps({ class: `${position} z-1000` }).setChild([
+    return elem("div").$vif(this.state.show).setProps({ class: `${position} z-5` }).setChild([
       elem("div").setProps({ class: `${toast} flex gap-4 justify-between` }).setChild([
         elem("div").setProps({ class: "flex gap-4 items-center" }).setChild([
           elem("p").setProps({ class: "text-gray-700", style: "width: 5ch" }).addChild(text(this.state.elapsedTime)),
           elem("p").setProps({ class: "text-gray-700" }).addChild(text(this.state.searchGame?.name)),
-          elem("p").setProps({ class: "text-gray-700" }).addChild(text("Waiting for a game..."))
+          elem("p").setProps({ class: "text-gray-700" }).addChild(text("Searching for a game..."))
         ]),
         new CancelButtonComponent({
           onClick: this.onCancel.bind(this)
@@ -1444,6 +1525,124 @@ var NavBarComponent = class extends component_default {
   }
 };
 
+// src/components/content/game-confirmation-modal-content/GameConfirmationComponent.ts
+var GameConfirmationComponent = class extends component_default {
+  constructor(remainingTime, onSubmit) {
+    super({ onSubmit, remainingTime });
+    this.componentName = "confirm-view-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "w-full h-full" }).setChild([
+      elem("p").setProps({ class: "text-sm text-gray-600 mb-2 text-start" }).addChild(text(`Confirmation time : ${this.props.remainingTime}`)),
+      new ButtonComponent({
+        label: "Accept",
+        type: "primary"
+      }).onClick(this.props.onSubmit.bind(this))
+    ]);
+  }
+};
+
+// src/components/content/game-confirmation-modal-content/WaitPlayerBoxComponent.ts
+var WaitPlayerBoxComponent = class extends component_default {
+  constructor(isConfirmed) {
+    super({ isConfirmed });
+    this.componentName = "wait-player-box-component";
+  }
+  template() {
+    const borderColor = this.props.isConfirmed ? "border-green-500" : "border-gray-300";
+    const bgColor = this.props.isConfirmed ? "bg-green-500" : "bg-gray-300";
+    return elem("div").setProps({ class: `w-8 h-8 border-2 ${borderColor} ${bgColor} rounded-md flex justify-center items-center` });
+  }
+};
+
+// src/components/content/game-confirmation-modal-content/GameWaitComponent.ts
+var GameWaitComponent = class extends component_default {
+  constructor(remainingTime) {
+    super({ remainingTime });
+    this.componentName = "game-wait-component";
+  }
+  template() {
+    const confirmed = GameSearcher.getConfirmedPlayers();
+    return elem("span").setChild([
+      elem("p").setProps({ class: "text-sm text-gray-600 mb-2 text-start" }).addChild(text(`Remaining time : ${this.props.remainingTime}`)),
+      elem("div").setProps({ class: "w-full flex gap-2" }).setChild([
+        ...confirmed.map((player) => new WaitPlayerBoxComponent(player.isConfirmed))
+      ])
+    ]);
+  }
+};
+
+// src/components/modals/GameConfirmationModal.ts
+var interval;
+var GameConfirmationModal = class extends component_default {
+  constructor(game) {
+    super({ game });
+    this.componentName = "game-launch-modal";
+  }
+  data() {
+    return {
+      show: false,
+      isLoading: false,
+      isConfirmed: false,
+      delay: 20
+    };
+  }
+  setShow(value) {
+    this.state.show = value;
+    if (value) {
+      interval = setInterval(() => {
+        if (this.state.delay == 0) {
+          clearInterval(interval);
+          GameSearcher.cancelGame(() => {
+            this.state.isLoading = false;
+            this.state.show = false;
+            this.state.isConfirmed = false;
+            this.state.delay = 20;
+          });
+        }
+        this.state.delay -= 1;
+      }, 1e3);
+    }
+    return this;
+  }
+  onSubmit() {
+    this.state.isLoading = true;
+    GameSearcher.confirmGame(() => {
+      this.state.isLoading = false;
+      this.state.isConfirmed = true;
+    });
+  }
+  time(num) {
+    const seconds = num < 10 ? "0" + num : num;
+    return "0:" + seconds;
+  }
+  template() {
+    const modal = new ModalLayout("game-launch-modal", {
+      customClasses: "min-h-20 min-w-[300px] max-w-[400px] rounded-lg shadow-lg bg-white"
+    }).setShow(this.state.show);
+    const headerText = this.state.isConfirmed ? "Waiting for all confirmations..." : "Found a game!";
+    const header = elem("h2").setProps({ class: "text-lg font-semibold text-gray-800" }).addChild(text(headerText));
+    modal.setSlot("header", header);
+    const remainingTime = this.time(this.state.delay);
+    if (this.state.isConfirmed) {
+      const body = elem("span").setChild([
+        new GameWaitComponent(remainingTime)
+      ]);
+      modal.setSlot("body", body);
+    } else {
+      const body = elem("span").setChild([
+        new LoadingLayout({
+          label: "Please wait...",
+          icon: "ti ti-loader"
+        }).setShow(this.state.isLoading),
+        new GameConfirmationComponent(remainingTime, this.onSubmit.bind(this))
+      ]);
+      modal.setSlot("body", body);
+    }
+    return elem("span").addChild(modal);
+  }
+};
+
 // src/components/AppComponent.ts
 var navBarLinks = [
   new NavBarLink("Home", "home", "ti ti-home"),
@@ -1457,8 +1656,8 @@ var AppComponent = class extends component_default {
   data() {
     return {
       currentRoute: router_default.getCurrentRoute(),
-      findGameType: null,
-      showFindGameBar: false
+      searchGameType: null,
+      showGameConfirmationModal: false
     };
   }
   isNavigatablePage() {
@@ -1468,28 +1667,37 @@ var AppComponent = class extends component_default {
     return this.state.currentRoute.name != "auth";
   }
   onMounted() {
-    EventBroker.getInstance().on("activate-find-game-bar", (game) => {
-      if (this.state.findGameType) {
+    EventBroker.getInstance().on("activate-search-game-bar", (game) => {
+      if (this.state.searchGameType) {
         return;
       }
-      this.state.findGameType = game;
+      this.state.searchGameType = game;
     });
-    EventBroker.getInstance().on("deactivate-find-game-bar", () => {
-      if (!this.state.findGameType) {
+    EventBroker.getInstance().on("deactivate-search-game-bar", () => {
+      if (!this.state.searchGameType) {
         return;
       }
-      this.state.findGameType = null;
+      this.state.searchGameType = null;
+    });
+    EventBroker.getInstance().on("activate-confirmation-modal", () => {
+      this.state.showGameConfirmationModal = true;
+    });
+    EventBroker.getInstance().on("deactivate-confirmation-modal", () => {
+      this.state.showGameConfirmationModal = false;
     });
   }
   onUnmounted() {
-    EventBroker.getInstance().off("activate-find-game-bar");
-    EventBroker.getInstance().off("deactivate-find-game-bar");
+    EventBroker.getInstance().off("activate-confirmation-modal");
+    EventBroker.getInstance().off("deactivate-confirmation-modal");
+    EventBroker.getInstance().off("activate-search-game-bar");
+    EventBroker.getInstance().off("deactivate-search-game-bar");
   }
   template() {
     return elem("div").setProps({ id: "app", class: "h-screen w-screen bg-gray-100 text-gray-800" }).setChild([
       elem("span").$vif(true).addChild(new NavBarComponent(navBarLinks)),
       new FrontendyRouterView(router_default),
-      new SearchGameBarComponent().setSearchGame(this.state.findGameType)
+      new SearchGameBarComponent().setSearchGame(this.state.searchGameType),
+      new GameConfirmationModal(this.state.searchGameType).setShow(this.state.showGameConfirmationModal)
     ]);
   }
 };

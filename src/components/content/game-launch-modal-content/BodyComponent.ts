@@ -2,13 +2,14 @@ import games from "../../../data/games";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 import PreferModeStorage from "../../../pkg/game-launcher/preferedMode";
+import Game from "../../../types/Game";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import GameCurrentRatingComponent from "./GameCurrentRatingComponent";
 import GameDescriptionComponent from "./GameDescriptionComponent";
 import GameOptionComponent from "./GameOptionComponent";
 
 type GameLauchBodyProps = {
-    onSubmit: (gameId: number) => void;
+    onSubmit: (game: Game) => void;
 }
 
 export default class GameLauchBodyComponent extends FrontendyComponent {

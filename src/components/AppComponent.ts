@@ -7,6 +7,7 @@ import Game from "../types/Game";
 import NavBarLink from "../types/NavBarLink";
 import SearchGameBarComponent from "./search-game-bar/SearchGameBarComponent";
 import NavBarComponent from "./nav-bar/NavBarComponent";
+import GameConfirmationModal from "./modals/GameConfirmationModal";
 
 const navBarLinks =  [
     new NavBarLink('Home', 'home', "ti ti-home"),
@@ -20,8 +21,8 @@ export default class AppComponent extends Component {
     data() {
         return {
             currentRoute : router.getCurrentRoute(),
-            findGameType: null,
-            showFindGameBar: false,
+            searchGameType: null,
+            showGameConfirmationModal: false,
         }
     }
 
@@ -33,23 +34,31 @@ export default class AppComponent extends Component {
     }
 
     onMounted(): void {
-        EventBroker.getInstance().on("activate-find-game-bar", (game: Game) => {
-            if (this.state.findGameType) {
+        EventBroker.getInstance().on("activate-search-game-bar", (game: Game) => {
+            if (this.state.searchGameType) {
                 return;
             }
-            this.state.findGameType = game;
+            this.state.searchGameType = game;
         })  
-        EventBroker.getInstance().on("deactivate-find-game-bar", () => {
-            if (!this.state.findGameType) {
+        EventBroker.getInstance().on("deactivate-search-game-bar", () => {
+            if (!this.state.searchGameType) {
                 return;
             }
-            this.state.findGameType = null;
+            this.state.searchGameType = null;
+        })
+        EventBroker.getInstance().on("activate-confirmation-modal", () => {
+            this.state.showGameConfirmationModal = true;
+        })
+        EventBroker.getInstance().on("deactivate-confirmation-modal", () => {
+            this.state.showGameConfirmationModal = false;
         })
     }
 
     onUnmounted(): void {
-        EventBroker.getInstance().off("activate-find-game-bar");    
-        EventBroker.getInstance().off("deactivate-find-game-bar");
+        EventBroker.getInstance().off("activate-confirmation-modal")
+        EventBroker.getInstance().off("deactivate-confirmation-modal");
+        EventBroker.getInstance().off("activate-search-game-bar");    
+        EventBroker.getInstance().off("deactivate-search-game-bar");
     }
 
     template() {
@@ -63,7 +72,10 @@ export default class AppComponent extends Component {
                 new FrontendyRouterView(router),
 
                 new SearchGameBarComponent()
-                    .setSearchGame(this.state.findGameType),
+                    .setSearchGame(this.state.searchGameType),
+                
+                new GameConfirmationModal(this.state.searchGameType)
+                .setShow(this.state.showGameConfirmationModal)
             ])
     }   
 }

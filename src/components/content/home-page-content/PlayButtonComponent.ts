@@ -1,7 +1,8 @@
 import EventBroker from "../../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
-import GameLaunchModal from "../../modals/GameModal";
+import GameSearcher from "../../../pkg/game-launcher/gameSercher";
+import GameLaunchModal from "../../modals/GameLauncherModal";
 
 export default class PlayButtonComponent extends FrontendyComponent {
     componentName: string = 'play-button-component';
@@ -13,8 +14,8 @@ export default class PlayButtonComponent extends FrontendyComponent {
     }
 
     onOpenModal() {
+        GameSearcher.stopGameSearching();
         this.state.showGameLaunchModal = true;
-        EventBroker.getInstance().emit("deactivate-find-game-bar");
     }
 
     template() {

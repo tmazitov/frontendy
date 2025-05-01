@@ -52,6 +52,18 @@ export default class ModalLayout extends FrontendyComponent {
             });
         }
 
+        const headerComp = elem("div").$vif(header !== null)
+        .setProps({ class: "px-6 py-4 flex gap-4 items-center " })
+
+        if (this.props.opts.onClose) {
+            const closeHandler = onCloseFuncion ? 
+                onCloseFuncion.bind(this) : undefined
+
+            headerComp.addChild(new ModalLayoutCloseButton(closeHandler))
+        }
+
+        headerComp.addChild(header)
+
         return elem("div").$vif(this.state.show)
             .setProps({ class : `fixed top-0 left-0 z-10 flex items-center` })
             .setChild([
@@ -65,11 +77,7 @@ export default class ModalLayout extends FrontendyComponent {
                 .setChild([
 
                     // Header
-                    elem("div").$vif(header !== null)
-                    .setProps({ class: "px-6 py-4 flex gap-4 items-center " })
-                    .addChild(new ModalLayoutCloseButton(onCloseFuncion ? 
-                        onCloseFuncion.bind(this) : undefined))
-                    .addChild(header),
+                    headerComp,
 
                     // Body
                     elem("div")
