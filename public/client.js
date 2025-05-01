@@ -527,8 +527,8 @@ var AboutPage = class extends component_default {
 
 // src/components/inputs/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
-  constructor(text6) {
-    super({ text: text6 });
+  constructor(text7) {
+    super({ text: text7 });
     this.componentName = "info-paragraph-component";
   }
   template() {
@@ -536,57 +536,86 @@ var InfoParagraphComponent = class extends component_default {
   }
 };
 
-// src/components/content/home-page-content/PlayButtonComponent.ts
-var PlayButtonComponent = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "play-button-component";
-  }
-  data() {
-    return {};
+// src/layout/modal/ModalLayoutCloseButton.ts
+var buttonSize = "w-6 h-6";
+var buttonColor = "bg-white hover:bg-gray-100 active:bg-gray-200 rounded-lg ease-in-out duration-200";
+var buttonInner = "flex items-center justify-center";
+var ModalLayoutCloseButton = class extends component_default {
+  constructor(onClick) {
+    super({ onClick });
+    this.componentName = "modal-layout-close-button";
   }
   template() {
-    return elem("button").setProps({
-      class: "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-2 px-4 mt-2 rounded"
-    }).addChild(text("Play"));
+    const button = elem("button").setProps({ class: `${buttonSize} ${buttonColor} ${buttonInner}` }).addChild(elem("i").setProps({ class: "ti ti-x" }));
+    if (this.props.onClick) {
+      button.addEventListener("click", this.props.onClick.bind(this));
+    }
+    return button;
   }
 };
 
-// src/components/content/home-page-content/DashboardComponent.ts
-var DashboardComponent = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "home-dashboard-component";
-  }
-  template() {
-    return elem("div").setProps({
-      id: "home-dashboard-component",
-      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
-    }).setChild([
-      elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`Home`)),
-      new InfoParagraphComponent("Welcome to the ft_transcendence!"),
-      new InfoParagraphComponent("There will be some tools and players statistics soon."),
-      new PlayButtonComponent()
-    ]);
-  }
-};
-
-// src/pages/HomePage.ts
-var HomePage = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "home-page";
+// src/layout/modal/ModalLayout.ts
+var ModalLayout = class extends component_default {
+  constructor(name, opts = {}) {
+    super({ name, opts });
   }
   data() {
     return {
-      title: "Welcome to Frontendy",
-      description: "This is a simple example of a Frontendy component."
+      show: false
     };
   }
+  setShow(value) {
+    this.state.show = value;
+    return this;
+  }
+  slots() {
+    return [
+      "header",
+      "body",
+      "footer"
+    ];
+  }
   template() {
-    return elem("div").setProps({ id: "home-page" }).setChild([
-      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(new DashboardComponent())
+    const header = this.useSlot("header");
+    const body = this.useSlot("body");
+    const footer = this.useSlot("footer");
+    const defaultCardSize = "min-h-20 min-w-20 max-w-80 rounded-lg shadow-lg bg-white";
+    const cardSize = this.props.opts.customClasses || defaultCardSize;
+    const cardPos = "absolute left-1/2 transform -translate-x-1/2";
+    const onCloseFuncion = this.props.opts.onClose;
+    const backdrop = elem("div").setProps({ class: "w-dvw h-dvh bg-black opacity-50 " });
+    if (this.props.opts.closeOnClickOutside && onCloseFuncion) {
+      backdrop.addEventListener("click", () => {
+        onCloseFuncion.bind(this)();
+      });
+    }
+    return elem("div").$vif(this.state.show).setProps({ class: `fixed top-0 left-0 z-10 flex items-center` }).setChild([
+      // Backdrop (outside click --> close)
+      backdrop,
+      // Modal Window (with header and body slots)
+      elem("div").setProps({ class: ` ${cardSize} ${cardPos}` }).setChild([
+        // Header
+        elem("div").$vif(header !== null).setProps({ class: "px-6 py-4 flex gap-4 items-center " }).addChild(new ModalLayoutCloseButton(onCloseFuncion ? onCloseFuncion.bind(this) : void 0)).addChild(header),
+        // Body
+        elem("div").setProps({ class: "p-6 pt-0" }).addChild(body),
+        // Footer
+        elem("div").$vif(footer !== null).setProps({ class: "p-6 pt-0" }).addChild(footer)
+      ])
     ]);
+  }
+};
+
+// src/pkg/game-launcher/preferedMode.ts
+var PreferModeStorage = class {
+  static save(modeId) {
+    localStorage.setItem("prefered-mode", modeId.toString());
+  }
+  static get() {
+    const modeId = localStorage.getItem("prefered-mode");
+    if (!modeId) {
+      return null;
+    }
+    return parseInt(modeId);
   }
 };
 
@@ -629,6 +658,244 @@ var ButtonComponent = class extends component_default {
       button.addEventListener("click", this.state.clickHandler);
     }
     return button;
+  }
+};
+
+// src/components/content/game-launch-modal-content/GameCurrentRatingComponent.ts
+var GameCurrentRatingComponent = class extends component_default {
+  constructor(rating) {
+    super({ rating });
+    this.componentName = "game-current-rating-component";
+  }
+  template() {
+    return elem("p").$vif(this.props.rating).setProps({ class: "text-sm text-gray-500 mt-6 mb-2" }).addChild(text(`Your rating : ${this.props.rating}`));
+  }
+};
+
+// src/components/inputs/TagComponent.ts
+var TagComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "tag-component";
+  }
+  template() {
+    const icon = this.props.icon ? elem("i").setProps({ class: this.props.icon }) : null;
+    return elem("div").setProps({
+      class: `flex flex-row items-center gap-2 bg-${this.props.color}-100 text-${this.props.color}-800 text-sm font-medium px-2.5 py-0.5 rounded`
+    }).setChild([
+      icon,
+      elem("div").setProps({ class: "" }).addChild(text(this.props.label))
+    ]);
+  }
+};
+
+// src/components/content/game-launch-modal-content/GameDescriptionComponent.ts
+var descriptions = [
+  "Fight against a bot to train your skills.",
+  "Face off against another player in a 1v1 duel.",
+  "Become the target of everyone and prove you're the king of the hill."
+];
+var players = [
+  1,
+  2,
+  8
+];
+var gameNames = [
+  "Training",
+  "Duel",
+  "Tournament"
+];
+var GameDescriptionComponent = class extends component_default {
+  constructor(gameId) {
+    super({ gameId });
+    this.componentName = "game-description-component";
+  }
+  template() {
+    const gameId = this.props.gameId;
+    const appropriateDescription = descriptions[gameId];
+    if (!appropriateDescription) {
+      return void 0;
+    }
+    const appropriateNumber = players[gameId];
+    if (!appropriateNumber) {
+      return void 0;
+    }
+    const appropriateGameName = gameNames[gameId];
+    if (!appropriateGameName) {
+      return void 0;
+    }
+    return elem("span").setChild([
+      elem("div").setProps({ class: "flex gap-2 mt-4" }).setChild([
+        elem("h4").setProps({ class: "text-lg font-semibold text-gray-800" }).addChild(text(appropriateGameName)),
+        new TagComponent({
+          label: `${appropriateNumber} player${appropriateNumber > 1 ? "s" : ""}`,
+          color: "blue",
+          icon: "ti ti-users"
+        })
+      ]),
+      elem("p").setProps({ class: "text-sm text-gray-600 mt-2 max-w-xs" }).addChild(text(appropriateDescription))
+    ]);
+  }
+};
+
+// src/components/content/game-launch-modal-content/GameOptionComponent.ts
+var GameOptionComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "game-option";
+  }
+  template() {
+    const sizeStyles = "w-24 h-24 flex flex-col items-center justify-center rounded-lg";
+    const borderStyles = this.props.isSelected ? "border-blue-300" : "border-blue-100";
+    const hoverStyles = this.props.isSelected ? "hover:border-blue-400" : "hover:border-blue-300";
+    const backgroundStyles = this.props.isSelected ? "bg-blue-100" : "bg-white";
+    return elem("div").setProps({
+      class: `${sizeStyles} border-2 ${borderStyles} ${hoverStyles} ${backgroundStyles} select-none cursor-pointer  shadow-md transition duration-300`
+    }).setChild([
+      elem("i").setProps({ class: this.props.icon }),
+      elem("p").setProps({ class: "text-sm mt-2" }).addChild(text(this.props.title))
+    ]).addEventListener("click", () => {
+      this.props.onClick(this.props.id);
+    });
+  }
+};
+
+// src/components/content/game-launch-modal-content/BodyComponent.ts
+var gameOptions = [
+  { title: "Training", icon: "ti ti-robot" },
+  { title: "Duel", icon: "ti ti-users" },
+  { title: "Turnament", icon: "ti ti-tournament" }
+];
+var GameLauchBodyComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "game-launch-body";
+  }
+  data() {
+    return {
+      selectedOption: PreferModeStorage.get() ?? 0
+    };
+  }
+  updateSelectedOption(id) {
+    if (this.state.selectedOption === id) {
+      return;
+    }
+    this.state.selectedOption = id;
+    PreferModeStorage.save(id);
+  }
+  template() {
+    return elem("div").setChild([
+      elem("div").setProps({ class: "flex flex-row gap-4 mt-4" }).setChild([
+        ...gameOptions.map((option, index) => {
+          return new GameOptionComponent({
+            id: index,
+            title: option.title,
+            icon: option.icon,
+            isSelected: this.state.selectedOption === index,
+            onClick: (id) => {
+              if (this.state.selectedOption === id) {
+                return;
+              }
+              this.state.selectedOption = id;
+            }
+          });
+        })
+      ]),
+      elem("hr").setProps({ class: "my-4 border-gray-300" }),
+      new GameDescriptionComponent(this.state.selectedOption),
+      new GameCurrentRatingComponent(1e3 - 7),
+      new ButtonComponent({
+        label: "Find Game",
+        type: "primary"
+      })
+    ]);
+  }
+};
+
+// src/components/modals/GameModal.ts
+var GameLaunchModal = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "game-launch-modal";
+  }
+  data() {
+    return {
+      show: false
+    };
+  }
+  setShow(value) {
+    this.state.show = value;
+    return this;
+  }
+  template() {
+    return elem("span").setChild([
+      new ModalLayout("game-launch-modal", {
+        onClose: () => this.state.show = false,
+        customClasses: "min-h-20 min-w-[300px] max-w-[400px] rounded-lg shadow-lg bg-white"
+      }).setShow(this.state.show).setSlot(
+        "header",
+        elem("h2").setProps({ class: "text-lg font-bold" }).addChild(text("Game Launch"))
+      ).setSlot("body", new GameLauchBodyComponent())
+    ]);
+  }
+};
+
+// src/components/content/home-page-content/PlayButtonComponent.ts
+var PlayButtonComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "play-button-component";
+  }
+  data() {
+    return {
+      showGameLaunchModal: false
+    };
+  }
+  template() {
+    return elem("span").setChild([
+      elem("button").setProps({
+        class: "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-2 px-4 mt-2 rounded"
+      }).addEventListener("click", () => this.state.showGameLaunchModal = true).addChild(text("Play")),
+      new GameLaunchModal().setShow(this.state.showGameLaunchModal)
+    ]);
+  }
+};
+
+// src/components/content/home-page-content/DashboardComponent.ts
+var DashboardComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "home-dashboard-component";
+  }
+  template() {
+    return elem("div").setProps({
+      id: "home-dashboard-component",
+      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
+    }).setChild([
+      elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`Home`)),
+      new InfoParagraphComponent("Welcome to the ft_transcendence!"),
+      new InfoParagraphComponent("There will be some tools and players statistics soon."),
+      new PlayButtonComponent()
+    ]);
+  }
+};
+
+// src/pages/HomePage.ts
+var HomePage = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "home-page";
+  }
+  data() {
+    return {
+      title: "Welcome to Frontendy",
+      description: "This is a simple example of a Frontendy component."
+    };
+  }
+  template() {
+    return elem("div").setProps({ id: "home-page" }).setChild([
+      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(new DashboardComponent())
+    ]);
   }
 };
 
@@ -703,75 +970,6 @@ var NavBarLink = class {
   constructor(label, routeName) {
     this.label = label;
     this.routeName = routeName;
-  }
-};
-
-// src/layout/modal/ModalLayoutCloseButton.ts
-var buttonSize = "w-6 h-6";
-var buttonColor = "bg-white hover:bg-gray-100 active:bg-gray-200 rounded-lg ease-in-out duration-200";
-var buttonInner = "flex items-center justify-center";
-var ModalLayoutCloseButton = class extends component_default {
-  constructor(onClick) {
-    super({ onClick });
-    this.componentName = "modal-layout-close-button";
-  }
-  template() {
-    const button = elem("button").setProps({ class: `${buttonSize} ${buttonColor} ${buttonInner}` }).addChild(elem("i").setProps({ class: "ti ti-x" }));
-    if (this.props.onClick) {
-      button.addEventListener("click", this.props.onClick.bind(this));
-    }
-    return button;
-  }
-};
-
-// src/layout/modal/ModalLayout.ts
-var ModalLayout = class extends component_default {
-  constructor(name, opts = {}) {
-    super({ name, opts });
-  }
-  data() {
-    return {
-      show: false
-    };
-  }
-  setShow(value) {
-    this.state.show = value;
-    return this;
-  }
-  slots() {
-    return [
-      "header",
-      "body",
-      "footer"
-    ];
-  }
-  template() {
-    const header = this.useSlot("header");
-    const body = this.useSlot("body");
-    const footer = this.useSlot("footer");
-    const defaultCardSize = "min-h-20 min-w-20 max-w-80 rounded-lg shadow-lg bg-white";
-    const cardSize = this.props.opts.customClasses || defaultCardSize;
-    const cardPos = "absolute left-1/2 transform -translate-x-1/2";
-    const onCloseFuncion = this.props.opts.onClose;
-    const backdrop = elem("div").setProps({ class: "w-dvw h-dvh bg-black opacity-50 " });
-    if (this.props.opts.closeOnClickOutside && onCloseFuncion) {
-      backdrop.addEventListener("click", () => {
-        onCloseFuncion.bind(this)();
-      });
-    }
-    return elem("div").$vif(this.state.show).setProps({ class: `fixed top-0 left-0 z-10 flex items-center` }).setChild([
-      // Backdrop (outside click --> close)
-      backdrop,
-      // Modal Window (with header and body slots)
-      elem("div").setProps({ class: ` ${cardSize} ${cardPos}` }).setChild([
-        // Header
-        elem("div").$vif(header !== null).setProps({ class: "px-6 py-4 flex gap-4 items-center " }).addChild(new ModalLayoutCloseButton(onCloseFuncion ? onCloseFuncion.bind(this) : void 0)).addChild(header),
-        // Body
-        elem("div").setProps({ class: "p-6 pt-0" }).addChild(body),
-        // Footer
-        elem("div").$vif(footer !== null).setProps({ class: "p-6 pt-0" }).addChild(footer)
-      ])
-    ]);
   }
 };
 
@@ -1012,7 +1210,6 @@ var AuthModal = class extends component_default {
       return;
     }
     this.state.errorMessage = "";
-    console.log(form);
   }
   toggleForm() {
     this.state.isLogin = !this.state.isLogin;
@@ -1032,9 +1229,7 @@ var AuthModal = class extends component_default {
       ).setSlot(
         "body",
         elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
-          elem("div").setProps({ class: "h-6" }).addChild(
-            elem("div").$vif(this.state.errorMessage).setProps({ class: "text-red-500 text-sm text-center" }).addChild(text(this.state.errorMessage))
-          ),
+          elem("div").$vif(this.state.errorMessage).setProps({ class: "text-red-500 text-sm text-center" }).addChild(text(this.state.errorMessage)),
           form,
           elem("div").setProps({ class: "text-center mt-2" }).addChild(
             elem("button").setProps({

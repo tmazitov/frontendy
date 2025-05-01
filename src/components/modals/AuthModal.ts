@@ -33,7 +33,6 @@ export default class AuthModal extends FrontendyComponent {
             return;
         }
         this.state.errorMessage = "";
-        console.log(form);
     }
 
     toggleForm() {
