@@ -631,6 +631,39 @@ var ModalLayout = class extends component_default {
   }
 };
 
+// src/pkg/event-broker/eventBroker.ts
+var EventBroker = class _EventBroker {
+  constructor() {
+    this.listeners = /* @__PURE__ */ new Map();
+  }
+  static getInstance() {
+    if (!_EventBroker.instance) {
+      _EventBroker.instance = new _EventBroker();
+    }
+    return _EventBroker.instance;
+  }
+  on(event, callback) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, callback);
+    }
+  }
+  off(event) {
+    if (this.listeners.has(event)) {
+      this.listeners.delete(event);
+    }
+  }
+  emit(event, ...args) {
+    if (this.listeners.has(event)) {
+      const callback = this.listeners.get(event);
+      if (callback) {
+        callback(...args);
+      }
+    } else {
+      console.warn(`EventBroker warn : no listener for event: ${event}`);
+    }
+  }
+};
+
 // src/pkg/game-launcher/preferedMode.ts
 var PreferModeStorage = class {
   static save(modeId) {
@@ -855,6 +888,7 @@ var GameLaunchModal = class extends component_default {
       console.log("Game ID: ", gameId);
       this.state.show = false;
       this.state.isLoading = false;
+      EventBroker.getInstance().emit("activate-find-game-bar", gameId);
     }, 2e3);
   }
   template() {
@@ -1012,6 +1046,81 @@ var NavBarLink = class {
     this.label = label;
     this.routeName = routeName;
     this.icon = icon;
+  }
+};
+
+// src/components/find-game-bar/CancelButtonComponent.ts
+var CancelButtonComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "cancel-button-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "w-6 h-6 flex justify-center items-center transition duration-300 hover:bg-red-200 active:bg-red-300 rounded-full cursor-pointer" }).setChild([
+      elem("i").setProps({ class: "ti ti-x text-red-500 text-md" })
+    ]).addEventListener("click", this.props.onClick);
+  }
+};
+
+// src/components/find-game-bar/FindGameBarComponent.ts
+var FindGameBarComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "find-game-bar-component";
+  }
+  data() {
+    return {
+      interval: null,
+      show: false,
+      startedAt: /* @__PURE__ */ new Date(),
+      elapsedTime: "0:00"
+    };
+  }
+  updateTime() {
+    const elapsedSeconds = Math.floor(((/* @__PURE__ */ new Date()).getTime() - this.state.startedAt.getTime()) / 1e3);
+    const minutes = Math.floor(elapsedSeconds / 60);
+    const seconds = elapsedSeconds % 60;
+    this.state.elapsedTime = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  }
+  setShow(show) {
+    if (this.state.show == show) {
+      return this;
+    }
+    console.log("new show state: ", show);
+    this.state.show = show;
+    if (show) {
+      this.state.startedAt = /* @__PURE__ */ new Date();
+      this.state.interval = setInterval(this.updateTime.bind(this), 1e3);
+    } else {
+      clearInterval(this.state.interval);
+      this.state.interval = null;
+    }
+    return this;
+  }
+  onUnmounted() {
+    if (this.state.interval) {
+      clearInterval(this.state.interval);
+      this.state.interval = null;
+    }
+  }
+  onCancel() {
+    console.log("Cancel button clicked, stopping the game search.");
+    EventBroker.getInstance().emit("deactivate-find-game-bar");
+  }
+  template() {
+    const position = `fixed left-0 bottom-0 w-full h-20 bg-gray-200 flex items-center justify-center`;
+    const toast = "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white py-2 px-4";
+    return elem("div").$vif(this.state.show).setProps({ class: `${position} z-1000` }).setChild([
+      elem("div").setProps({ class: `${toast} flex gap-4 justify-between` }).setChild([
+        elem("div").setProps({ class: "flex gap-4 items-center" }).setChild([
+          elem("p").setProps({ class: "text-gray-700" }).addChild(text(this.state.elapsedTime)),
+          elem("p").setProps({ class: "text-gray-700" }).addChild(text("Waiting for a game..."))
+        ]),
+        new CancelButtonComponent({
+          onClick: this.onCancel.bind(this)
+        })
+      ])
+    ]);
   }
 };
 
@@ -1366,11 +1475,8 @@ var AppComponent = class extends component_default {
   data() {
     return {
       currentRoute: router_default.getCurrentRoute(),
-      showRegModal: false
+      showFindGameBar: false
     };
-  }
-  toggleShowModal() {
-    this.state.showRegModal = !this.state.showRegModal;
   }
   isNavigatablePage() {
     if (!this.state.currentRoute) {
@@ -1378,10 +1484,23 @@ var AppComponent = class extends component_default {
     }
     return this.state.currentRoute.name != "auth";
   }
+  onMounted() {
+    EventBroker.getInstance().on("activate-find-game-bar", () => {
+      this.state.showFindGameBar = true;
+    });
+    EventBroker.getInstance().on("deactivate-find-game-bar", () => {
+      this.state.showFindGameBar = false;
+    });
+  }
+  onUnmounted() {
+    EventBroker.getInstance().off("activate-find-game-bar");
+    EventBroker.getInstance().off("deactivate-find-game-bar");
+  }
   template() {
     return elem("div").setProps({ id: "app", class: "h-screen w-screen bg-gray-100 text-gray-800" }).setChild([
       elem("span").$vif(true).addChild(new NavBarComponent(navBarLinks)),
-      new FrontendyRouterView(router_default)
+      new FrontendyRouterView(router_default),
+      new FindGameBarComponent().setShow(this.state.showFindGameBar)
     ]);
   }
 };

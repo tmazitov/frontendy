@@ -1,5 +1,6 @@
 import LoadingLayout from "../../layout/loading/LoadingLayout";
 import ModalLayout from "../../layout/modal/ModalLayout";
+import EventBroker from "../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
 import GameLauchBodyComponent from "../content/game-launch-modal-content/BodyComponent";
@@ -25,6 +26,7 @@ export default class GameLaunchModal extends FrontendyComponent {
             console.log("Game ID: ", gameId);
             this.state.show = false;
             this.state.isLoading = false;
+            EventBroker.getInstance().emit("activate-find-game-bar", gameId);
         }, 2000);
     }
 

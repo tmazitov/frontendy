@@ -1,8 +1,10 @@
 import router from "../pages/router";
+import EventBroker from "../pkg/event-broker/eventBroker";
 import Component from "../pkg/frontendy/component/component";
 import FrontendyRouterView from "../pkg/frontendy/router/RouterView";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
 import NavBarLink from "../types/NavBarLink";
+import FindGameBarComponent from "./find-game-bar/FindGameBarComponent";
 import NavBarComponent from "./nav-bar/NavBarComponent";
 
 const navBarLinks =  [
@@ -17,12 +19,8 @@ export default class AppComponent extends Component {
     data() {
         return {
             currentRoute : router.getCurrentRoute(),
-            showRegModal: false,
+            showFindGameBar: false,
         }
-    }
-
-    toggleShowModal() {
-        this.state.showRegModal = !this.state.showRegModal; 
     }
 
     isNavigatablePage() {
@@ -30,6 +28,20 @@ export default class AppComponent extends Component {
             return false;
         }
         return this.state.currentRoute.name != 'auth'
+    }
+
+    onMounted(): void {
+        EventBroker.getInstance().on("activate-find-game-bar", () => {
+            this.state.showFindGameBar = true;
+        })  
+        EventBroker.getInstance().on("deactivate-find-game-bar", () => {
+            this.state.showFindGameBar = false;
+        })
+    }
+
+    onUnmounted(): void {
+        EventBroker.getInstance().off("activate-find-game-bar");    
+        EventBroker.getInstance().off("deactivate-find-game-bar");
     }
 
     template() {
@@ -41,6 +53,9 @@ export default class AppComponent extends Component {
                     .addChild(new NavBarComponent(navBarLinks)),
 
                 new FrontendyRouterView(router),
+
+                new FindGameBarComponent()
+                    .setShow(this.state.showFindGameBar),
             ])
     }   
 }
