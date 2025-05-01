@@ -3,8 +3,9 @@ import EventBroker from "../pkg/event-broker/eventBroker";
 import Component from "../pkg/frontendy/component/component";
 import FrontendyRouterView from "../pkg/frontendy/router/RouterView";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
+import Game from "../types/Game";
 import NavBarLink from "../types/NavBarLink";
-import FindGameBarComponent from "./find-game-bar/FindGameBarComponent";
+import SearchGameBarComponent from "./search-game-bar/SearchGameBarComponent";
 import NavBarComponent from "./nav-bar/NavBarComponent";
 
 const navBarLinks =  [
@@ -19,6 +20,7 @@ export default class AppComponent extends Component {
     data() {
         return {
             currentRoute : router.getCurrentRoute(),
+            findGameType: null,
             showFindGameBar: false,
         }
     }
@@ -31,11 +33,17 @@ export default class AppComponent extends Component {
     }
 
     onMounted(): void {
-        EventBroker.getInstance().on("activate-find-game-bar", () => {
-            this.state.showFindGameBar = true;
+        EventBroker.getInstance().on("activate-find-game-bar", (game: Game) => {
+            if (this.state.findGameType) {
+                return;
+            }
+            this.state.findGameType = game;
         })  
         EventBroker.getInstance().on("deactivate-find-game-bar", () => {
-            this.state.showFindGameBar = false;
+            if (!this.state.findGameType) {
+                return;
+            }
+            this.state.findGameType = null;
         })
     }
 
@@ -54,8 +62,8 @@ export default class AppComponent extends Component {
 
                 new FrontendyRouterView(router),
 
-                new FindGameBarComponent()
-                    .setShow(this.state.showFindGameBar),
+                new SearchGameBarComponent()
+                    .setSearchGame(this.state.findGameType),
             ])
     }   
 }

@@ -1,9 +1,10 @@
 import EventBroker from "../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
+import Game from "../../types/Game";
 import CancelButtonComponent from "./CancelButtonComponent";
 
-export default class FindGameBarComponent extends FrontendyComponent {
+export default class SearchGameBarComponent extends FrontendyComponent {
     componentName: string = 'find-game-bar-component';
 
     data() {
@@ -12,6 +13,7 @@ export default class FindGameBarComponent extends FrontendyComponent {
             show: false,
             startedAt: new Date(),
             elapsedTime: "0:00",
+            searchGame: null,
         }
     }
 
@@ -22,13 +24,14 @@ export default class FindGameBarComponent extends FrontendyComponent {
         this.state.elapsedTime = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     }
 
-    setShow(show: boolean) {
-        if (this.state.show == show) {
+    setSearchGame(game: Game) {
+        if (this.state.searchGame == game) {
             return this;
         }
-        console.log("new show state: ", show);
-        this.state.show = show;
-        if (show) {
+        this.state.searchGame = game;
+
+        this.state.show = !!this.state.searchGame;
+        if (this.state.show) {
             this.state.startedAt = new Date();
             this.state.interval = setInterval(this.updateTime.bind(this), 1000);
         } else {
@@ -65,12 +68,16 @@ export default class FindGameBarComponent extends FrontendyComponent {
                     .setProps({ class: "flex gap-4 items-center" })
                     .setChild([
                         elem('p')
-                        .setProps({ class: "text-gray-700" })
+                        .setProps({ class: "text-gray-700", style: "width: 5ch"})
                         .addChild(text(this.state.elapsedTime)),
-    
+                        
                         elem('p')
                         .setProps({ class: "text-gray-700" })
-                        .addChild(text("Waiting for a game...")),
+                        .addChild(text(this.state.searchGame?.name)),
+
+                        elem('p')
+                        .setProps({ class: "text-gray-700" })
+                        .addChild(text("Searching for a game...")),
                     ]),
 
                     new CancelButtonComponent({

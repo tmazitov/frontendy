@@ -17,7 +17,7 @@ function removeNewElement(parent: HTMLElement, index: number) {
 
     const child = parent.childNodes[index]
     if (!child) {
-        console.log("update vdom erorr: child with index ", index, "not found in parent", parent)
+        // console.log("update vdom erorr: child with index ", index, "not found in parent", parent)
         return
     }
     
@@ -28,14 +28,14 @@ function replaceElement(parent: HTMLElement, newVNode: VNode | FrontendyComponen
 
     const child = parent.childNodes[index]
     if (!child) {
-        console.log("update vdom erorr: child with index ", index, "not found in parent", parent)
+        // console.log("update vdom erorr: child with index ", index, "not found in parent", parent)
         return
     }
 
     if (newVNode instanceof FrontendyComponent) {
         const element = newVNode.mount(parent)
         if (!element) {
-            console.log("after render component no element in replace...")
+            // console.log("after render component no element in replace...")
             return
         }
         parent.replaceChild(element, child);
@@ -99,21 +99,21 @@ function updateElement(parent: HTMLElement | Text,
     if (newIsComponent || oldIsComponent) {
         if (newIsComponent && oldIsComponent ) {
 
-            if (newVNode.componentName !== oldVNode.componentName)  {
-                console.log("UPD_ELEM : 2 different components", newVNode.componentName, "and", oldVNode.componentName);
-            } else {
-                console.log("UPD_ELEM : 2 same components ", newVNode.componentName);
-            }
+            // if (newVNode.componentName !== oldVNode.componentName)  {
+            //     console.log("UPD_ELEM : 2 different components", newVNode.componentName, "and", oldVNode.componentName);
+            // } else {
+            //     console.log("UPD_ELEM : 2 same components ", newVNode.componentName);
+            // }
 
             const parentParent = parent.parentElement;
             if (!parentParent) {
-                console.log("UPD_ELEM : parentParent is null", parent);
+                // console.log("UPD_ELEM : parentParent is null", parent);
                 return
             }
-            console.log("UPD_ELEM : before replace", parentParent);
+            // console.log("UPD_ELEM : before replace", parentParent);
             newVNode.mount(parentParent)
             oldVNode.unmount();
-            console.log("UPD_ELEM : after replace", parentParent);
+            // console.log("UPD_ELEM : after replace", parentParent);
         } else {
             addNewElement(parent, newVNode);
         }

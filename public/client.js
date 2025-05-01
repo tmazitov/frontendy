@@ -203,7 +203,6 @@ function addNewElement(parent, newVNode) {
 function removeNewElement(parent, index) {
   const child = parent.childNodes[index];
   if (!child) {
-    console.log("update vdom erorr: child with index ", index, "not found in parent", parent);
     return;
   }
   parent.removeChild(child);
@@ -211,13 +210,11 @@ function removeNewElement(parent, index) {
 function replaceElement(parent, newVNode, index) {
   const child = parent.childNodes[index];
   if (!child) {
-    console.log("update vdom erorr: child with index ", index, "not found in parent", parent);
     return;
   }
   if (newVNode instanceof component_default) {
     const element = newVNode.mount(parent);
     if (!element) {
-      console.log("after render component no element in replace...");
       return;
     }
     parent.replaceChild(element, child);
@@ -269,20 +266,12 @@ function updateElement(parent, oldVNode, newVNode, index = 0) {
   const oldIsComponent = oldVNode instanceof component_default;
   if (newIsComponent || oldIsComponent) {
     if (newIsComponent && oldIsComponent) {
-      if (newVNode.componentName !== oldVNode.componentName) {
-        console.log("UPD_ELEM : 2 different components", newVNode.componentName, "and", oldVNode.componentName);
-      } else {
-        console.log("UPD_ELEM : 2 same components ", newVNode.componentName);
-      }
       const parentParent = parent.parentElement;
       if (!parentParent) {
-        console.log("UPD_ELEM : parentParent is null", parent);
         return;
       }
-      console.log("UPD_ELEM : before replace", parentParent);
       newVNode.mount(parentParent);
       oldVNode.unmount();
-      console.log("UPD_ELEM : after replace", parentParent);
     } else {
       addNewElement(parent, newVNode);
     }
@@ -536,6 +525,39 @@ var InfoParagraphComponent = class extends component_default {
   }
 };
 
+// src/pkg/event-broker/eventBroker.ts
+var EventBroker = class _EventBroker {
+  constructor() {
+    this.listeners = /* @__PURE__ */ new Map();
+  }
+  static getInstance() {
+    if (!_EventBroker.instance) {
+      _EventBroker.instance = new _EventBroker();
+    }
+    return _EventBroker.instance;
+  }
+  on(event, callback) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, callback);
+    }
+  }
+  off(event) {
+    if (this.listeners.has(event)) {
+      this.listeners.delete(event);
+    }
+  }
+  emit(event, ...args) {
+    if (this.listeners.has(event)) {
+      const callback = this.listeners.get(event);
+      if (callback) {
+        callback(...args);
+      }
+    } else {
+      console.warn(`EventBroker warn : no listener for event: ${event}`);
+    }
+  }
+};
+
 // src/layout/loading/LoadingLayout.ts
 var LoadingLayout = class extends component_default {
   constructor(props) {
@@ -631,38 +653,24 @@ var ModalLayout = class extends component_default {
   }
 };
 
-// src/pkg/event-broker/eventBroker.ts
-var EventBroker = class _EventBroker {
-  constructor() {
-    this.listeners = /* @__PURE__ */ new Map();
-  }
-  static getInstance() {
-    if (!_EventBroker.instance) {
-      _EventBroker.instance = new _EventBroker();
-    }
-    return _EventBroker.instance;
-  }
-  on(event, callback) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, callback);
-    }
-  }
-  off(event) {
-    if (this.listeners.has(event)) {
-      this.listeners.delete(event);
-    }
-  }
-  emit(event, ...args) {
-    if (this.listeners.has(event)) {
-      const callback = this.listeners.get(event);
-      if (callback) {
-        callback(...args);
-      }
-    } else {
-      console.warn(`EventBroker warn : no listener for event: ${event}`);
-    }
+// src/types/Game.ts
+var Game = class {
+  constructor(id, name, description, players, icon) {
+    this.id = id;
+    this.name = name;
+    this.description = description;
+    this.players = players;
+    this.icon = icon;
   }
 };
+
+// src/data/games.ts
+var games = [
+  new Game(0, "Training", "Fight against a bot to train your skills.", 1, "ti ti-robot"),
+  new Game(1, "Duel", "Face off against another player in a 1v1 duel.", 2, "ti ti-users"),
+  new Game(2, "Turnament", "Become the target of everyone and prove you're the king of the hill.", 8, "ti ti-tournament")
+];
+var games_default = games;
 
 // src/pkg/game-launcher/preferedMode.ts
 var PreferModeStorage = class {
@@ -749,50 +757,25 @@ var TagComponent = class extends component_default {
 };
 
 // src/components/content/game-launch-modal-content/GameDescriptionComponent.ts
-var descriptions = [
-  "Fight against a bot to train your skills.",
-  "Face off against another player in a 1v1 duel.",
-  "Become the target of everyone and prove you're the king of the hill."
-];
-var players = [
-  1,
-  2,
-  8
-];
-var gameNames = [
-  "Training",
-  "Duel",
-  "Tournament"
-];
 var GameDescriptionComponent = class extends component_default {
-  constructor(gameId) {
-    super({ gameId });
+  constructor(game) {
+    super({ game });
     this.componentName = "game-description-component";
   }
   template() {
-    const gameId = this.props.gameId;
-    const appropriateDescription = descriptions[gameId];
-    if (!appropriateDescription) {
-      return void 0;
-    }
-    const appropriateNumber = players[gameId];
-    if (!appropriateNumber) {
-      return void 0;
-    }
-    const appropriateGameName = gameNames[gameId];
-    if (!appropriateGameName) {
-      return void 0;
-    }
+    const description = this.props.game.description;
+    const number = this.props.game.players;
+    const name = this.props.game.name;
     return elem("span").setChild([
       elem("div").setProps({ class: "flex gap-2 mt-4" }).setChild([
-        elem("h4").setProps({ class: "text-lg font-semibold text-gray-800" }).addChild(text(appropriateGameName)),
+        elem("h4").setProps({ class: "text-lg font-semibold text-gray-800" }).addChild(text(name)),
         new TagComponent({
-          label: `${appropriateNumber} player${appropriateNumber > 1 ? "s" : ""}`,
+          label: `${number} player${number > 1 ? "s" : ""}`,
           color: "blue",
           icon: "ti ti-users"
         })
       ]),
-      elem("p").setProps({ class: "text-sm text-gray-600 mt-2 max-w-xs" }).addChild(text(appropriateDescription))
+      elem("p").setProps({ class: "text-sm text-gray-600 mt-2 max-w-xs" }).addChild(text(description))
     ]);
   }
 };
@@ -811,20 +794,15 @@ var GameOptionComponent = class extends component_default {
     return elem("div").setProps({
       class: `${sizeStyles} border-2 ${borderStyles} ${hoverStyles} ${backgroundStyles} select-none cursor-pointer  shadow-md transition duration-300`
     }).setChild([
-      elem("i").setProps({ class: this.props.icon }),
-      elem("p").setProps({ class: "text-sm mt-2" }).addChild(text(this.props.title))
+      elem("i").setProps({ class: this.props.game.icon }),
+      elem("p").setProps({ class: "text-sm mt-2" }).addChild(text(this.props.game.name))
     ]).addEventListener("click", () => {
-      this.props.onClick(this.props.id);
+      this.props.onClick(this.props.game.id);
     });
   }
 };
 
 // src/components/content/game-launch-modal-content/BodyComponent.ts
-var gameOptions = [
-  { title: "Training", icon: "ti ti-robot" },
-  { title: "Duel", icon: "ti ti-users" },
-  { title: "Turnament", icon: "ti ti-tournament" }
-];
 var GameLauchBodyComponent = class extends component_default {
   constructor(props) {
     super(props);
@@ -845,23 +823,21 @@ var GameLauchBodyComponent = class extends component_default {
   template() {
     return elem("div").setChild([
       elem("div").setProps({ class: "flex flex-row gap-4 mt-4" }).setChild([
-        ...gameOptions.map((option, index) => {
+        ...games_default.map((option, index) => {
           return new GameOptionComponent({
-            id: index,
-            title: option.title,
-            icon: option.icon,
+            game: option,
             isSelected: this.state.selectedOption === index,
             onClick: this.updateSelectedOption.bind(this)
           });
         })
       ]),
       elem("hr").setProps({ class: "my-4 border-gray-300" }),
-      new GameDescriptionComponent(this.state.selectedOption),
+      new GameDescriptionComponent(games_default[this.state.selectedOption]),
       new GameCurrentRatingComponent(1e3 - 7),
       new ButtonComponent({
         label: "Find Game",
         type: "primary"
-      }).onClick(() => this.props.onSubmit(this.state.selectedOption))
+      }).onClick(() => this.props.onSubmit(games_default[this.state.selectedOption]))
     ]);
   }
 };
@@ -926,11 +902,15 @@ var PlayButtonComponent = class extends component_default {
       showGameLaunchModal: false
     };
   }
+  onOpenModal() {
+    this.state.showGameLaunchModal = true;
+    EventBroker.getInstance().emit("deactivate-find-game-bar");
+  }
   template() {
     return elem("span").setChild([
       elem("button").setProps({
         class: "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-2 px-4 mt-2 rounded"
-      }).addEventListener("click", () => this.state.showGameLaunchModal = true).addChild(text("Play")),
+      }).addEventListener("click", this.onOpenModal.bind(this)).addChild(text("Play")),
       new GameLaunchModal().setShow(this.state.showGameLaunchModal)
     ]);
   }
@@ -1049,7 +1029,7 @@ var NavBarLink = class {
   }
 };
 
-// src/components/find-game-bar/CancelButtonComponent.ts
+// src/components/search-game-bar/CancelButtonComponent.ts
 var CancelButtonComponent = class extends component_default {
   constructor(props) {
     super(props);
@@ -1062,8 +1042,8 @@ var CancelButtonComponent = class extends component_default {
   }
 };
 
-// src/components/find-game-bar/FindGameBarComponent.ts
-var FindGameBarComponent = class extends component_default {
+// src/components/search-game-bar/SearchGameBarComponent.ts
+var SearchGameBarComponent = class extends component_default {
   constructor() {
     super(...arguments);
     this.componentName = "find-game-bar-component";
@@ -1073,7 +1053,8 @@ var FindGameBarComponent = class extends component_default {
       interval: null,
       show: false,
       startedAt: /* @__PURE__ */ new Date(),
-      elapsedTime: "0:00"
+      elapsedTime: "0:00",
+      searchGame: null
     };
   }
   updateTime() {
@@ -1082,13 +1063,13 @@ var FindGameBarComponent = class extends component_default {
     const seconds = elapsedSeconds % 60;
     this.state.elapsedTime = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   }
-  setShow(show) {
-    if (this.state.show == show) {
+  setSearchGame(game) {
+    if (this.state.searchGame == game) {
       return this;
     }
-    console.log("new show state: ", show);
-    this.state.show = show;
-    if (show) {
+    this.state.searchGame = game;
+    this.state.show = !!this.state.searchGame;
+    if (this.state.show) {
       this.state.startedAt = /* @__PURE__ */ new Date();
       this.state.interval = setInterval(this.updateTime.bind(this), 1e3);
     } else {
@@ -1113,7 +1094,8 @@ var FindGameBarComponent = class extends component_default {
     return elem("div").$vif(this.state.show).setProps({ class: `${position} z-1000` }).setChild([
       elem("div").setProps({ class: `${toast} flex gap-4 justify-between` }).setChild([
         elem("div").setProps({ class: "flex gap-4 items-center" }).setChild([
-          elem("p").setProps({ class: "text-gray-700" }).addChild(text(this.state.elapsedTime)),
+          elem("p").setProps({ class: "text-gray-700", style: "width: 5ch" }).addChild(text(this.state.elapsedTime)),
+          elem("p").setProps({ class: "text-gray-700" }).addChild(text(this.state.searchGame?.name)),
           elem("p").setProps({ class: "text-gray-700" }).addChild(text("Waiting for a game..."))
         ]),
         new CancelButtonComponent({
@@ -1475,6 +1457,7 @@ var AppComponent = class extends component_default {
   data() {
     return {
       currentRoute: router_default.getCurrentRoute(),
+      findGameType: null,
       showFindGameBar: false
     };
   }
@@ -1485,11 +1468,17 @@ var AppComponent = class extends component_default {
     return this.state.currentRoute.name != "auth";
   }
   onMounted() {
-    EventBroker.getInstance().on("activate-find-game-bar", () => {
-      this.state.showFindGameBar = true;
+    EventBroker.getInstance().on("activate-find-game-bar", (game) => {
+      if (this.state.findGameType) {
+        return;
+      }
+      this.state.findGameType = game;
     });
     EventBroker.getInstance().on("deactivate-find-game-bar", () => {
-      this.state.showFindGameBar = false;
+      if (!this.state.findGameType) {
+        return;
+      }
+      this.state.findGameType = null;
     });
   }
   onUnmounted() {
@@ -1500,7 +1489,7 @@ var AppComponent = class extends component_default {
     return elem("div").setProps({ id: "app", class: "h-screen w-screen bg-gray-100 text-gray-800" }).setChild([
       elem("span").$vif(true).addChild(new NavBarComponent(navBarLinks)),
       new FrontendyRouterView(router_default),
-      new FindGameBarComponent().setShow(this.state.showFindGameBar)
+      new SearchGameBarComponent().setSearchGame(this.state.findGameType)
     ]);
   }
 };

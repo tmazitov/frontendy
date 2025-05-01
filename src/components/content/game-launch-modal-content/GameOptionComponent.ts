@@ -1,10 +1,9 @@
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
+import Game from "../../../types/Game";
 
 type GameOptionProps = {
-    id: number;
-    title: string;
-    icon: string;
+    game: Game
     isSelected: boolean;
     onClick: (id: number) => void;
 }
@@ -28,12 +27,12 @@ export default class GameOptionComponent extends FrontendyComponent {
                 class: `${sizeStyles} border-2 ${borderStyles} ${hoverStyles} ${backgroundStyles} select-none cursor-pointer  shadow-md transition duration-300`,
             })
             .setChild([
-                elem("i").setProps({ class: this.props.icon }),
+                elem("i").setProps({ class: this.props.game.icon }),
                 elem("p").setProps({ class: "text-sm mt-2"})
-                    .addChild(text(this.props.title)),
+                    .addChild(text(this.props.game.name)),
             ])
             .addEventListener('click', () => {
-                this.props.onClick(this.props.id)
+                this.props.onClick(this.props.game.id)
             })
     }
 }
