@@ -1,3 +1,4 @@
+import LoadingLayout from "../../layout/loading/LoadingLayout";
 import ModalLayout from "../../layout/modal/ModalLayout";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
@@ -9,12 +10,22 @@ export default class GameLaunchModal extends FrontendyComponent {
     data() {
         return {
             show: false,
+            isLoading: false,
         }
     }
 
     public setShow(value: boolean) {
         this.state.show = value;
         return this 
+    }
+
+    private onSubmit(gameId: number) {
+        this.state.isLoading = true;
+        setTimeout(() => {
+            console.log("Game ID: ", gameId);
+            this.state.show = false;
+            this.state.isLoading = false;
+        }, 2000);
     }
 
     template() {
@@ -29,7 +40,18 @@ export default class GameLaunchModal extends FrontendyComponent {
                     elem("h2")
                     .setProps({ class: "text-lg font-bold" })
                     .addChild(text("Game Launch")))
-                .setSlot("body", new GameLauchBodyComponent())
+                .setSlot("body", 
+                    elem("span")
+                    .setChild([
+                        new LoadingLayout({
+                            label: "Please wait...", 
+                            icon: "ti ti-loader"
+                        }).setShow(this.state.isLoading),
+                        new GameLauchBodyComponent({
+                            onSubmit: this.onSubmit.bind(this),
+                        }),
+                    ])
+                )
             ])
     }
 }

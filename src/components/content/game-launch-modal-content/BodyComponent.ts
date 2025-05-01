@@ -12,8 +12,16 @@ const gameOptions = [
     { title: "Turnament", icon: "ti ti-tournament"},
 ]
 
+type GameLauchBodyProps = {
+    onSubmit: (gameId: number) => void;
+}
+
 export default class GameLauchBodyComponent extends FrontendyComponent {
     componentName: string = 'game-launch-body';
+
+    constructor(props: GameLauchBodyProps) {
+        super(props);
+    }
 
     data() {
         return {
@@ -21,12 +29,12 @@ export default class GameLauchBodyComponent extends FrontendyComponent {
         }
     }
 
-    updateSelectedOption(id:number) {
-        if (this.state.selectedOption === id) {
+    updateSelectedOption(gameId:number) {
+        if (this.state.selectedOption === gameId) {
             return
         }
-        this.state.selectedOption = id;
-        PreferModeStorage.save(id);
+        this.state.selectedOption = gameId;
+        PreferModeStorage.save(gameId);
     }
 
     template() {
@@ -42,12 +50,7 @@ export default class GameLauchBodyComponent extends FrontendyComponent {
                             title: option.title,
                             icon: option.icon,
                             isSelected: this.state.selectedOption === index,
-                            onClick: (id: number) => {
-                                if (this.state.selectedOption === id) {
-                                    return
-                                }
-                                this.state.selectedOption = id;
-                            }
+                            onClick: this.updateSelectedOption.bind(this),
                         })
                     }),
                 ]),
@@ -61,6 +64,7 @@ export default class GameLauchBodyComponent extends FrontendyComponent {
                     label: "Find Game",
                     type: "primary",
                 })
+                .onClick(() => this.props.onSubmit(this.state.selectedOption)),
             ])
     }
 }

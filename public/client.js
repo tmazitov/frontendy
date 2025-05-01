@@ -536,6 +536,32 @@ var InfoParagraphComponent = class extends component_default {
   }
 };
 
+// src/layout/loading/LoadingLayout.ts
+var LoadingLayout = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "loading-layout";
+  }
+  data() {
+    return {
+      show: false
+    };
+  }
+  setShow(value) {
+    this.state.show = value;
+    return this;
+  }
+  template() {
+    return elem("div").$vif(this.state.show).setProps({ class: "absolute top-0 left-0 w-full h-full flex items-center justify-center" }).setChild([
+      elem("div").setProps({ class: "absolute z-1 top-0 left-0 w-full h-full bg-gray-200 opacity-50" }),
+      elem("div").setProps({ class: "absolute z-2 left-1/2 transform -translate-x-1/2 flex flex-col items-center" }).setChild([
+        elem("i").setProps({ class: `${this.props.icon} text-xl text-blue-500 animate-spin` }),
+        elem("p").setProps({ class: "text-gray-700 mt-2" }).addChild(text(this.props.label))
+      ])
+    ]);
+  }
+};
+
 // src/layout/modal/ModalLayoutCloseButton.ts
 var buttonSize = "w-6 h-6";
 var buttonColor = "bg-white hover:bg-gray-100 active:bg-gray-200 rounded-lg ease-in-out duration-200";
@@ -593,7 +619,7 @@ var ModalLayout = class extends component_default {
       // Backdrop (outside click --> close)
       backdrop,
       // Modal Window (with header and body slots)
-      elem("div").setProps({ class: ` ${cardSize} ${cardPos}` }).setChild([
+      elem("div").setProps({ class: ` ${cardSize} ${cardPos}  overflow-hidden` }).setChild([
         // Header
         elem("div").$vif(header !== null).setProps({ class: "px-6 py-4 flex gap-4 items-center " }).addChild(new ModalLayoutCloseButton(onCloseFuncion ? onCloseFuncion.bind(this) : void 0)).addChild(header),
         // Body
@@ -767,8 +793,8 @@ var gameOptions = [
   { title: "Turnament", icon: "ti ti-tournament" }
 ];
 var GameLauchBodyComponent = class extends component_default {
-  constructor() {
-    super(...arguments);
+  constructor(props) {
+    super(props);
     this.componentName = "game-launch-body";
   }
   data() {
@@ -776,12 +802,12 @@ var GameLauchBodyComponent = class extends component_default {
       selectedOption: PreferModeStorage.get() ?? 0
     };
   }
-  updateSelectedOption(id) {
-    if (this.state.selectedOption === id) {
+  updateSelectedOption(gameId) {
+    if (this.state.selectedOption === gameId) {
       return;
     }
-    this.state.selectedOption = id;
-    PreferModeStorage.save(id);
+    this.state.selectedOption = gameId;
+    PreferModeStorage.save(gameId);
   }
   template() {
     return elem("div").setChild([
@@ -792,12 +818,7 @@ var GameLauchBodyComponent = class extends component_default {
             title: option.title,
             icon: option.icon,
             isSelected: this.state.selectedOption === index,
-            onClick: (id) => {
-              if (this.state.selectedOption === id) {
-                return;
-              }
-              this.state.selectedOption = id;
-            }
+            onClick: this.updateSelectedOption.bind(this)
           });
         })
       ]),
@@ -807,7 +828,7 @@ var GameLauchBodyComponent = class extends component_default {
       new ButtonComponent({
         label: "Find Game",
         type: "primary"
-      })
+      }).onClick(() => this.props.onSubmit(this.state.selectedOption))
     ]);
   }
 };
@@ -820,12 +841,21 @@ var GameLaunchModal = class extends component_default {
   }
   data() {
     return {
-      show: false
+      show: false,
+      isLoading: false
     };
   }
   setShow(value) {
     this.state.show = value;
     return this;
+  }
+  onSubmit(gameId) {
+    this.state.isLoading = true;
+    setTimeout(() => {
+      console.log("Game ID: ", gameId);
+      this.state.show = false;
+      this.state.isLoading = false;
+    }, 2e3);
   }
   template() {
     return elem("span").setChild([
@@ -835,7 +865,18 @@ var GameLaunchModal = class extends component_default {
       }).setShow(this.state.show).setSlot(
         "header",
         elem("h2").setProps({ class: "text-lg font-bold" }).addChild(text("Game Launch"))
-      ).setSlot("body", new GameLauchBodyComponent())
+      ).setSlot(
+        "body",
+        elem("span").setChild([
+          new LoadingLayout({
+            label: "Please wait...",
+            icon: "ti ti-loader"
+          }).setShow(this.state.isLoading),
+          new GameLauchBodyComponent({
+            onSubmit: this.onSubmit.bind(this)
+          })
+        ])
+      )
     ]);
   }
 };

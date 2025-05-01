@@ -61,7 +61,7 @@ export default class ModalLayout extends FrontendyComponent {
 
                 // Modal Window (with header and body slots)
                 elem("div")
-                .setProps({ class: ` ${cardSize} ${cardPos}` })
+                .setProps({ class: ` ${cardSize} ${cardPos}  overflow-hidden` })
                 .setChild([
 
                     // Header
