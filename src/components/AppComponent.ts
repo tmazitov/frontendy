@@ -6,8 +6,8 @@ import NavBarLink from "../types/NavBarLink";
 import NavBarComponent from "./nav-bar/NavBarComponent";
 
 const navBarLinks =  [
-    new NavBarLink('Home', 'home'),
-    new NavBarLink('About', 'about'),
+    new NavBarLink('Home', 'home', "ti ti-home"),
+    new NavBarLink('About', 'about', "ti ti-info-circle"),
 ]
 
 export default class AppComponent extends Component {

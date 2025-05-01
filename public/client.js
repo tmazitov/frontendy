@@ -967,9 +967,10 @@ var FrontendyRouterView = class extends component_default {
 
 // src/types/NavBarLink.ts
 var NavBarLink = class {
-  constructor(label, routeName) {
+  constructor(label, routeName, icon) {
     this.label = label;
     this.routeName = routeName;
+    this.icon = icon;
   }
 };
 
@@ -1245,8 +1246,7 @@ var AuthModal = class extends component_default {
 // src/components/nav-bar/NavBarItemComponent.ts
 var NavBarItemComponent = class extends component_default {
   constructor(props) {
-    const { label, onClick } = props;
-    super({ label, onClick });
+    super(props);
     this.componentName = "nav-bar-item-component";
   }
   getStyles() {
@@ -1258,7 +1258,10 @@ var NavBarItemComponent = class extends component_default {
     return `nav-link ${styles.container} ${styles.text} ${styles.animation}`;
   }
   template() {
-    return elem("div").setProps({ class: this.getStyles() }).addChild(text(this.props.label)).addEventListener("click", this.props.onClick);
+    return elem("div").setProps({ class: this.getStyles() }).setChild([
+      elem("i").setProps({ class: this.props.icon }),
+      elem("span").setProps({ class: "ml-2" }).addChild(text(this.props.label))
+    ]).addEventListener("click", this.props.onClick);
   }
 };
 
@@ -1288,12 +1291,14 @@ var NavBarComponent = class extends component_default {
           // Main navbar links
           elem("div").setProps({ class: "flex flex-row" }).setChild(this.props.links.map((link) => {
             return new NavBarItemComponent({
+              icon: link.icon,
               label: link.label,
               onClick: () => this.navigate(link)
             });
           })),
           // Sign in button
           new NavBarItemComponent({
+            icon: "ti ti-login-2",
             label: "Sign in",
             onClick: () => {
               this.state.showAuthModal = true;
@@ -1309,8 +1314,8 @@ var NavBarComponent = class extends component_default {
 
 // src/components/AppComponent.ts
 var navBarLinks = [
-  new NavBarLink("Home", "home"),
-  new NavBarLink("About", "about")
+  new NavBarLink("Home", "home", "ti ti-home"),
+  new NavBarLink("About", "about", "ti ti-info-circle")
 ];
 var AppComponent = class extends component_default {
   constructor() {

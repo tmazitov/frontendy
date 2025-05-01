@@ -47,6 +47,7 @@ export default class NavBarComponent extends FrontendyComponent {
                         .setProps({ class : "flex flex-row" })
                         .setChild(this.props.links.map((link:NavBarLink) => {
                             return new NavBarItemComponent({
+                                icon: link.icon,
                                 label: link.label,
                                 onClick: () => this.navigate(link)
                             })
@@ -55,6 +56,7 @@ export default class NavBarComponent extends FrontendyComponent {
                         // Sign in button
 
                         new NavBarItemComponent({
+                            icon: "ti ti-login-2",
                             label: "Sign in",
                             onClick: () => {
                                 this.state.showAuthModal = true;

@@ -2,6 +2,7 @@ import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
 
 type NavBarItemProps = {
+    icon: string,
     label: string,
     onClick: () => void,
 }
@@ -10,8 +11,7 @@ export default class NavBarItemComponent extends FrontendyComponent {
     componentName: string = 'nav-bar-item-component';
 
     constructor(props: NavBarItemProps) {
-        const { label, onClick } = props
-        super({label, onClick});
+        super(props);
     }
 
     getStyles() {
@@ -26,7 +26,11 @@ export default class NavBarItemComponent extends FrontendyComponent {
     template() {
         return elem('div')
             .setProps({class : this.getStyles()})
-            .addChild(text(this.props.label))
+            .setChild([
+                elem("i").setProps({class: this.props.icon}),
+                elem("span").setProps({class: "ml-2"})
+                    .addChild(text(this.props.label))
+            ])
             .addEventListener("click", this.props.onClick)
     }   
 }
