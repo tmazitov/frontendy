@@ -12,9 +12,7 @@ export default class GameWaitComponent extends FrontendyComponent {
 
     template() {
 
-        const confirmed = GameSearcher.getConfirmedPlayers()
-
-
+        const confirmed = GameSearcher.getMatchPlayer()
 
         return elem("span")
         .setChild([
@@ -23,9 +21,9 @@ export default class GameWaitComponent extends FrontendyComponent {
             .addChild(text(`Remaining time : ${this.props.remainingTime}`)),
             
             elem('div')
-            .setProps({class : "w-full flex gap-2"})
+            .setProps({class : "w-full flex gap-2 justify-center"})
             .setChild([
-                ...confirmed.map(player => new WaitPlayerBoxComponent(player.isConfirmed))
+                ...confirmed.map(player => new WaitPlayerBoxComponent(player.status))
             ])
         ])
     }

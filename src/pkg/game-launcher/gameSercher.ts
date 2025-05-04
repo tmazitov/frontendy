@@ -16,9 +16,9 @@ export default class GameSearcher {
             if (callback) {
                 callback();
             }
-            setTimeout(() => {
-                this.foundGame()
-            }, 5000)
+            // setTimeout(() => {
+            //     this.foundGame()
+            // }, 5000)
         }, 2000)
     }
 
@@ -51,7 +51,8 @@ export default class GameSearcher {
         }
         EventBroker.getInstance().emit("deactivate-confirmation-modal");
         
-        setTimeout(() => {
+        setTimeout(() => { 
+            const isWasConfirmed = this.isConfirmed;
             this.isConfirmed = false;
             if (callback) {
                 callback();
@@ -60,13 +61,14 @@ export default class GameSearcher {
             if (!this.searchGameType) {
                 return; 
             }
-            const game = this.searchGameType
+            if (isWasConfirmed) {
+                this.startGameSearching(this.searchGameType)
+            }
             this.searchGameType = null;
-            this.startGameSearching(game);
         }, 200)
     }
 
-    static getConfirmedPlayers() {
+    static getMatchPlayer() {
 
         if (!this.isConfirmed || !this.searchGameType) {
             return [];
@@ -76,10 +78,10 @@ export default class GameSearcher {
         const players = Array.from({ length: numberOfPlayers }, (_, index) => index + 1).map(player => {
             return {
                 id: player,
-                isConfirmed: false,
+                status: "waiting",
             }
         });
-        players[0].isConfirmed = true;
+        players[0].status = "confirmed";
         return players;
     }
 }

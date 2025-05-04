@@ -1,6 +1,5 @@
 import LoadingLayout from "../../layout/loading/LoadingLayout";
 import ModalLayout from "../../layout/modal/ModalLayout";
-import EventBroker from "../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
 import GameSearcher from "../../pkg/game-launcher/gameSercher";

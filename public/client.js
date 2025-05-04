@@ -576,9 +576,6 @@ var GameSearcher = class {
       if (callback) {
         callback();
       }
-      setTimeout(() => {
-        this.foundGame();
-      }, 5e3);
     }, 2e3);
   }
   static foundGame() {
@@ -606,6 +603,7 @@ var GameSearcher = class {
     }
     EventBroker.getInstance().emit("deactivate-confirmation-modal");
     setTimeout(() => {
+      const isWasConfirmed = this.isConfirmed;
       this.isConfirmed = false;
       if (callback) {
         callback();
@@ -614,12 +612,13 @@ var GameSearcher = class {
       if (!this.searchGameType) {
         return;
       }
-      const game = this.searchGameType;
+      if (isWasConfirmed) {
+        this.startGameSearching(this.searchGameType);
+      }
       this.searchGameType = null;
-      this.startGameSearching(game);
     }, 200);
   }
-  static getConfirmedPlayers() {
+  static getMatchPlayer() {
     if (!this.isConfirmed || !this.searchGameType) {
       return [];
     }
@@ -627,10 +626,10 @@ var GameSearcher = class {
     const players = Array.from({ length: numberOfPlayers }, (_, index) => index + 1).map((player) => {
       return {
         id: player,
-        isConfirmed: false
+        status: "waiting"
       };
     });
-    players[0].isConfirmed = true;
+    players[0].status = "confirmed";
     return players;
   }
 };
@@ -1123,19 +1122,18 @@ var CancelButtonComponent = class extends component_default {
   }
 };
 
-// src/components/search-game-bar/SearchGameBarComponent.ts
-var SearchGameBarComponent = class extends component_default {
+// src/components/search-game-bar/ElapsedTimeComponent.ts
+var interval = void 0;
+var ElapsedTimeComponent = class extends component_default {
   constructor() {
     super(...arguments);
-    this.componentName = "find-game-bar-component";
+    this.componentName = "elapsed-time-component";
   }
   data() {
     return {
-      interval: null,
-      show: false,
       startedAt: /* @__PURE__ */ new Date(),
       elapsedTime: "0:00",
-      searchGame: null
+      isCounting: false
     };
   }
   updateTime() {
@@ -1144,26 +1142,52 @@ var SearchGameBarComponent = class extends component_default {
     const seconds = elapsedSeconds % 60;
     this.state.elapsedTime = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   }
+  setCounting(isCounting) {
+    if (this.state.isCounting == isCounting) {
+      return this;
+    }
+    if (interval) {
+      clearInterval(interval);
+      interval = void 0;
+    }
+    console.log("setCounting", isCounting);
+    this.state.isCounting = isCounting;
+    if (this.state.isCounting) {
+      this.state.startedAt = /* @__PURE__ */ new Date();
+      interval = setInterval(this.updateTime.bind(this), 1e3);
+    }
+    return this;
+  }
+  onUnmounted() {
+    clearInterval(interval);
+    interval = void 0;
+  }
+  template() {
+    return elem("p").setChild([
+      text(this.state.elapsedTime)
+    ]);
+  }
+};
+
+// src/components/search-game-bar/SearchGameBarComponent.ts
+var SearchGameBarComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "find-game-bar-component";
+  }
+  data() {
+    return {
+      show: false,
+      searchGame: null
+    };
+  }
   setSearchGame(game) {
     if (this.state.searchGame == game) {
       return this;
     }
     this.state.searchGame = game;
     this.state.show = !!this.state.searchGame;
-    if (this.state.show) {
-      this.state.startedAt = /* @__PURE__ */ new Date();
-      this.state.interval = setInterval(this.updateTime.bind(this), 1e3);
-    } else {
-      clearInterval(this.state.interval);
-      this.state.interval = null;
-    }
     return this;
-  }
-  onUnmounted() {
-    if (this.state.interval) {
-      clearInterval(this.state.interval);
-      this.state.interval = null;
-    }
   }
   onCancel() {
     console.log("Cancel button clicked, stopping the game search.");
@@ -1175,7 +1199,7 @@ var SearchGameBarComponent = class extends component_default {
     return elem("div").$vif(this.state.show).setProps({ class: `${position} z-5` }).setChild([
       elem("div").setProps({ class: `${toast} flex gap-4 justify-between` }).setChild([
         elem("div").setProps({ class: "flex gap-4 items-center" }).setChild([
-          elem("p").setProps({ class: "text-gray-700", style: "width: 5ch" }).addChild(text(this.state.elapsedTime)),
+          new ElapsedTimeComponent().setCounting(this.state.show),
           elem("p").setProps({ class: "text-gray-700" }).addChild(text(this.state.searchGame?.name)),
           elem("p").setProps({ class: "text-gray-700" }).addChild(text("Searching for a game..."))
         ]),
@@ -1543,14 +1567,39 @@ var GameConfirmationComponent = class extends component_default {
 };
 
 // src/components/content/game-confirmation-modal-content/WaitPlayerBoxComponent.ts
-var WaitPlayerBoxComponent = class extends component_default {
-  constructor(isConfirmed) {
-    super({ isConfirmed });
-    this.componentName = "wait-player-box-component";
+var PlayerBoxComponent = class extends component_default {
+  constructor(status) {
+    super({ status });
+    this.componentName = "player-box-component";
+  }
+  getBackgroundColor(status) {
+    switch (status) {
+      case "confirmed":
+        return "bg-green-500";
+      case "waiting":
+        return "bg-gray-300";
+      case "missing":
+        return "bg-red-500";
+      default:
+        return "bg-gray-300";
+    }
+  }
+  getBorderColor(status) {
+    switch (status) {
+      case "confirmed":
+        return "border-green-500";
+      case "waiting":
+        return "border-gray-300";
+      case "missing":
+        return "border-red-500";
+      default:
+        return "border-gray-300";
+    }
   }
   template() {
-    const borderColor = this.props.isConfirmed ? "border-green-500" : "border-gray-300";
-    const bgColor = this.props.isConfirmed ? "bg-green-500" : "bg-gray-300";
+    const status = this.props.status;
+    const borderColor = this.getBorderColor(status);
+    const bgColor = this.getBackgroundColor(status);
     return elem("div").setProps({ class: `w-8 h-8 border-2 ${borderColor} ${bgColor} rounded-md flex justify-center items-center` });
   }
 };
@@ -1562,18 +1611,18 @@ var GameWaitComponent = class extends component_default {
     this.componentName = "game-wait-component";
   }
   template() {
-    const confirmed = GameSearcher.getConfirmedPlayers();
+    const confirmed = GameSearcher.getMatchPlayer();
     return elem("span").setChild([
       elem("p").setProps({ class: "text-sm text-gray-600 mb-2 text-start" }).addChild(text(`Remaining time : ${this.props.remainingTime}`)),
-      elem("div").setProps({ class: "w-full flex gap-2" }).setChild([
-        ...confirmed.map((player) => new WaitPlayerBoxComponent(player.isConfirmed))
+      elem("div").setProps({ class: "w-full flex gap-2 justify-center" }).setChild([
+        ...confirmed.map((player) => new PlayerBoxComponent(player.status))
       ])
     ]);
   }
 };
 
 // src/components/modals/GameConfirmationModal.ts
-var interval;
+var interval2;
 var GameConfirmationModal = class extends component_default {
   constructor(game) {
     super({ game });
@@ -1590,9 +1639,9 @@ var GameConfirmationModal = class extends component_default {
   setShow(value) {
     this.state.show = value;
     if (value) {
-      interval = setInterval(() => {
+      interval2 = setInterval(() => {
         if (this.state.delay == 0) {
-          clearInterval(interval);
+          clearInterval(interval2);
           GameSearcher.cancelGame(() => {
             this.state.isLoading = false;
             this.state.show = false;
