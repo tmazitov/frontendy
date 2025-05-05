@@ -13,6 +13,7 @@ import TimerStorage from "../pkg/timer";
 const navBarLinks =  [
     new NavBarLink('Home', 'home', "ti ti-home"),
     new NavBarLink('About', 'about', "ti ti-info-circle"),
+    new NavBarLink('Profile', 'profile', "ti ti-user"),
 ]
 
 export default class AppComponent extends Component {

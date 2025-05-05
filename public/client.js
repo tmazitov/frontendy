@@ -516,8 +516,8 @@ var AboutPage = class extends component_default {
 
 // src/components/inputs/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
-  constructor(text7) {
-    super({ text: text7 });
+  constructor(text8) {
+    super({ text: text8 });
     this.componentName = "info-paragraph-component";
   }
   template() {
@@ -1060,10 +1060,62 @@ var NotFoundPage = class extends component_default {
   }
 };
 
+// src/components/content/profile-page-content/ProfilePageContent.ts
+var ProfilePageContent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "profile-page-content";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("div").setChild([text("Profile Page Content")]);
+  }
+};
+
+// src/layout/dashboard/DashboardLayout.ts
+var DashboardComponent2 = class extends component_default {
+  constructor(label) {
+    super({ label });
+    this.componentName = "dashboard-component";
+  }
+  slots() {
+    return [
+      "content"
+    ];
+  }
+  template() {
+    const content = this.useSlot("content");
+    return elem("div").setProps({
+      id: "dashboard-component",
+      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
+    }).setChild([
+      elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(this.props.label)),
+      content
+    ]);
+  }
+};
+
+// src/pages/ProfilePage.ts
+var ProfilePage = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "profile-page";
+  }
+  template() {
+    const dashboard = new DashboardComponent2("Profile").setSlot("content", new ProfilePageContent());
+    return elem("div").setProps({ id: "profile-page" }).setChild([
+      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(dashboard)
+    ]);
+  }
+};
+
 // src/pages/router.ts
 var routes = [
   { name: "home", path: "/", component: HomePage },
-  { name: "about", path: "/about", component: AboutPage }
+  { name: "about", path: "/about", component: AboutPage },
+  { name: "profile", path: "/profile", component: ProfilePage }
 ];
 var routerConfig = {
   NotFoundPage
@@ -1739,7 +1791,8 @@ var GameConfirmationModal = class extends component_default {
 // src/components/AppComponent.ts
 var navBarLinks = [
   new NavBarLink("Home", "home", "ti ti-home"),
-  new NavBarLink("About", "about", "ti ti-info-circle")
+  new NavBarLink("About", "about", "ti ti-info-circle"),
+  new NavBarLink("Profile", "profile", "ti ti-user")
 ];
 var AppComponent = class extends component_default {
   constructor() {
