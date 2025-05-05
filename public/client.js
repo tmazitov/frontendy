@@ -567,15 +567,15 @@ var GameSearcher = class {
     this.isConfirmed = false;
   }
   static startGameSearching(game, callback = null) {
-    if (this.searchGameType) {
-      return;
-    }
     setTimeout(() => {
       EventBroker.getInstance().emit("activate-search-game-bar", game);
       this.searchGameType = game;
       if (callback) {
         callback();
       }
+      setTimeout(() => {
+        this.foundGame();
+      }, 5e3);
     }, 2e3);
   }
   static foundGame() {
@@ -608,14 +608,15 @@ var GameSearcher = class {
       if (callback) {
         callback();
       }
-      console.log("Game search cancelled.", this.searchGameType);
+      console.log("Game cancelled", isWasConfirmed);
       if (!this.searchGameType) {
         return;
       }
-      if (isWasConfirmed) {
-        this.startGameSearching(this.searchGameType);
-      }
+      const game = this.searchGameType;
       this.searchGameType = null;
+      if (isWasConfirmed) {
+        this.startGameSearching(game);
+      }
     }, 200);
   }
   static getMatchPlayer() {
@@ -1122,8 +1123,68 @@ var CancelButtonComponent = class extends component_default {
   }
 };
 
+// src/pkg/timer.ts
+var Timer = class {
+  constructor() {
+    this.interval = void 0;
+    this.counter = 0;
+    this.isCounting = false;
+  }
+  start(omChange) {
+    if (this.isCounting) {
+      return;
+    }
+    this.isCounting = true;
+    this.counter = 0;
+    this.interval = setInterval(() => {
+      this.counter++;
+      omChange(this.counter);
+    }, 1e3);
+  }
+  stop() {
+    if (!this.isCounting) {
+      return;
+    }
+    this.isCounting = false;
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = void 0;
+    }
+  }
+  reset() {
+    this.counter = 0;
+  }
+};
+var TimerStorage = class {
+  static {
+    this.timers = /* @__PURE__ */ new Map();
+  }
+  static addTimer(name, onChange) {
+    if (this.timers.has(name)) {
+      throw new Error(`Timer with name ${name} already exists`);
+    }
+    const timer = new Timer();
+    this.timers.set(name, timer);
+    timer.start(onChange);
+    return timer;
+  }
+  static removeTimer(name) {
+    const timer = this.timers.get(name);
+    if (timer) {
+      timer.stop();
+      this.timers.delete(name);
+    }
+  }
+  static closeAll() {
+    this.timers.forEach((timer) => {
+      timer.stop();
+    });
+    this.timers.clear();
+  }
+};
+var timer_default = TimerStorage;
+
 // src/components/search-game-bar/ElapsedTimeComponent.ts
-var interval = void 0;
 var ElapsedTimeComponent = class extends component_default {
   constructor() {
     super(...arguments);
@@ -1131,36 +1192,21 @@ var ElapsedTimeComponent = class extends component_default {
   }
   data() {
     return {
-      startedAt: /* @__PURE__ */ new Date(),
-      elapsedTime: "0:00",
-      isCounting: false
+      elapsedTime: "0:00"
     };
-  }
-  updateTime() {
-    const elapsedSeconds = Math.floor(((/* @__PURE__ */ new Date()).getTime() - this.state.startedAt.getTime()) / 1e3);
-    const minutes = Math.floor(elapsedSeconds / 60);
-    const seconds = elapsedSeconds % 60;
-    this.state.elapsedTime = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   }
   setCounting(isCounting) {
     if (this.state.isCounting == isCounting) {
       return this;
     }
-    if (interval) {
-      clearInterval(interval);
-      interval = void 0;
-    }
-    console.log("setCounting", isCounting);
-    this.state.isCounting = isCounting;
-    if (this.state.isCounting) {
-      this.state.startedAt = /* @__PURE__ */ new Date();
-      interval = setInterval(this.updateTime.bind(this), 1e3);
+    if (isCounting) {
+      timer_default.addTimer("game-search-bar", (counter2) => {
+        const minutes = Math.floor(counter2 / 60);
+        const seconds = counter2 % 60;
+        this.state.elapsedTime = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+      });
     }
     return this;
-  }
-  onUnmounted() {
-    clearInterval(interval);
-    interval = void 0;
   }
   template() {
     return elem("p").setChild([
@@ -1622,7 +1668,6 @@ var GameWaitComponent = class extends component_default {
 };
 
 // src/components/modals/GameConfirmationModal.ts
-var interval2;
 var GameConfirmationModal = class extends component_default {
   constructor(game) {
     super({ game });
@@ -1639,9 +1684,8 @@ var GameConfirmationModal = class extends component_default {
   setShow(value) {
     this.state.show = value;
     if (value) {
-      interval2 = setInterval(() => {
-        if (this.state.delay == 0) {
-          clearInterval(interval2);
+      timer_default.addTimer("game-confirmation-modal", (counter2) => {
+        if (counter2 == 20) {
           GameSearcher.cancelGame(() => {
             this.state.isLoading = false;
             this.state.show = false;
@@ -1649,8 +1693,8 @@ var GameConfirmationModal = class extends component_default {
             this.state.delay = 20;
           });
         }
-        this.state.delay -= 1;
-      }, 1e3);
+        this.state.delay = 20 - counter2;
+      });
     }
     return this;
   }
@@ -1726,12 +1770,14 @@ var AppComponent = class extends component_default {
       if (!this.state.searchGameType) {
         return;
       }
+      timer_default.removeTimer("game-search-bar");
       this.state.searchGameType = null;
     });
     EventBroker.getInstance().on("activate-confirmation-modal", () => {
       this.state.showGameConfirmationModal = true;
     });
     EventBroker.getInstance().on("deactivate-confirmation-modal", () => {
+      timer_default.removeTimer("game-confirmation-modal");
       this.state.showGameConfirmationModal = false;
     });
   }

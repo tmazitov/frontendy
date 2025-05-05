@@ -7,18 +7,15 @@ export default class GameSearcher {
     private static isConfirmed: boolean = false;
 
     static startGameSearching(game:Game, callback: Function | null = null) {
-        if (this.searchGameType) {
-            return;
-        }
         setTimeout(() => {
             EventBroker.getInstance().emit("activate-search-game-bar", game);
             this.searchGameType = game;
             if (callback) {
                 callback();
             }
-            // setTimeout(() => {
-            //     this.foundGame()
-            // }, 5000)
+            setTimeout(() => {
+                this.foundGame()
+            }, 5000)
         }, 2000)
     }
 
@@ -57,14 +54,15 @@ export default class GameSearcher {
             if (callback) {
                 callback();
             }
-            console.log("Game search cancelled.", this.searchGameType);
+            console.log("Game cancelled", isWasConfirmed);
             if (!this.searchGameType) {
                 return; 
             }
-            if (isWasConfirmed) {
-                this.startGameSearching(this.searchGameType)
-            }
+            const game = this.searchGameType;
             this.searchGameType = null;
+            if (isWasConfirmed) {
+                this.startGameSearching(game)
+            }
         }, 200)
     }
 

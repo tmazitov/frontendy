@@ -8,6 +8,7 @@ import NavBarLink from "../types/NavBarLink";
 import SearchGameBarComponent from "./search-game-bar/SearchGameBarComponent";
 import NavBarComponent from "./nav-bar/NavBarComponent";
 import GameConfirmationModal from "./modals/GameConfirmationModal";
+import TimerStorage from "../pkg/timer";
 
 const navBarLinks =  [
     new NavBarLink('Home', 'home', "ti ti-home"),
@@ -44,12 +45,14 @@ export default class AppComponent extends Component {
             if (!this.state.searchGameType) {
                 return;
             }
+            TimerStorage.removeTimer("game-search-bar");
             this.state.searchGameType = null;
         })
         EventBroker.getInstance().on("activate-confirmation-modal", () => {
             this.state.showGameConfirmationModal = true;
         })
         EventBroker.getInstance().on("deactivate-confirmation-modal", () => {
+            TimerStorage.removeTimer("game-confirmation-modal");
             this.state.showGameConfirmationModal = false;
         })
     }

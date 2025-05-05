@@ -3,6 +3,7 @@ import ModalLayout from "../../layout/modal/ModalLayout";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
 import GameSearcher from "../../pkg/game-launcher/gameSercher";
+import TimerStorage from "../../pkg/timer";
 import Game from "../../types/Game";
 import GameConfirmationComponent from "../content/game-confirmation-modal-content/GameConfirmationComponent";
 import GameWaitComponent from "../content/game-confirmation-modal-content/GameWaitComponent";
@@ -28,9 +29,8 @@ export default class GameConfirmationModal extends FrontendyComponent {
     public setShow(value: boolean) {
         this.state.show = value;
         if (value) {
-            interval = setInterval(() => {
-                if (this.state.delay == 0) {
-                    clearInterval(interval);
+            TimerStorage.addTimer("game-confirmation-modal", (counter: number) => {
+                if (counter == 20) {
                     GameSearcher.cancelGame(() => {
                         this.state.isLoading = false;
                         this.state.show = false;
@@ -38,8 +38,8 @@ export default class GameConfirmationModal extends FrontendyComponent {
                         this.state.delay = 20;
                     })
                 }
-                this.state.delay -= 1;
-            }, 1000);
+                this.state.delay = 20 - counter;
+            })
         }
         return this 
     }
