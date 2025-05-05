@@ -516,8 +516,8 @@ var AboutPage = class extends component_default {
 
 // src/components/inputs/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
-  constructor(text8) {
-    super({ text: text8 });
+  constructor(text10) {
+    super({ text: text10 });
     this.componentName = "info-paragraph-component";
   }
   template() {
@@ -1060,6 +1060,208 @@ var NotFoundPage = class extends component_default {
   }
 };
 
+// src/layout/tabs/TabItemComponent.ts
+var TabItemComponent = class extends component_default {
+  constructor(title, isActive) {
+    super({ title, isActive });
+    this.componentName = "tab-item";
+  }
+  data() {
+    return {
+      onClickHandler: null
+    };
+  }
+  onClick(fn) {
+    this.state.onClickHandler = fn;
+    return this;
+  }
+  template() {
+    const borderClass = this.props.isActive ? "border-b-2 border-blue-500" : "border-b-2 border-transparent";
+    return elem("div").setProps({ class: `px-4 py-2 cursor-pointer hover:bg-gray-100 active:bg-gray-200 ${borderClass} transition duration-300 ease-in-out` }).addChild(text(this.props.title)).addEventListener("click", () => {
+      if (this.state.onClickHandler) {
+        this.state.onClickHandler();
+      }
+    });
+  }
+};
+
+// src/layout/tabs/TabsLayout.ts
+var TabsLayout = class extends component_default {
+  constructor(tabs) {
+    super({ tabs });
+    this.componentName = "tabs-layout";
+  }
+  data() {
+    return {
+      currentTab: 0
+    };
+  }
+  changeCurrentTab(index) {
+    if (this.state.currentTab == index) {
+      return this;
+    }
+    this.state.currentTab = index;
+    return this;
+  }
+  template() {
+    const currentTabContent = this.props.tabs[this.state.currentTab].content;
+    return elem("div").setChild([
+      // Tabs
+      elem("div").setProps({ class: "flex border-b-1 border-gray-200" }).setChild(this.props.tabs.map((tab, index) => {
+        return new TabItemComponent(tab.title, this.state.currentTab == index).onClick(() => this.changeCurrentTab(index));
+      })),
+      // Tab content
+      elem("div").setProps({ class: "p-4" }).addChild(currentTabContent)
+    ]);
+  }
+};
+
+// src/types/GameStat.ts
+var GameStat = class {
+  constructor(data) {
+    this.uid = data.uid;
+    this.date = new Date(data.date);
+    this.typeId = data.typeId;
+    this.statusId = data.statusId;
+    this.winnerId = data.winnerId;
+  }
+  getDateTime() {
+    const minutes = this.date.getMinutes();
+    const hours = this.date.getHours();
+    const time = (hours < 10 ? "0" : "") + hours + ":" + (minutes < 10 ? "0" : "") + minutes;
+    return this.date.toLocaleDateString() + " " + time;
+  }
+};
+var GameStat_default = GameStat;
+
+// src/components/content/profile-page-content/GamesTableRowComponent.ts
+var GamesTableRowComponent = class extends component_default {
+  constructor(gameStat) {
+    super({ gameStat });
+    this.componentName = "games-table-row-component";
+  }
+  getGameTypeName() {
+    return games_default.find((game) => game.id === this.props.gameStat.typeId)?.name || "Unknown";
+  }
+  getGameResult() {
+    return this.props.gameStat.winnerId === 0 ? "Win" : "Lose";
+  }
+  template() {
+    const gameResultStyle = this.props.gameStat.winnerId === 0 ? "green" : "red";
+    return elem("tr").setProps({ class: "border-t-1 border-gray-200" }).setChild([
+      elem("td").setProps({ class: "p-2 text-sm" }).addChild(text("#" + this.props.gameStat.uid)),
+      elem("td").setProps({ class: `p-2 border-l-1 border-gray-200 text-sm` }).addChild(new TagComponent({ label: this.getGameResult(), color: gameResultStyle })),
+      elem("td").setProps({ class: "p-2 border-l-1 border-gray-200 text-sm" }).addChild(text(this.props.gameStat.getDateTime())),
+      elem("td").setProps({ class: "p-2 border-l-1 border-gray-200 text-sm" }).addChild(text(this.getGameTypeName()))
+    ]);
+  }
+};
+
+// src/components/content/profile-page-content/GamesTableComponent.ts
+var GamesTableComponent = class extends component_default {
+  constructor(games3) {
+    super({ games: games3 });
+    this.componentName = "games-table-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "max-h-[320px] overflow-y-auto" }).addChild(
+      elem("table").setProps({ class: "min-w-full table-auto" }).setChild([
+        elem("thead").setProps({ class: "sticky top-0 z-10" }).setChild([
+          elem("tr").setChild([
+            elem("th").setProps({ class: "p-2 w-1/6 bg-white text-start" }).addChild(text("ID")),
+            elem("th").setProps({ class: "p-2 w-1/6  bg-white text-start border-l-1 border-gray-200" }).addChild(text("Result")),
+            elem("th").setProps({ class: "p-2 w-1/3 text-start border-l-1 border-gray-200" }).addChild(text("Date")),
+            elem("th").setProps({ class: "p-2 w-1/3 text-start border-l-1 border-gray-200" }).addChild(text("Type"))
+          ])
+        ]),
+        elem("tbody").setChild(this.props.games.map((game) => {
+          return new GamesTableRowComponent(game);
+        }))
+      ])
+    );
+  }
+};
+
+// src/components/content/profile-page-content/GamesContentComponent.ts
+var games2 = [
+  new GameStat_default({ uid: "1234", date: "2023-03-01", typeId: 0, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-02", typeId: 1, winnerId: 1 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-03", typeId: 2, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-04", typeId: 2, winnerId: 1 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-01", typeId: 0, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-02", typeId: 1, winnerId: 1 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-03", typeId: 2, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-04", typeId: 2, winnerId: 1 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-01", typeId: 0, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-02", typeId: 1, winnerId: 1 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-03", typeId: 2, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-04", typeId: 2, winnerId: 1 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-01", typeId: 0, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-02", typeId: 1, winnerId: 1 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-03", typeId: 2, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-04", typeId: 2, winnerId: 1 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
+  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 })
+];
+var GamesContentComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "games-content";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("div").setChild([
+      new GamesTableComponent(games2)
+    ]);
+  }
+};
+
+// src/components/content/profile-page-content/InfoContentComponent.ts
+var InfoContentComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "info-content";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("tr").setChild([
+      elem("td").addChild(text("2023-03-01")),
+      elem("td").addChild(text("Ranked")),
+      elem("td").addChild(text("Win"))
+    ]);
+  }
+};
+
 // src/components/content/profile-page-content/ProfilePageContent.ts
 var ProfilePageContent = class extends component_default {
   constructor() {
@@ -1070,7 +1272,12 @@ var ProfilePageContent = class extends component_default {
     return {};
   }
   template() {
-    return elem("div").setChild([text("Profile Page Content")]);
+    return elem("div").setChild([
+      new TabsLayout([
+        { title: "Info", content: new InfoContentComponent() },
+        { title: "Games", content: new GamesContentComponent() }
+      ])
+    ]);
   }
 };
 
