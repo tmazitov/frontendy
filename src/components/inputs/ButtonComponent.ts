@@ -1,9 +1,35 @@
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
 
-type ButtonType = 'primary' | 'default'
+type ButtonColor = 
+    | 'red'
+    | 'blue'
+    | 'green'
+    | 'yellow'
+    | 'purple'
+    | 'pink'
+    | 'indigo'
+    | 'gray'
+    | 'black'
+    | 'white'
+    | 'teal'
+    | 'cyan'
+    | 'lime'
+    | 'amber'
+    | 'orange'
+    | 'emerald'
+    | 'fuchsia'
+    | 'rose';
+
+type ButtonType =
+    | 'default'
+    | 'outline'
+    | 'blank'
+
 type ButtonProps = {
-    label: string,
+    label?: string,
+    icon?: string,
+    color?: ButtonColor,
     type?: ButtonType,
 }
 
@@ -11,9 +37,7 @@ export default class ButtonComponent extends FrontendyComponent {
     componentName: string = 'button-component';
 
     constructor(props: ButtonProps) {
-        const { label, type } = props
-
-        super({label, type })
+        super(props)
     }
 
     data() {
@@ -29,13 +53,17 @@ export default class ButtonComponent extends FrontendyComponent {
 
     getButtonColor(){
         const type = this.props.type || 'default'
+        const color = this.props.color || 'gray'
+
+        console.log({type, color})
+
         switch (type) {
-            case 'primary':
-                return 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white'
             case 'default':
-                return 'bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-800'
+                return `bg-${color}-500 hover:bg-${color}-600 active:bg-${color}-700 text-white`
+            case 'blank':
+                return `bg-${color}-100 hover:bg-${color}-200 active:bg-${color}-300 text-gray-800`
             default:
-                return 'bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-800'
+                return `bg-${color}-200 hover:bg-${color}-300 active:bg-${color}-400 text-gray-800`
         }
     }
 
@@ -46,10 +74,23 @@ export default class ButtonComponent extends FrontendyComponent {
         const buttonAnime = "transition duration-200 ease-in-out"
 
         const button = elem('button')
-            .addChild(text(this.props.label))
+            
             .setProps({
                 class: `${buttonColor} ${buttonSize} ${buttonAnime} flex justify-center items-center`,
             })
+
+        if (this.props.icon) {
+            button.addChild(
+                elem('i').setProps({ class: this.props.icon })
+            )
+        }
+        if (this.props.label) {
+            button.addChild(
+                elem('span')
+                    .setProps({ class: "ml-2" })
+                    .addChild(text(this.props.label))
+            )
+        }
 
         if (this.state.clickHandler) {
             button.addEventListener('click', this.state.clickHandler)

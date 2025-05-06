@@ -772,8 +772,7 @@ var PreferModeStorage = class {
 // src/components/inputs/ButtonComponent.ts
 var ButtonComponent = class extends component_default {
   constructor(props) {
-    const { label, type } = props;
-    super({ label, type });
+    super(props);
     this.componentName = "button-component";
   }
   data() {
@@ -788,22 +787,34 @@ var ButtonComponent = class extends component_default {
   }
   getButtonColor() {
     const type = this.props.type || "default";
+    const color = this.props.color || "gray";
+    console.log({ type, color });
     switch (type) {
-      case "primary":
-        return "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white";
       case "default":
-        return "bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-800";
+        return `bg-${color}-500 hover:bg-${color}-600 active:bg-${color}-700 text-white`;
+      case "blank":
+        return `bg-${color}-100 hover:bg-${color}-200 active:bg-${color}-300 text-gray-800`;
       default:
-        return "bg-gray-200 hover:bg-gray-300 active:bg-gray-400 text-gray-800";
+        return `bg-${color}-200 hover:bg-${color}-300 active:bg-${color}-400 text-gray-800`;
     }
   }
   template() {
     const buttonSize2 = "px-4 py-2 rounded-md w-full h-10 text-sm";
     const buttonColor2 = this.getButtonColor();
     const buttonAnime = "transition duration-200 ease-in-out";
-    const button = elem("button").addChild(text(this.props.label)).setProps({
+    const button = elem("button").setProps({
       class: `${buttonColor2} ${buttonSize2} ${buttonAnime} flex justify-center items-center`
     });
+    if (this.props.icon) {
+      button.addChild(
+        elem("i").setProps({ class: this.props.icon })
+      );
+    }
+    if (this.props.label) {
+      button.addChild(
+        elem("span").setProps({ class: "ml-2" }).addChild(text(this.props.label))
+      );
+    }
     if (this.state.clickHandler) {
       button.addEventListener("click", this.state.clickHandler);
     }
@@ -1265,12 +1276,12 @@ var InfoContentComponent = class extends component_default {
       // Information container
       elem("div").setProps({ class: "w-full " }).setChild([
         elem("div").setProps({ class: "flex flex-col gap-2" }).setChild([
-          elem("div").setProps({ class: "flex gap-2" }).setChild([
-            new TagComponent(status),
-            elem("h2").setProps({ class: "text-xl font-bold" }).addChild(text("username"))
-          ]),
+          elem("h2").setProps({ class: "text-xl font-bold" }).addChild(text("username")),
           elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Played games: 0")),
-          elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Rating: 1000 - 7"))
+          elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Rating: 1000 - 7")),
+          elem("div").setProps({ class: "flex gap-2" }).setChild([
+            new ButtonComponent({ icon: "ti ti-logout", color: "red", type: "blank" })
+          ])
         ])
       ])
     ]);

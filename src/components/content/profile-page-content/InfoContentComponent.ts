@@ -1,5 +1,6 @@
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
+import ButtonComponent from "../../inputs/ButtonComponent";
 import TagComponent, { TagColor } from "../../inputs/TagComponent";
 
 const statuses:Array<{icon:string, label:string, color: TagColor}> = [
@@ -33,24 +34,23 @@ export default class InfoContentComponent extends FrontendyComponent {
                 elem('div')
                 .setProps({class: "flex flex-col gap-2"})
                 .setChild([
-                    elem('div')
-                    .setProps({class: "flex gap-2"})
-                    .setChild([
-                        new TagComponent(status),
-                        
-                        elem('h2')
-                        .setProps({class: "text-xl font-bold"})
-                        .addChild(text("username")),
-                    ]),
-
+                    elem('h2')
+                    .setProps({class: "text-xl font-bold"})
+                    .addChild(text("username")),
 
                     elem('p')
                     .setProps({class: "text-gray-600 text-sm"})
                     .addChild(text("Played games: 0")),
-
+                    
                     elem('p')
                     .setProps({class: "text-gray-600 text-sm"})
                     .addChild(text("Rating: 1000 - 7")),
+
+                    elem('div')
+                    .setProps({class: "flex gap-2"})
+                    .setChild([
+                        new ButtonComponent({icon: "ti ti-logout", color: "red", type: "blank"})
+                    ]),
                 ])
         ])
     ])
