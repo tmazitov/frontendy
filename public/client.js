@@ -788,7 +788,6 @@ var ButtonComponent = class extends component_default {
   getButtonColor() {
     const type = this.props.type || "default";
     const color = this.props.color || "gray";
-    console.log({ type, color });
     switch (type) {
       case "default":
         return `bg-${color}-500 hover:bg-${color}-600 active:bg-${color}-700 text-white`;
@@ -1698,7 +1697,7 @@ var AuthForm = class extends component_default {
     this.state.form.email = value;
   }
   template() {
-    const submitButton = new ButtonComponent({ label: "Submit", type: "primary" }).onClick(this.submit.bind(this));
+    const submitButton = new ButtonComponent({ label: "Submit", color: "blue", fullWidth: true }).onClick(this.submit.bind(this));
     const passwordInput = new InputComponent(this.state.form.password, {
       type: "password",
       label: "Password"
@@ -1739,7 +1738,7 @@ var RegistrationForm = class extends component_default {
     this.state.form.password = value;
   }
   template() {
-    const submitButton = new ButtonComponent({ label: "Submit", type: "primary" }).onClick(this.submit.bind(this));
+    const submitButton = new ButtonComponent({ label: "Submit", color: "blue", fullWidth: true }).onClick(this.submit.bind(this));
     const passwordInput = new InputComponent(this.state.form.password, {
       type: "password",
       label: "Password"

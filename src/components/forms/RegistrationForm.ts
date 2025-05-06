@@ -34,7 +34,7 @@ export default class RegistrationForm extends FrontendyComponent {
     }
 
     template() {
-        const submitButton = new ButtonComponent({label: "Submit", type: 'primary' })
+        const submitButton = new ButtonComponent({label: "Submit", color: "blue", fullWidth: true  })
             .onClick(this.submit.bind(this))
  
         const passwordInput = new InputComponent(this.state.form.password, {
