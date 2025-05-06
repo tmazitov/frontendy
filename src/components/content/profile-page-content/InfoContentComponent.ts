@@ -21,7 +21,7 @@ export default class InfoContentComponent extends FrontendyComponent {
 
             // Image container
             elem('div')
-            .setProps({class: "w-32"})
+            .setProps({class: "size-32"})
             .setChild([
                 elem('div')
                 .setProps({class: "size-32 bg-gray-200 rounded-full"})
@@ -29,27 +29,32 @@ export default class InfoContentComponent extends FrontendyComponent {
 
             // Information container
             elem('div')
-            .setProps({class: "w-full "})
+            .setProps({class: "w-full h-32"})
             .setChild([
                 elem('div')
-                .setProps({class: "flex flex-col gap-2"})
+                .setProps({class: "flex flex-col gap-2 justify-between h-full"})
                 .setChild([
-                    elem('h2')
-                    .setProps({class: "text-xl font-bold"})
-                    .addChild(text("username")),
-
-                    elem('p')
-                    .setProps({class: "text-gray-600 text-sm"})
-                    .addChild(text("Played games: 0")),
-                    
-                    elem('p')
-                    .setProps({class: "text-gray-600 text-sm"})
-                    .addChild(text("Rating: 1000 - 7")),
+                    elem('div')
+                    .setProps({class: "flex gap-2 flex-col"})
+                    .setChild([
+                        elem('h2')
+                        .setProps({class: "text-xl font-bold"})
+                        .addChild(text("username")),
+    
+                        elem('p')
+                        .setProps({class: "text-gray-600 text-sm"})
+                        .addChild(text("Played games: 0")),
+                        
+                        elem('p')
+                        .setProps({class: "text-gray-600 text-sm"})
+                        .addChild(text("Rating: 1000 - 7")),
+                    ]),
 
                     elem('div')
                     .setProps({class: "flex gap-2"})
                     .setChild([
-                        new ButtonComponent({icon: "ti ti-logout", color: "red", type: "blank"})
+                        new ButtonComponent({icon: "ti ti-settings", color: "blue", type: "outline"}),
+                        new ButtonComponent({icon: "ti ti-logout", color: "red", type: "outline"})
                     ]),
                 ])
         ])

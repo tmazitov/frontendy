@@ -19,8 +19,10 @@ export default class GameConfirmationComponent extends FrontendyComponent {
 
                 new ButtonComponent({
                     label: "Accept",
-                    type: "primary",
-                }).onClick(this.props.onSubmit.bind(this)),
+                    color: "blue",
+                    fullWidth: true,
+                })
+                .onClick(this.props.onSubmit.bind(this)),
             ])
     }
 }

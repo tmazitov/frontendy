@@ -56,7 +56,8 @@ export default class GameLauchBodyComponent extends FrontendyComponent {
 
                 new ButtonComponent({
                     label: "Find Game",
-                    type: "primary",
+                    color: "blue",
+                    fullWidth: true,
                 })
                 .onClick(() => this.props.onSubmit(games[this.state.selectedOption])),
             ])

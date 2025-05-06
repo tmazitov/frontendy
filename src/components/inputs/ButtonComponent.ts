@@ -31,6 +31,7 @@ type ButtonProps = {
     icon?: string,
     color?: ButtonColor,
     type?: ButtonType,
+    fullWidth?: boolean,
 }
 
 export default class ButtonComponent extends FrontendyComponent {
@@ -55,11 +56,11 @@ export default class ButtonComponent extends FrontendyComponent {
         const type = this.props.type || 'default'
         const color = this.props.color || 'gray'
 
-        console.log({type, color})
-
         switch (type) {
             case 'default':
                 return `bg-${color}-500 hover:bg-${color}-600 active:bg-${color}-700 text-white`
+            case 'outline':
+                return `border border-${color}-300 hover:bg-${color}-100 active:bg-${color}-200 text-${color}-500`
             case 'blank':
                 return `bg-${color}-100 hover:bg-${color}-200 active:bg-${color}-300 text-gray-800`
             default:
@@ -69,15 +70,15 @@ export default class ButtonComponent extends FrontendyComponent {
 
     template() {
         
-        const buttonSize = "px-4 py-2 rounded-md w-full h-10 text-sm"
+        const iconOnly = !this.props.label && this.props.icon
+        const buttonSize = `${iconOnly ? 'p-2' : 'px-4 py-2'} rounded-md ${this.props.fullWidth ? 'w-full' : ''} text-sm`
         const buttonColor = this.getButtonColor()
         const buttonAnime = "transition duration-200 ease-in-out"
 
         const button = elem('button')
-            
-            .setProps({
-                class: `${buttonColor} ${buttonSize} ${buttonAnime} flex justify-center items-center`,
-            })
+        .setProps({
+            class: `${buttonColor} ${buttonSize} ${buttonAnime} flex justify-center items-center`,
+        })
 
         if (this.props.icon) {
             button.addChild(

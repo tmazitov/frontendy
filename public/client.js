@@ -792,6 +792,8 @@ var ButtonComponent = class extends component_default {
     switch (type) {
       case "default":
         return `bg-${color}-500 hover:bg-${color}-600 active:bg-${color}-700 text-white`;
+      case "outline":
+        return `border border-${color}-300 hover:bg-${color}-100 active:bg-${color}-200 text-${color}-500`;
       case "blank":
         return `bg-${color}-100 hover:bg-${color}-200 active:bg-${color}-300 text-gray-800`;
       default:
@@ -799,7 +801,8 @@ var ButtonComponent = class extends component_default {
     }
   }
   template() {
-    const buttonSize2 = "px-4 py-2 rounded-md w-full h-10 text-sm";
+    const iconOnly = !this.props.label && this.props.icon;
+    const buttonSize2 = `${iconOnly ? "p-2" : "px-4 py-2"} rounded-md ${this.props.fullWidth ? "w-full" : ""} text-sm`;
     const buttonColor2 = this.getButtonColor();
     const buttonAnime = "transition duration-200 ease-in-out";
     const button = elem("button").setProps({
@@ -930,7 +933,8 @@ var GameLauchBodyComponent = class extends component_default {
       new GameCurrentRatingComponent(1e3 - 7),
       new ButtonComponent({
         label: "Find Game",
-        type: "primary"
+        color: "blue",
+        fullWidth: true
       }).onClick(() => this.props.onSubmit(games_default[this.state.selectedOption]))
     ]);
   }
@@ -1270,17 +1274,20 @@ var InfoContentComponent = class extends component_default {
     const status = statuses[1];
     return elem("div").setProps({ class: "flex gap-4 w-full" }).setChild([
       // Image container
-      elem("div").setProps({ class: "w-32" }).setChild([
+      elem("div").setProps({ class: "size-32" }).setChild([
         elem("div").setProps({ class: "size-32 bg-gray-200 rounded-full" })
       ]),
       // Information container
-      elem("div").setProps({ class: "w-full " }).setChild([
-        elem("div").setProps({ class: "flex flex-col gap-2" }).setChild([
-          elem("h2").setProps({ class: "text-xl font-bold" }).addChild(text("username")),
-          elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Played games: 0")),
-          elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Rating: 1000 - 7")),
+      elem("div").setProps({ class: "w-full h-32" }).setChild([
+        elem("div").setProps({ class: "flex flex-col gap-2 justify-between h-full" }).setChild([
+          elem("div").setProps({ class: "flex gap-2 flex-col" }).setChild([
+            elem("h2").setProps({ class: "text-xl font-bold" }).addChild(text("username")),
+            elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Played games: 0")),
+            elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Rating: 1000 - 7"))
+          ]),
           elem("div").setProps({ class: "flex gap-2" }).setChild([
-            new ButtonComponent({ icon: "ti ti-logout", color: "red", type: "blank" })
+            new ButtonComponent({ icon: "ti ti-settings", color: "blue", type: "outline" }),
+            new ButtonComponent({ icon: "ti ti-logout", color: "red", type: "outline" })
           ])
         ])
       ])
@@ -1891,7 +1898,8 @@ var GameConfirmationComponent = class extends component_default {
       elem("p").setProps({ class: "text-sm text-gray-600 mb-2 text-start" }).addChild(text(`Confirmation time : ${this.props.remainingTime}`)),
       new ButtonComponent({
         label: "Accept",
-        type: "primary"
+        color: "blue",
+        fullWidth: true
       }).onClick(this.props.onSubmit.bind(this))
     ]);
   }
