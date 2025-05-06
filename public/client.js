@@ -1168,8 +1168,8 @@ var GamesTableComponent = class extends component_default {
       elem("table").setProps({ class: "min-w-full table-auto" }).setChild([
         elem("thead").setProps({ class: "sticky top-0 z-10" }).setChild([
           elem("tr").setChild([
-            elem("th").setProps({ class: "p-2 w-1/6 bg-white text-start" }).addChild(text("ID")),
-            elem("th").setProps({ class: "p-2 w-1/6  bg-white text-start border-l-1 border-gray-200" }).addChild(text("Result")),
+            elem("th").setProps({ class: "p-2 w-1/6 text-start" }).addChild(text("ID")),
+            elem("th").setProps({ class: "p-2 w-1/6 text-start border-l-1 border-gray-200" }).addChild(text("Result")),
             elem("th").setProps({ class: "p-2 w-1/3 text-start border-l-1 border-gray-200" }).addChild(text("Date")),
             elem("th").setProps({ class: "p-2 w-1/3 text-start border-l-1 border-gray-200" }).addChild(text("Type"))
           ])
@@ -1245,19 +1245,34 @@ var GamesContentComponent = class extends component_default {
 };
 
 // src/components/content/profile-page-content/InfoContentComponent.ts
+var statuses = [
+  { icon: "ti ti-user-cancel", label: "Offline", color: "gray" },
+  { icon: "ti ti-user", label: "Online", color: "green" },
+  { icon: "ti ti-brand-apple-arcade", label: "Playing", color: "blue" }
+];
 var InfoContentComponent = class extends component_default {
   constructor() {
     super(...arguments);
     this.componentName = "info-content";
   }
-  data() {
-    return {};
-  }
   template() {
-    return elem("tr").setChild([
-      elem("td").addChild(text("2023-03-01")),
-      elem("td").addChild(text("Ranked")),
-      elem("td").addChild(text("Win"))
+    const status = statuses[1];
+    return elem("div").setProps({ class: "flex gap-4 w-full" }).setChild([
+      // Image container
+      elem("div").setProps({ class: "w-32" }).setChild([
+        elem("div").setProps({ class: "size-32 bg-gray-200 rounded-full" })
+      ]),
+      // Information container
+      elem("div").setProps({ class: "w-full " }).setChild([
+        elem("div").setProps({ class: "flex flex-col gap-2" }).setChild([
+          elem("div").setProps({ class: "flex gap-2" }).setChild([
+            new TagComponent(status),
+            elem("h2").setProps({ class: "text-xl font-bold" }).addChild(text("username"))
+          ]),
+          elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Played games: 0")),
+          elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Rating: 1000 - 7"))
+        ])
+      ])
     ]);
   }
 };

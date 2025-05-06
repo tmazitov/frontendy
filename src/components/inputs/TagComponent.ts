@@ -27,6 +27,8 @@ type TagComponentProps = {
     icon?: string;
 }
 
+export {TagColor}
+
 export default class TagComponent extends FrontendyComponent {
     componentName: string = 'tag-component';
 
