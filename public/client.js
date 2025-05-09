@@ -1417,11 +1417,21 @@ var InputComponent = class extends component_default {
   data() {
     return {
       inputHandler: null,
-      enterHandler: null
+      enterHandler: null,
+      blurHandler: null,
+      focusHandler: null
     };
   }
   onInput(fn) {
     this.state.inputHandler = fn;
+    return this;
+  }
+  onBlur(fn) {
+    this.state.blurHandler = fn;
+    return this;
+  }
+  onFocus(fn) {
+    this.state.focusHandler = fn;
     return this;
   }
   onEnter(fn) {
@@ -1452,6 +1462,18 @@ var InputComponent = class extends component_default {
       input.addEventListener("input", (event) => {
         const target = event.target;
         this.state.inputHandler(target.value);
+      });
+    }
+    if (this.state.blurHandler) {
+      input.addEventListener("blur", (event) => {
+        const target = event.target;
+        this.state.blurHandler(target.value);
+      });
+    }
+    if (this.state.focusHandler) {
+      input.addEventListener("focus", (event) => {
+        const target = event.target;
+        this.state.focusHandler(target.value);
       });
     }
     if (this.state.enterHandler) {
@@ -1505,7 +1527,10 @@ var DeleteAccountModal = class extends component_default {
         elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
           new InfoParagraphComponent("This action cannot be undone."),
           new InfoParagraphComponent(`To delete your account, please enter "${this.state.originalNickname}" in the field below:`),
-          new InputComponent(this.state.enteredNickname, { placeholder: "Enter your nickname" }).onInput((value) => this.state.enteredNickname = value),
+          new InputComponent(this.state.enteredNickname, { placeholder: "Enter your nickname" }).onBlur((value) => {
+            console.log("blur", value);
+            this.state.enteredNickname = value;
+          }),
           new ButtonComponent({
             label: "Delete",
             icon: "ti ti-trash",

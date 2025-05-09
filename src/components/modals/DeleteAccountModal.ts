@@ -46,7 +46,10 @@ export default class DeleteAccountModal extends FrontendyComponent {
                         new InfoParagraphComponent(`To delete your account, please enter "${this.state.originalNickname}" in the field below:`),
 
                         new InputComponent(this.state.enteredNickname, { placeholder: "Enter your nickname" })
-                            .onInput((value: string) => this.state.enteredNickname = value),
+                            .onBlur((value: string) => {
+                                console.log("blur", value)
+                                this.state.enteredNickname = value
+                            }),
 
                         new ButtonComponent({
                             label: "Delete",

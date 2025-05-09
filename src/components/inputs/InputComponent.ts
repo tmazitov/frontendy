@@ -18,12 +18,24 @@ export default class InputComponent extends FrontendyComponent {
     data() {
         return {
             inputHandler: null,
-            enterHandler: null
+            enterHandler: null,
+            blurHandler: null,
+            focusHandler: null,
         }
     }
 
     onInput(fn:Function) {
         this.state.inputHandler = fn;
+        return this
+    }
+
+    onBlur(fn:Function) {
+        this.state.blurHandler = fn;
+        return this
+    }
+
+    onFocus(fn:Function) {
+        this.state.focusHandler = fn;
         return this
     }
 
@@ -62,6 +74,20 @@ export default class InputComponent extends FrontendyComponent {
                 const target = event.target as HTMLInputElement;
                 this.state.inputHandler(target.value);
             })
+        }
+        
+        if (this.state.blurHandler) {
+            input.addEventListener("blur", ((event: Event) => {
+                const target = event.target as HTMLInputElement;
+                this.state.blurHandler(target.value);
+            }) as EventListener)
+        }
+
+        if (this.state.focusHandler) {
+            input.addEventListener("focus", ((event: Event) => {
+                const target = event.target as HTMLInputElement;
+                this.state.focusHandler(target.value);
+            }) as EventListener)
         }
 
         if (this.state.enterHandler) {

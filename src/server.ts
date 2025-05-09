@@ -22,7 +22,7 @@ async function main() {
     return reply.type('text/html').send(html)
   });
 
-  app.listen({ port: 3000 }, (err, address) => {
+  app.listen({ port: 3001 }, (err, address) => {
     if (err) {
       app.log.error(err)
       process.exit(1)
