@@ -28,6 +28,7 @@ var FrontendyRouter = class {
     this.routerView = routerView;
   }
   findRoute(path) {
+    console.log("path", path);
     return this.routes.find((route) => route.path === path);
   }
   getUndefinedMessageComponent() {
@@ -799,13 +800,45 @@ var ButtonComponent = class extends component_default {
         return `bg-${color}-200 hover:bg-${color}-300 active:bg-${color}-400 text-gray-800`;
     }
   }
+  getButtonSize(iconOnly) {
+    const size = this.props.size || "medium";
+    let sizeStyles = "";
+    if (iconOnly) {
+      switch (size) {
+        case "small":
+          sizeStyles = "w-6 h-6 p-2";
+          break;
+        case "large":
+          sizeStyles = "w-10 h-10 p-6";
+          break;
+        default:
+          sizeStyles = "w-8 h-8 p-4";
+      }
+    } else {
+      switch (size) {
+        case "small":
+          sizeStyles = "w-6 h-6 px-2 py-1 text-sm";
+          break;
+        case "large":
+          sizeStyles = "px-6 py-3 text-lg";
+          break;
+        default:
+          sizeStyles = "px-4 py-2 text-base";
+      }
+    }
+    if (this.props.fullWidth) {
+      sizeStyles += " w-full";
+    }
+    return `${sizeStyles}`;
+  }
   template() {
     const iconOnly = !this.props.label && this.props.icon;
-    const buttonSize2 = `${iconOnly ? "p-2" : "px-4 py-2"} rounded-md ${this.props.fullWidth ? "w-full" : ""} text-sm`;
+    const buttonSize2 = `${this.getButtonSize(iconOnly)} rounded-lg`;
     const buttonColor2 = this.getButtonColor();
-    const buttonAnime = "transition duration-200 ease-in-out";
+    const buttonAnime = "transition duration-200 ease-in-out cursor-pointer";
+    const buttonDisabledStyle = this.props.isDisabled ? "opacity-50 cursor-not-allowed" : "";
     const button = elem("button").setProps({
-      class: `${buttonColor2} ${buttonSize2} ${buttonAnime} flex justify-center items-center`
+      class: `${buttonColor2} ${buttonSize2} ${buttonAnime} ${buttonDisabledStyle} flex justify-center items-center`
     });
     if (this.props.icon) {
       button.addChild(
@@ -817,7 +850,7 @@ var ButtonComponent = class extends component_default {
         elem("span").setProps({ class: "ml-2" }).addChild(text(this.props.label))
       );
     }
-    if (this.state.clickHandler) {
+    if (this.state.clickHandler && !this.props.isDisabled) {
       button.addEventListener("click", this.state.clickHandler);
     }
     return button;
@@ -1063,11 +1096,12 @@ var NotFoundPage = class extends component_default {
       class: "flex flex-col items-center justify-center h-full w-full p-8"
     }).setChild([
       elem("div").setProps({ class: "flex flex-col gap-4 p-4 rounded-lg max-w-lg w-full bg-white" }).setChild([
+        elem("div").setProps({ class: "flex items-center justify-center mb-4" }).addChild(elem("img").setProps({ src: "/public/notfound_image.png", class: "w-72" })),
         elem("h1").setProps({ class: "text-2xl font-bold text-gray-800" }).addChild(text("404 Oups! Page not found...")),
         elem("p").setProps({ class: "text-gray-600" }).addChild(text("The page you are looking for does not exist.")),
         new ButtonComponent({
-          label: "Main page",
-          type: "primary"
+          label: "Home page",
+          color: "blue"
         }).onClick(this.goHome.bind(this))
       ])
     ]);
@@ -1269,6 +1303,11 @@ var InfoContentComponent = class extends component_default {
     super(...arguments);
     this.componentName = "info-content";
   }
+  data() {
+    return {
+      isDeleteAccountModalOpen: false
+    };
+  }
   template() {
     const status = statuses[1];
     return elem("div").setProps({ class: "flex gap-4 w-full" }).setChild([
@@ -1285,7 +1324,7 @@ var InfoContentComponent = class extends component_default {
             elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Rating: 1000 - 7"))
           ]),
           elem("div").setProps({ class: "flex gap-2" }).setChild([
-            new ButtonComponent({ icon: "ti ti-settings", color: "blue", type: "outline" }),
+            new ButtonComponent({ icon: "ti ti-settings", color: "blue", type: "outline" }).onClick(() => router_default.push("profile-settings")),
             new ButtonComponent({ icon: "ti ti-logout", color: "red", type: "outline" })
           ])
         ])
@@ -1321,18 +1360,26 @@ var DashboardComponent2 = class extends component_default {
   }
   slots() {
     return [
-      "content"
+      "content",
+      "header"
     ];
   }
   template() {
     const content = this.useSlot("content");
-    return elem("div").setProps({
+    const header = this.useSlot("header");
+    const dashboard = elem("div").setProps({
       id: "dashboard-component",
       class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
-    }).setChild([
-      elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(this.props.label)),
-      content
-    ]);
+    });
+    if (header) {
+      dashboard.addChild(header);
+    } else {
+      dashboard.addChild(
+        elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(this.props.label))
+      );
+    }
+    dashboard.addChild(content);
+    return dashboard;
   }
 };
 
@@ -1350,11 +1397,176 @@ var ProfilePage = class extends component_default {
   }
 };
 
+// src/components/inputs/InputLabelComponent.ts
+var InputLabelComponent = class extends component_default {
+  constructor(label) {
+    super({ label });
+    this.componentName = "input-label-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "text-gray-700 text-sm" }).addChild(text(this.props.label));
+  }
+};
+
+// src/components/inputs/InputComponent.ts
+var InputComponent = class extends component_default {
+  constructor(value, opts = {}) {
+    super({ value, opts });
+    this.componentName = "input-component";
+  }
+  data() {
+    return {
+      inputHandler: null,
+      enterHandler: null
+    };
+  }
+  onInput(fn) {
+    this.state.inputHandler = fn;
+    return this;
+  }
+  onEnter(fn) {
+    this.state.enterHandler = fn;
+    return this;
+  }
+  focus() {
+    if (!this.el || this.el instanceof Text) {
+      return;
+    }
+    this.el.focus();
+    if (this.el.tagName === "input") {
+      this.el.focus();
+    } else {
+      this.el.querySelector("input")?.focus();
+    }
+  }
+  template() {
+    const elemBorder = "border-2 border-blue-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ease-in-out duration-200";
+    const elemSize = "w-full h-8";
+    const input = elem("input").setProps({
+      type: this.props.opts.type,
+      value: this.props.value,
+      class: `p-2 bg-transparent ${elemSize} ${elemBorder}`,
+      placeholder: this.props.opts.placeholder ?? ""
+    });
+    if (this.state.inputHandler) {
+      input.addEventListener("input", (event) => {
+        const target = event.target;
+        this.state.inputHandler(target.value);
+      });
+    }
+    if (this.state.enterHandler) {
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          this.state.enterHandler();
+        }
+      });
+    }
+    if (this.props.opts.label) {
+      return elem("div").setChild([
+        new InputLabelComponent(this.props.opts.label),
+        input
+      ]);
+    }
+    return input;
+  }
+};
+
+// src/components/modals/DeleteAccountModal.ts
+var DeleteAccountModal = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "delete-account-modal";
+  }
+  data() {
+    return {
+      show: false,
+      errorMessage: "",
+      originalNickname: "tmazitov",
+      enteredNickname: ""
+    };
+  }
+  setShow(value) {
+    this.state.show = value;
+    return this;
+  }
+  onSubmit() {
+    this.setShow(false);
+  }
+  template() {
+    return elem("span").addChild(
+      new ModalLayout("auth-modal", {
+        onClose: () => this.state.show = false,
+        customClasses: "min-h-20 min-w-[300px] max-w-[400px] rounded-lg shadow-lg bg-white"
+      }).setShow(this.state.show).setSlot(
+        "header",
+        elem("h2").addChild(text("Delete your Account")).setProps({ class: "text-xl font-bold text-center" })
+      ).setSlot(
+        "body",
+        elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
+          new InfoParagraphComponent("This action cannot be undone."),
+          new InfoParagraphComponent(`To delete your account, please enter "${this.state.originalNickname}" in the field below:`),
+          new InputComponent(this.state.enteredNickname, { placeholder: "Enter your nickname" }).onInput((value) => this.state.enteredNickname = value),
+          new ButtonComponent({
+            label: "Delete",
+            icon: "ti ti-trash",
+            color: "red",
+            isDisabled: this.state.enteredNickname != this.state.originalNickname
+          }).onClick(() => {
+            this.onSubmit();
+          })
+        ])
+      )
+    );
+  }
+};
+
+// src/components/content/profile-settings-page-content/ProfileSettingsPageContent.ts
+var ProfileSettingsPageContent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "profile-settings-page-content";
+  }
+  data() {
+    return {
+      isDeleteAccountModalOpen: false
+    };
+  }
+  template() {
+    return elem("div").setChild([
+      new ButtonComponent({
+        label: "Delete account",
+        icon: "ti ti-trash",
+        color: "red",
+        type: "outline"
+      }).onClick(() => this.state.isDeleteAccountModalOpen = true),
+      new DeleteAccountModal().setShow(this.state.isDeleteAccountModalOpen)
+    ]);
+  }
+};
+
+// src/pages/ProfileSettingsPage.ts
+var ProfileSettingsPage = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "profile-settings-page";
+  }
+  template() {
+    const dashboard = new DashboardComponent2().setSlot("content", new ProfileSettingsPageContent()).setSlot("header", elem("div").setProps({ class: "flex gap-4 items-center mb-4" }).setChild([
+      new ButtonComponent({ color: "gray", icon: "ti ti-arrow-left", type: "blank", size: "small" }).onClick(() => router_default.push("profile")),
+      elem("h1").setProps({ class: "text-2xl font-bold" }).addChild(text("Profile settings"))
+    ]));
+    return elem("div").setProps({ id: "profile-settings-page" }).setChild([
+      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(dashboard)
+    ]);
+  }
+};
+
 // src/pages/router.ts
 var routes = [
   { name: "home", path: "/", component: HomePage },
   { name: "about", path: "/about", component: AboutPage },
-  { name: "profile", path: "/profile", component: ProfilePage }
+  { name: "profile", path: "/profile", component: ProfilePage },
+  { name: "profile-settings", path: "/profile/settings", component: ProfileSettingsPage }
 ];
 var routerConfig = {
   NotFoundPage
@@ -1599,80 +1811,6 @@ var SignInForm = class {
       email: this.email,
       password: this.password
     };
-  }
-};
-
-// src/components/inputs/InputLabelComponent.ts
-var InputLabelComponent = class extends component_default {
-  constructor(label) {
-    super({ label });
-    this.componentName = "input-label-component";
-  }
-  template() {
-    return elem("div").setProps({ class: "text-gray-700 text-sm" }).addChild(text(this.props.label));
-  }
-};
-
-// src/components/inputs/InputComponent.ts
-var InputComponent = class extends component_default {
-  constructor(value, opts = {}) {
-    super({ value, opts });
-    this.componentName = "input-component";
-  }
-  data() {
-    return {
-      inputHandler: null,
-      enterHandler: null
-    };
-  }
-  onInput(fn) {
-    this.state.inputHandler = fn;
-    return this;
-  }
-  onEnter(fn) {
-    this.state.enterHandler = fn;
-    return this;
-  }
-  focus() {
-    if (!this.el || this.el instanceof Text) {
-      return;
-    }
-    this.el.focus();
-    if (this.el.tagName === "input") {
-      this.el.focus();
-    } else {
-      this.el.querySelector("input")?.focus();
-    }
-  }
-  template() {
-    const elemBorder = "border-2 border-blue-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ease-in-out duration-200";
-    const elemSize = "w-full h-8";
-    const input = elem("input").setProps({
-      type: this.props.opts.type,
-      value: this.props.value,
-      class: `p-2 bg-transparent ${elemSize} ${elemBorder}`,
-      placeholder: this.props.opts.placeholder ?? ""
-    });
-    if (this.state.inputHandler) {
-      input.addEventListener("input", (event) => {
-        const target = event.target;
-        this.state.inputHandler(target.value);
-      });
-    }
-    if (this.state.enterHandler) {
-      input.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          this.state.enterHandler();
-        }
-      });
-    }
-    if (this.props.opts.label) {
-      return elem("div").setChild([
-        new InputLabelComponent(this.props.opts.label),
-        input
-      ]);
-    }
-    return input;
   }
 };
 

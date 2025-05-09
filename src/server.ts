@@ -6,7 +6,13 @@ import path from 'path';
 const app = Fastify()
 
 async function main() {
+  // First register static file serving
+  app.register(fastifyStatic, {
+    root: path.join(__dirname, '../public'),
+    prefix: '/public/',
+  });
 
+  // Then the catch-all for client-side routing
   app.get("/*", async (request, reply) => {
     const url = request.url;
     if (path.extname(url)) {
@@ -14,11 +20,6 @@ async function main() {
     }
     const html = await readFile('index.html', 'utf-8');
     return reply.type('text/html').send(html)
-  })
-
-  app.register(fastifyStatic, {
-    root: path.join(__dirname, '../public'),
-    prefix: '/public/',
   });
 
   app.listen({ port: 3000 }, (err, address) => {

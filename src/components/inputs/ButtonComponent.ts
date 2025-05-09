@@ -26,12 +26,19 @@ type ButtonType =
     | 'outline'
     | 'blank'
 
+type ButtonSize = 
+    | 'small'
+    | 'medium'
+    | 'large';
+
 type ButtonProps = {
     label?: string,
     icon?: string,
     color?: ButtonColor,
     type?: ButtonType,
+    size?: ButtonSize,
     fullWidth?: boolean,
+    isDisabled?: boolean,
 }
 
 export default class ButtonComponent extends FrontendyComponent {
@@ -68,16 +75,53 @@ export default class ButtonComponent extends FrontendyComponent {
         }
     }
 
+    getButtonSize(iconOnly: boolean) {
+        const size = this.props.size || 'medium'
+        let sizeStyles = ""
+
+        if (iconOnly) {
+            switch (size) {
+                case 'small':
+                    sizeStyles = 'w-6 h-6 p-2'
+                    break
+                case 'large':
+                    sizeStyles = 'w-10 h-10 p-6'
+                    break
+                default:
+                    sizeStyles = 'w-8 h-8 p-4'
+            }
+        } else {
+            switch (size) {
+                case 'small':
+                    sizeStyles = 'w-6 h-6 px-2 py-1 text-sm'
+                    break
+                case 'large':
+                    sizeStyles = 'px-6 py-3 text-lg'
+                    break
+                default:
+                    sizeStyles = 'px-4 py-2 text-base'
+            }
+        }
+
+        if (this.props.fullWidth ) {
+            sizeStyles += ' w-full'
+        }
+
+
+        return `${sizeStyles}`
+    }
+
     template() {
         
         const iconOnly = !this.props.label && this.props.icon
-        const buttonSize = `${iconOnly ? 'p-2' : 'px-4 py-2'} rounded-md ${this.props.fullWidth ? 'w-full' : ''} text-sm`
+        const buttonSize = `${this.getButtonSize(iconOnly)} rounded-lg`
         const buttonColor = this.getButtonColor()
-        const buttonAnime = "transition duration-200 ease-in-out"
+        const buttonAnime = "transition duration-200 ease-in-out cursor-pointer"
+        const buttonDisabledStyle = this.props.isDisabled ? "opacity-50 cursor-not-allowed" : ""
 
         const button = elem('button')
         .setProps({
-            class: `${buttonColor} ${buttonSize} ${buttonAnime} flex justify-center items-center`,
+            class: `${buttonColor} ${buttonSize} ${buttonAnime} ${buttonDisabledStyle} flex justify-center items-center`,
         })
 
         if (this.props.icon) {
@@ -93,7 +137,7 @@ export default class ButtonComponent extends FrontendyComponent {
             )
         }
 
-        if (this.state.clickHandler) {
+        if (this.state.clickHandler && !this.props.isDisabled) {
             button.addEventListener('click', this.state.clickHandler)
         }
 

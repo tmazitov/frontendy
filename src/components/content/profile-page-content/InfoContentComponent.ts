@@ -1,7 +1,9 @@
+import router from "../../../pages/router";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import TagComponent, { TagColor } from "../../inputs/TagComponent";
+import DeleteAccountModal from "../../modals/DeleteAccountModal";
 
 const statuses:Array<{icon:string, label:string, color: TagColor}> = [
     {icon: "ti ti-user-cancel", label : "Offline", color: "gray"},
@@ -11,6 +13,13 @@ const statuses:Array<{icon:string, label:string, color: TagColor}> = [
 
 export default class InfoContentComponent extends FrontendyComponent {
     componentName: string = 'info-content';
+
+    protected data(){
+        return {
+            isDeleteAccountModalOpen: false,
+        }
+    }
+
     template() {
 
         const status = statuses[1];
@@ -53,11 +62,13 @@ export default class InfoContentComponent extends FrontendyComponent {
                     elem('div')
                     .setProps({class: "flex gap-2"})
                     .setChild([
-                        new ButtonComponent({icon: "ti ti-settings", color: "blue", type: "outline"}),
+                        new ButtonComponent({icon: "ti ti-settings", color: "blue", type: "outline"})
+                        .onClick(() => router.push("profile-settings")),
+
                         new ButtonComponent({icon: "ti ti-logout", color: "red", type: "outline"})
                     ]),
                 ])
+            ]),
         ])
-    ])
     }
 }

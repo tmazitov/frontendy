@@ -31,6 +31,7 @@ export default class FrontendyRouter {
     }
 
     findRoute(path: string): FrontendyRoute | undefined {
+        console.log("path", path)
         return this.routes.find(route => route.path === path);
     }
 
