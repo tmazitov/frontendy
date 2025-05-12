@@ -21,14 +21,6 @@ export default class AuthForm extends FrontendyComponent {
         this.props.onSubmit(this.state.form);
     }
 
-    onChangePassword(value: string) {
-        this.state.form.password = value;
-    }
-
-    onChangeEmail(value: string) {
-        this.state.form.email = value;
-    }
-
     template() {
 
         const submitButton = new ButtonComponent({label: "Submit", color: "blue", fullWidth: true })
@@ -41,17 +33,17 @@ export default class AuthForm extends FrontendyComponent {
         .onInput((value: string) => this.state.form.password = value)
         .onEnter(this.submit.bind(this));
 
-        const emailInput = new InputComponent(this.state.form.email, {
-            type: 'email',
-            label: 'Email',
+        const nicknameInput = new InputComponent(this.state.form.nickname, {
+            type: 'nickname',
+            label: 'Nickname',
         })
-        .onInput((value: string) => this.state.form.email = value)
+        .onInput((value: string) => this.state.form.nickname = value)
         .onEnter(() => passwordInput.focus())
  
         return elem('div')
             .setProps({ class : "flex flex-col gap-4"})
             .setChild([
-                emailInput,
+                nicknameInput,
                 passwordInput,
 
                 elem("div")

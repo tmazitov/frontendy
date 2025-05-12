@@ -8,8 +8,8 @@ import NavBarItemComponent from "./NavBarItemComponent";
 export default class NavBarComponent extends FrontendyComponent {
     componentName: string = 'nav-bar-component';
 
-    constructor(links:Array<NavBarLink>) {
-        super({links})
+    constructor(links:Array<NavBarLink>, isAuthorized:boolean = false) {
+        super({links, isAuthorized})
     }
 
     data() {
@@ -18,9 +18,9 @@ export default class NavBarComponent extends FrontendyComponent {
         }
     }
 
-    navigate(link:NavBarLink) {
-        console.log('navigate', link)
-        router.push(link.routeName)
+    navigate(routeName: string) {
+        console.log('navigate', routeName)
+        router.push(routeName)
     }
 
     template() {
@@ -49,19 +49,25 @@ export default class NavBarComponent extends FrontendyComponent {
                             return new NavBarItemComponent({
                                 icon: link.icon,
                                 label: link.label,
-                                onClick: () => this.navigate(link)
+                                onClick: () => this.navigate(link.routeName)
                             })
                         })),
 
                         // Sign in button
-
-                        new NavBarItemComponent({
-                            icon: "ti ti-login-2",
-                            label: "Sign in",
-                            onClick: () => {
-                                this.state.showAuthModal = true;
-                            }
-                        }),
+                        this.props.isAuthorized ?
+                            new NavBarItemComponent({
+                                icon: "ti ti-user",
+                                label: "Profile",
+                                onClick: () => this.navigate("profile")
+                            })
+                        :
+                            new NavBarItemComponent({
+                                icon: "ti ti-login-2",
+                                label: "Sign in",
+                                onClick: () => {
+                                    this.state.showAuthModal = true;
+                                }
+                            }),
                     ]),
 
             // Sign in / up modal window

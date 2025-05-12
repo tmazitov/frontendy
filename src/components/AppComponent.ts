@@ -9,11 +9,11 @@ import SearchGameBarComponent from "./search-game-bar/SearchGameBarComponent";
 import NavBarComponent from "./nav-bar/NavBarComponent";
 import GameConfirmationModal from "./modals/GameConfirmationModal";
 import TimerStorage from "../pkg/timer";
+import { isAuthorized } from "../api/client";
 
 const navBarLinks =  [
     new NavBarLink('Home', 'home', "ti ti-home"),
     new NavBarLink('About', 'about', "ti ti-info-circle"),
-    new NavBarLink('Profile', 'profile', "ti ti-user"),
 ]
 
 export default class AppComponent extends Component {
@@ -22,6 +22,7 @@ export default class AppComponent extends Component {
 
     data() {
         return {
+            isAuthorized: isAuthorized(),
             currentRoute : router.getCurrentRoute(),
             searchGameType: null,
             showGameConfirmationModal: false,
@@ -56,6 +57,10 @@ export default class AppComponent extends Component {
             TimerStorage.removeTimer("game-confirmation-modal");
             this.state.showGameConfirmationModal = false;
         })
+
+        EventBroker.getInstance().on("update-auth", () => {
+            this.state.isAuthorized = isAuthorized();
+        })
     }
 
     onUnmounted(): void {
@@ -63,6 +68,7 @@ export default class AppComponent extends Component {
         EventBroker.getInstance().off("deactivate-confirmation-modal");
         EventBroker.getInstance().off("activate-search-game-bar");    
         EventBroker.getInstance().off("deactivate-search-game-bar");
+        EventBroker.getInstance().off("update-auth");
     }
 
     template() {
@@ -71,7 +77,7 @@ export default class AppComponent extends Component {
             .setChild([
 
                 elem("span").$vif(true)
-                    .addChild(new NavBarComponent(navBarLinks)),
+                    .addChild(new NavBarComponent(navBarLinks, this.state.isAuthorized)),
 
                 new FrontendyRouterView(router),
 

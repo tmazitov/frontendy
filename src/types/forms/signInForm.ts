@@ -1,18 +1,17 @@
 import Form from "./form";
 
 export default class SignInForm implements Form {
-    email: string;
+    nickname: string;
     password: string;
     
-    constructor(email: string, password: string) {
-        this.email = email;
+    constructor(nickname: string, password: string) {
+        this.nickname = nickname;
         this.password = password;
     }
 
     validate(): string | undefined {
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!this.email.length || !emailRegex.test(this.email)) {
+        if (!this.nickname.length) {
             return "Invalid email address.";
         }
 
@@ -27,7 +26,7 @@ export default class SignInForm implements Form {
 
     toSubmit(): Record<string, any> {
         return {
-            email: this.email,
+            nickname: this.nickname,
             password: this.password,
         };
     }

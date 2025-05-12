@@ -1,3 +1,4 @@
+import { isAuthorized } from "../../../api/client";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 import InfoParagraphComponent from "../../inputs/InfoParagraphComponent";
@@ -19,7 +20,12 @@ export default class DashboardComponent extends FrontendyComponent {
                 
                 new InfoParagraphComponent("Welcome to the ft_transcendence!"),
                 new InfoParagraphComponent("There will be some tools and players statistics soon."),
-                new PlayButtonComponent()
+                
+                isAuthorized() ?
+                    new PlayButtonComponent()
+                    :
+                    new InfoParagraphComponent("You have to sign in to play.")
+            
             ]);
     }
 }

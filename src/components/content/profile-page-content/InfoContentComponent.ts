@@ -1,4 +1,6 @@
+import API from "../../../api/api";
 import router from "../../../pages/router";
+import EventBroker from "../../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 import ButtonComponent from "../../inputs/ButtonComponent";
@@ -18,6 +20,15 @@ export default class InfoContentComponent extends FrontendyComponent {
         return {
             isDeleteAccountModalOpen: false,
         }
+    }
+
+    async signoutHandler() {
+
+        await API.ums.signOut()
+
+        EventBroker.getInstance().emit("update-auth");
+
+        router.push("home")
     }
 
     template() {
@@ -66,6 +77,7 @@ export default class InfoContentComponent extends FrontendyComponent {
                         .onClick(() => router.push("profile-settings")),
 
                         new ButtonComponent({icon: "ti ti-logout", color: "red", type: "outline"})
+                        .onClick(() => this.signoutHandler())
                     ]),
                 ])
             ]),

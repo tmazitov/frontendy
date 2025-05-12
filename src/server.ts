@@ -2,8 +2,13 @@ import Fastify from 'fastify'
 import { readFile } from "fs/promises";
 import fastifyStatic from '@fastify/static';
 import path from 'path';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = Fastify()
+const port = process.env.PORT || 3000; 
+
 
 async function main() {
   // First register static file serving
@@ -22,7 +27,7 @@ async function main() {
     return reply.type('text/html').send(html)
   });
 
-  app.listen({ port: 3001 }, (err, address) => {
+  app.listen({ port: 3000 }, (err, address) => {
     if (err) {
       app.log.error(err)
       process.exit(1)
