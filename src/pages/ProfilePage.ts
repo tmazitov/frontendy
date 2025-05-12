@@ -9,15 +9,6 @@ import router from "./router";
 export default class ProfilePage extends FrontendyComponent {
     componentName: string = 'profile-page';
     
-    constructor() {
-        super();
-
-        if (!isAuthorized()) {
-            router.push("home");
-            throw new Error("ProfilePage error : user is not authorized");
-        }
-
-    }
     
     template() {
         const dashboard = new DashboardComponent("Profile")

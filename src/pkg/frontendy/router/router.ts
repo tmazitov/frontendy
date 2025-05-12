@@ -2,8 +2,9 @@ import FrontendyComponent from "../component/component";
 import FrontendyRoute from "./route";
 import FrontendyRouterView from "./RouterView";
 
-class RouterConfig {
-    NotFoundPage : typeof FrontendyComponent | undefined = undefined;
+type RouterConfig = {
+    notFoundPage? : typeof FrontendyComponent;
+    routeIsAvailable? : (route: FrontendyRoute) => string | undefined;
 }
 
 export {
@@ -18,7 +19,7 @@ export default class FrontendyRouter {
     private routerView: FrontendyRouterView | undefined;
 
     constructor(routes: FrontendyRoute[], config: RouterConfig | undefined = undefined) {
-        this.config = config ?? new RouterConfig();
+        this.config = config ?? {notFoundPage: undefined, routeIsAvailable: undefined};
         this.routes = routes;
         this.currentRoute = this.findRoute(window.location.pathname);
 
@@ -32,11 +33,24 @@ export default class FrontendyRouter {
 
     findRoute(path: string): FrontendyRoute | undefined {
         console.log("path", path)
-        return this.routes.find(route => route.path === path);
+        const route = this.routes.find(route => route.path === path)
+        if (!route) {
+            return undefined
+        }
+
+        if (!this.config.routeIsAvailable) {
+            return route
+        }
+        const reason = this.config.routeIsAvailable(route)
+        if (reason) {
+            console.error(`Router error : route ${route.name} is not available for reason : ${reason}` )
+            return undefined;
+        }
+        return route;
     }
 
     getUndefinedMessageComponent(): typeof FrontendyComponent | undefined {
-        return this.config?.NotFoundPage;
+        return this.config?.notFoundPage;
     }
 
     private handleLinkClick(event: MouseEvent) {
@@ -56,7 +70,6 @@ export default class FrontendyRouter {
             throw new Error("Router error : routerView instance is not set");
         } 
         this.currentRoute = this.findRoute(window.location.pathname);
-
         this.routerView.updateCurrentRoute()
     }
 

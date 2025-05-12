@@ -10,6 +10,7 @@ import NavBarComponent from "./nav-bar/NavBarComponent";
 import GameConfirmationModal from "./modals/GameConfirmationModal";
 import TimerStorage from "../pkg/timer";
 import { isAuthorized } from "../api/client";
+import Store from "../store/store";
 
 const navBarLinks =  [
     new NavBarLink('Home', 'home', "ti ti-home"),
@@ -61,6 +62,10 @@ export default class AppComponent extends Component {
         EventBroker.getInstance().on("update-auth", () => {
             this.state.isAuthorized = isAuthorized();
         })
+    }
+
+    protected onCreated(): void {
+        Store.setupUser()
     }
 
     onUnmounted(): void {

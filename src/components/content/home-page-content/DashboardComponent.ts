@@ -24,7 +24,7 @@ export default class DashboardComponent extends FrontendyComponent {
                 isAuthorized() ?
                     new PlayButtonComponent()
                     :
-                    new InfoParagraphComponent("You have to sign in to play.")
+                    new InfoParagraphComponent("You have to sign in in to play.")
             
             ]);
     }

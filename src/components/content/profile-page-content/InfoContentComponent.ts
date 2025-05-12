@@ -26,11 +26,10 @@ export default class InfoContentComponent extends FrontendyComponent {
 
         await API.ums.signOut()
 
-        EventBroker.getInstance().emit("update-auth");
-
         router.push("home")
+        EventBroker.getInstance().emit("update-auth");
     }
-
+    
     template() {
 
         const status = statuses[1];

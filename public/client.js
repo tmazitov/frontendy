@@ -15,512 +15,6 @@ var FrontendyAppInstance = class {
   }
 };
 
-// src/pkg/frontendy/router/router.ts
-var RouterConfig = class {
-  constructor() {
-    this.NotFoundPage = void 0;
-  }
-};
-var FrontendyRouter = class {
-  constructor(routes2, config = void 0) {
-    this.routes = [];
-    this.config = config ?? new RouterConfig();
-    this.routes = routes2;
-    this.currentRoute = this.findRoute(window.location.pathname);
-    document.addEventListener("click", this.handleLinkClick.bind(this));
-    window.addEventListener("popstate", () => this.setCurrentRoute());
-  }
-  setRouterView(routerView) {
-    this.routerView = routerView;
-  }
-  findRoute(path) {
-    console.log("path", path);
-    return this.routes.find((route) => route.path === path);
-  }
-  getUndefinedMessageComponent() {
-    return this.config?.NotFoundPage;
-  }
-  handleLinkClick(event) {
-    const target = event.target;
-    if (target.tagName === "A") {
-      const anchor = target;
-      const href = anchor.getAttribute("href");
-      if (href && href.startsWith("/")) {
-        event.preventDefault();
-        window.history.pushState({}, "", href);
-        this.setCurrentRoute();
-      }
-    }
-  }
-  setCurrentRoute() {
-    if (!this.routerView) {
-      throw new Error("Router error : routerView instance is not set");
-    }
-    this.currentRoute = this.findRoute(window.location.pathname);
-    this.routerView.updateCurrentRoute();
-  }
-  push(name) {
-    const route = this.routes.find((route2) => route2.name === name);
-    if (!route) {
-      throw new Error(`Router error: route ${name} not found`);
-    }
-    if (route.path === this.currentRoute?.path) {
-      throw new Error(`Router error: route ${name} already active`);
-    }
-    window.history.pushState({}, "", route.path);
-    this.setCurrentRoute();
-  }
-  getCurrentRoute() {
-    return this.currentRoute;
-  }
-};
-
-// src/pkg/frontendy/vdom/VText.ts
-var VText = class {
-  constructor(value) {
-    this.value = "";
-    this.value = `${value}`;
-  }
-  print(level = 0) {
-    console.log(`${"-".repeat(level)}> ${this.value}`);
-  }
-};
-var VText_default = VText;
-
-// src/pkg/frontendy/vdom/createElement.ts
-function createElement(node) {
-  if (!node) {
-    return document.createElement("noscript");
-  }
-  if (node instanceof VText_default) {
-    return document.createTextNode(node.value);
-  }
-  const el = document.createElement(node.tag);
-  if (node.props) {
-    for (const key in node.props) {
-      el.setAttribute(key, node.props[key]);
-    }
-  }
-  if (node.styles) {
-    const styles = el.style;
-    for (const key in node.styles) {
-      if (key in styles && node.styles[key]) {
-        styles[key] = node.styles[key];
-      }
-    }
-  }
-  if (node.events) {
-    for (const eventName in node.events) {
-      el.addEventListener(eventName, node.events[eventName]);
-    }
-  }
-  node.children?.forEach((child) => {
-    if (child instanceof component_default) {
-      el.appendChild(child.mount(el));
-    } else {
-      el.appendChild(createElement(child));
-    }
-  });
-  return el;
-}
-var createElement_default = createElement;
-
-// src/pkg/frontendy/vdom/VElem.ts
-var VElem = class _VElem {
-  constructor(tag) {
-    this.props = {};
-    this.children = [];
-    this.show = true;
-    this.styles = {};
-    this.events = {};
-    this.tag = tag;
-  }
-  setProps(props) {
-    if (!this.props) {
-      this.props = props;
-      return this;
-    }
-    Object.keys(props).forEach((key) => {
-      this.props[key] = props[key];
-    });
-    return this;
-  }
-  getProps() {
-    return this.props;
-  }
-  setChild(child) {
-    const filtered = child.filter((c) => c != null);
-    this.children.push(...filtered);
-    return this;
-  }
-  addChild(child) {
-    if (!child) {
-      return this;
-    }
-    this.children.push(child);
-    return this;
-  }
-  addEventListener(event, callback) {
-    if (!event || !callback) {
-      throw new Error("event and callback are required");
-    }
-    this.events[event] = callback;
-    return this;
-  }
-  createHTMLElement() {
-    return createElement_default(this);
-  }
-  print(level = 0) {
-    const props = Object.keys(this.props).map((key) => `${key}="${this.props[key]}"`);
-    console.log(`${"-".repeat(level)}> ${this.tag} with ${props}`);
-    this.children.forEach((child) => {
-      child.print(level + 2);
-    });
-  }
-  $vif(conditionResult) {
-    if (!conditionResult) {
-      this.styles.display = "none";
-    } else {
-      this.styles.display = null;
-    }
-    return this;
-  }
-  $vfor(array, callback) {
-    if (!Array.isArray(array)) {
-      throw new Error("v-for expects an array");
-    }
-    return array.map((item) => {
-      const newElem = new _VElem(this.tag);
-      newElem.setProps(this.props);
-      callback(newElem, item);
-      return newElem;
-    });
-  }
-};
-var VElem_default = VElem;
-
-// src/pkg/frontendy/vdom/updateElement.ts
-function addNewElement(parent, newVNode) {
-  if (newVNode instanceof component_default) {
-    newVNode.mount(parent);
-  } else {
-    parent.appendChild(createElement_default(newVNode));
-  }
-}
-function removeNewElement(parent, index) {
-  const child = parent.childNodes[index];
-  if (!child) {
-    return;
-  }
-  parent.removeChild(child);
-}
-function replaceElement(parent, newVNode, index) {
-  const child = parent.childNodes[index];
-  if (!child) {
-    return;
-  }
-  if (newVNode instanceof component_default) {
-    const element = newVNode.mount(parent);
-    if (!element) {
-      return;
-    }
-    parent.replaceChild(element, child);
-    return;
-  }
-  parent.replaceChild(createElement_default(newVNode), child);
-}
-function updateElement(parent, oldVNode, newVNode, index = 0) {
-  if (parent instanceof Text) {
-    if (newVNode instanceof VText_default) {
-      if (newVNode.value !== parent.nodeValue) {
-        parent.nodeValue = newVNode.value;
-      }
-    } else if (newVNode instanceof VElem_default) {
-      parent.replaceWith(createElement_default(newVNode));
-    }
-    return;
-  }
-  if (!oldVNode && !newVNode) {
-    return;
-  }
-  if (!oldVNode && newVNode) {
-    addNewElement(parent, newVNode);
-    return;
-  }
-  if (!newVNode && oldVNode) {
-    removeNewElement(parent, index);
-    return;
-  }
-  const newIsText = newVNode instanceof VText_default;
-  const oldIsText = oldVNode instanceof VText_default;
-  if (newIsText || oldIsText) {
-    if (newIsText && oldIsText && newVNode.value !== oldVNode.value) {
-      parent.innerText = newVNode.value;
-    } else if (newVNode !== oldVNode && newVNode instanceof VElem_default) {
-      parent.replaceWith(createElement_default(newVNode));
-    } else if (newVNode !== oldVNode && newVNode instanceof component_default) {
-      const elem2 = newVNode.mount(parent);
-      if (elem2) {
-        parent.replaceWith(elem2);
-      } else {
-        removeNewElement(parent, index);
-        console.log("after render component no element...");
-      }
-    }
-    return;
-  }
-  const newIsComponent = newVNode instanceof component_default;
-  const oldIsComponent = oldVNode instanceof component_default;
-  if (newIsComponent || oldIsComponent) {
-    if (newIsComponent && oldIsComponent) {
-      const parentParent = parent.parentElement;
-      if (!parentParent) {
-        return;
-      }
-      newVNode.mount(parentParent);
-      oldVNode.unmount();
-    } else {
-      addNewElement(parent, newVNode);
-    }
-    return;
-  }
-  if (newVNode && oldVNode && newVNode.tag !== oldVNode.tag) {
-    replaceElement(parent, newVNode, index);
-    return;
-  }
-  if (!(parent.childNodes && parent.childNodes.length && oldVNode && newVNode)) {
-    return;
-  }
-  for (const key in oldVNode.props) {
-    if (!(key in newVNode.props)) {
-      parent.removeAttribute(key);
-    }
-  }
-  for (const key in newVNode.props) {
-    if (oldVNode.props?.[key] !== newVNode.props[key]) {
-      parent.setAttribute(key, newVNode.props[key]);
-    }
-  }
-  for (let i = 0; i < newVNode.children.length || i < oldVNode.children.length; i++) {
-    const newParent = parent.childNodes[i];
-    const oldChild = oldVNode.children?.[i];
-    const newChild = newVNode.children?.[i];
-    updateElement(newParent, oldChild, newChild, i);
-  }
-}
-var updateElement_default = updateElement;
-
-// src/pkg/frontendy/component/lifecicle.ts
-var FrontendyLifecicle = class {
-  onMounted() {
-  }
-  onUpdated() {
-  }
-  onUnmounted() {
-  }
-  onCreated() {
-  }
-};
-var lifecicle_default = FrontendyLifecicle;
-
-// src/pkg/frontendy/component/name.ts
-function getCounter() {
-  let count = 0;
-  return {
-    getValue: () => ++count
-  };
-}
-var counter = getCounter();
-function getComponentUniqueName() {
-  const id = counter.getValue();
-  return "component-" + id;
-}
-
-// src/pkg/frontendy/component/slot.ts
-var FrontendySlot = class {
-  constructor(name) {
-    this.value = void 0;
-    this.name = name;
-  }
-  set(value) {
-    this.value = value;
-  }
-  render() {
-    return this.value ?? null;
-  }
-};
-var slot_default = FrontendySlot;
-
-// src/pkg/frontendy/component/component.ts
-var FrontendyComponent = class extends lifecicle_default {
-  constructor(props = {}) {
-    super();
-    this.componentName = getComponentUniqueName();
-    // State
-    this.state = {};
-    this._props = {};
-    this._slots = {};
-    // VDOM
-    this.oldVNode = null;
-    this.isMounted = false;
-    this._el = null;
-    this.initProps(props);
-    this.initState();
-    this.initSlots();
-    this.onCreated();
-  }
-  initProps(props = {}) {
-    this._props = props;
-  }
-  initState() {
-    const initialState = this.data();
-    this.state = new Proxy(initialState, {
-      set: (target, prop, value) => {
-        target[prop] = value;
-        console.log(`\u{1F504} State \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D: ${String(prop)} \u2192 ${value}`);
-        this.update();
-        return true;
-      }
-    });
-  }
-  initSlots() {
-    this.slots().forEach((slotName) => {
-      this.registerSlot(slotName);
-    });
-  }
-  get props() {
-    return this._props;
-  }
-  get el() {
-    return this._el;
-  }
-  data() {
-    return {};
-  }
-  slots() {
-    return [];
-  }
-  print() {
-    console.log("Component : ", this.componentName);
-  }
-  template() {
-    return void 0;
-  }
-  mount(target) {
-    this.oldVNode = this.template() ?? null;
-    if (!this.oldVNode) {
-      this._el = null;
-      return;
-    }
-    this._el = this.oldVNode.createHTMLElement();
-    target.appendChild(this._el);
-    if (!this.isMounted) {
-      this.onMounted();
-    } else {
-      this.onUpdated();
-    }
-    this.isMounted = true;
-    return this.el;
-  }
-  unmount() {
-    if (!this.el || !this.isMounted) {
-      return;
-    }
-    const parent = this.el.parentElement;
-    if (parent) {
-      parent.removeChild(this.el);
-    }
-    this._el = null;
-    this.oldVNode = null;
-    this.isMounted = false;
-    this.onUnmounted();
-  }
-  update() {
-    if (!this.isMounted || !this.el) {
-      return;
-    }
-    const newVNode = this.template();
-    if (!newVNode) {
-      return;
-    }
-    updateElement_default(this.el, this.oldVNode, newVNode);
-    this.oldVNode = newVNode;
-  }
-  registerSlot(name) {
-    if (this._slots[name]) {
-      return this._slots[name];
-    }
-    const slot = new slot_default(name);
-    this._slots[name] = slot;
-    return slot;
-  }
-  useSlot(name) {
-    if (!this._slots[name]) {
-      throw new Error(`FrontendyComponent error : slot with name "${name}" does not exist`);
-    }
-    return this._slots[name].render();
-  }
-  setSlot(name, value) {
-    if (!this._slots[name]) {
-      throw new Error(`FrontendyComponent error : slot with name "${name}" does not exist`);
-    }
-    this._slots[name].set(value);
-    return this;
-  }
-};
-var component_default = FrontendyComponent;
-
-// src/pkg/frontendy/vdom/constructor.ts
-function elem(tag) {
-  return new VElem_default(tag);
-}
-function text(value) {
-  return new VText_default(value);
-}
-
-// src/components/content/about-page-content/AboutInfoComponent.ts
-var AboutInfoComponent = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "home-dashboard-component";
-  }
-  template() {
-    return elem("div").setProps({
-      id: "home-dashboard-component",
-      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
-    }).setChild([
-      elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`About us`)),
-      elem("p").setProps({ class: "text-gray-700 text-base mb-4" }).addChild(text("ft_transcendence is a project that aims to provide a platform for developers to learn and practice their skills in a collaborative environment.")),
-      elem("h2").setProps({ class: "text-xl font-bold mb-2" }).addChild(text("Our team:")),
-      elem("ul").setProps({ class: "list-disc list-inside mb-4" }).setChild([
-        elem("li").addChild(text("Timur Mazitov - Project Manager")),
-        elem("li").addChild(text("Valeria Lomakina - Backend Developer")),
-        elem("li").addChild(text("Sofia Abdulkina - Backend Developer")),
-        elem("li").addChild(text("Ibrohim Ganiev - Fullstack Developer"))
-      ])
-    ]);
-  }
-};
-
-// src/pages/AboutPage.ts
-var AboutPage = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "about-page";
-  }
-  data() {
-    return {
-      title: "About Us",
-      description: "Example text about us."
-    };
-  }
-  template() {
-    return elem("div").setProps({ id: "about-page" }).setChild([
-      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(new AboutInfoComponent())
-    ]);
-  }
-};
-
 // node_modules/axios/lib/helpers/bind.js
 function bind(fn, thisArg) {
   return function wrap() {
@@ -3146,6 +2640,519 @@ var AxiosClient = class _AxiosClient {
 };
 var client_default = AxiosClient;
 
+// src/pkg/frontendy/router/router.ts
+var FrontendyRouter = class {
+  constructor(routes2, config = void 0) {
+    this.routes = [];
+    this.config = config ?? { notFoundPage: void 0, routeIsAvailable: void 0 };
+    this.routes = routes2;
+    this.currentRoute = this.findRoute(window.location.pathname);
+    document.addEventListener("click", this.handleLinkClick.bind(this));
+    window.addEventListener("popstate", () => this.setCurrentRoute());
+  }
+  setRouterView(routerView) {
+    this.routerView = routerView;
+  }
+  findRoute(path) {
+    console.log("path", path);
+    const route = this.routes.find((route2) => route2.path === path);
+    if (!route) {
+      return void 0;
+    }
+    if (!this.config.routeIsAvailable) {
+      return route;
+    }
+    const reason = this.config.routeIsAvailable(route);
+    if (reason) {
+      console.error(`Router error : route ${route.name} is not available for reason : ${reason}`);
+      return void 0;
+    }
+    return route;
+  }
+  getUndefinedMessageComponent() {
+    return this.config?.notFoundPage;
+  }
+  handleLinkClick(event) {
+    const target = event.target;
+    if (target.tagName === "A") {
+      const anchor = target;
+      const href = anchor.getAttribute("href");
+      if (href && href.startsWith("/")) {
+        event.preventDefault();
+        window.history.pushState({}, "", href);
+        this.setCurrentRoute();
+      }
+    }
+  }
+  setCurrentRoute() {
+    if (!this.routerView) {
+      throw new Error("Router error : routerView instance is not set");
+    }
+    this.currentRoute = this.findRoute(window.location.pathname);
+    this.routerView.updateCurrentRoute();
+  }
+  push(name) {
+    const route = this.routes.find((route2) => route2.name === name);
+    if (!route) {
+      throw new Error(`Router error: route ${name} not found`);
+    }
+    if (route.path === this.currentRoute?.path) {
+      throw new Error(`Router error: route ${name} already active`);
+    }
+    window.history.pushState({}, "", route.path);
+    this.setCurrentRoute();
+  }
+  getCurrentRoute() {
+    return this.currentRoute;
+  }
+};
+
+// src/pkg/frontendy/vdom/VText.ts
+var VText = class {
+  constructor(value) {
+    this.value = "";
+    this.value = `${value}`;
+  }
+  print(level = 0) {
+    console.log(`${"-".repeat(level)}> ${this.value}`);
+  }
+};
+var VText_default = VText;
+
+// src/pkg/frontendy/vdom/createElement.ts
+function createElement(node) {
+  if (!node) {
+    return document.createElement("noscript");
+  }
+  if (node instanceof VText_default) {
+    return document.createTextNode(node.value);
+  }
+  const el = document.createElement(node.tag);
+  if (node.props) {
+    for (const key in node.props) {
+      el.setAttribute(key, node.props[key]);
+    }
+  }
+  if (node.styles) {
+    const styles = el.style;
+    for (const key in node.styles) {
+      if (key in styles && node.styles[key]) {
+        styles[key] = node.styles[key];
+      }
+    }
+  }
+  if (node.events) {
+    for (const eventName in node.events) {
+      el.addEventListener(eventName, node.events[eventName]);
+    }
+  }
+  node.children?.forEach((child) => {
+    if (child instanceof component_default) {
+      el.appendChild(child.mount(el));
+    } else {
+      el.appendChild(createElement(child));
+    }
+  });
+  return el;
+}
+var createElement_default = createElement;
+
+// src/pkg/frontendy/vdom/VElem.ts
+var VElem = class _VElem {
+  constructor(tag) {
+    this.props = {};
+    this.children = [];
+    this.show = true;
+    this.styles = {};
+    this.events = {};
+    this.tag = tag;
+  }
+  setProps(props) {
+    if (!this.props) {
+      this.props = props;
+      return this;
+    }
+    Object.keys(props).forEach((key) => {
+      this.props[key] = props[key];
+    });
+    return this;
+  }
+  getProps() {
+    return this.props;
+  }
+  setChild(child) {
+    const filtered = child.filter((c) => c != null);
+    this.children.push(...filtered);
+    return this;
+  }
+  addChild(child) {
+    if (!child) {
+      return this;
+    }
+    this.children.push(child);
+    return this;
+  }
+  addEventListener(event, callback) {
+    if (!event || !callback) {
+      throw new Error("event and callback are required");
+    }
+    this.events[event] = callback;
+    return this;
+  }
+  createHTMLElement() {
+    return createElement_default(this);
+  }
+  print(level = 0) {
+    const props = Object.keys(this.props).map((key) => `${key}="${this.props[key]}"`);
+    console.log(`${"-".repeat(level)}> ${this.tag} with ${props}`);
+    this.children.forEach((child) => {
+      child.print(level + 2);
+    });
+  }
+  $vif(conditionResult) {
+    if (!conditionResult) {
+      this.styles.display = "none";
+    } else {
+      this.styles.display = null;
+    }
+    return this;
+  }
+  $vfor(array, callback) {
+    if (!Array.isArray(array)) {
+      throw new Error("v-for expects an array");
+    }
+    return array.map((item) => {
+      const newElem = new _VElem(this.tag);
+      newElem.setProps(this.props);
+      callback(newElem, item);
+      return newElem;
+    });
+  }
+};
+var VElem_default = VElem;
+
+// src/pkg/frontendy/vdom/updateElement.ts
+function addNewElement(parent, newVNode) {
+  if (newVNode instanceof component_default) {
+    newVNode.mount(parent);
+  } else {
+    parent.appendChild(createElement_default(newVNode));
+  }
+}
+function removeNewElement(parent, index) {
+  const child = parent.childNodes[index];
+  if (!child) {
+    return;
+  }
+  parent.removeChild(child);
+}
+function replaceElement(parent, newVNode, index) {
+  const child = parent.childNodes[index];
+  if (!child) {
+    return;
+  }
+  if (newVNode instanceof component_default) {
+    const element = newVNode.mount(parent);
+    if (!element) {
+      return;
+    }
+    parent.replaceChild(element, child);
+    return;
+  }
+  parent.replaceChild(createElement_default(newVNode), child);
+}
+function updateElement(parent, oldVNode, newVNode, index = 0) {
+  if (parent instanceof Text) {
+    if (newVNode instanceof VText_default) {
+      if (newVNode.value !== parent.nodeValue) {
+        parent.nodeValue = newVNode.value;
+      }
+    } else if (newVNode instanceof VElem_default) {
+      parent.replaceWith(createElement_default(newVNode));
+    }
+    return;
+  }
+  if (!oldVNode && !newVNode) {
+    return;
+  }
+  if (!oldVNode && newVNode) {
+    addNewElement(parent, newVNode);
+    return;
+  }
+  if (!newVNode && oldVNode) {
+    removeNewElement(parent, index);
+    return;
+  }
+  const newIsText = newVNode instanceof VText_default;
+  const oldIsText = oldVNode instanceof VText_default;
+  if (newIsText || oldIsText) {
+    if (newIsText && oldIsText && newVNode.value !== oldVNode.value) {
+      parent.innerText = newVNode.value;
+    } else if (newVNode !== oldVNode && newVNode instanceof VElem_default) {
+      parent.replaceWith(createElement_default(newVNode));
+    } else if (newVNode !== oldVNode && newVNode instanceof component_default) {
+      const elem2 = newVNode.mount(parent);
+      if (elem2) {
+        parent.replaceWith(elem2);
+      } else {
+        removeNewElement(parent, index);
+        console.log("after render component no element...");
+      }
+    }
+    return;
+  }
+  const newIsComponent = newVNode instanceof component_default;
+  const oldIsComponent = oldVNode instanceof component_default;
+  if (newIsComponent || oldIsComponent) {
+    if (newIsComponent && oldIsComponent) {
+      const parentParent = parent.parentElement;
+      if (!parentParent) {
+        return;
+      }
+      newVNode.mount(parentParent);
+      oldVNode.unmount();
+    } else {
+      addNewElement(parent, newVNode);
+    }
+    return;
+  }
+  if (newVNode && oldVNode && newVNode.tag !== oldVNode.tag) {
+    replaceElement(parent, newVNode, index);
+    return;
+  }
+  if (!(parent.childNodes && parent.childNodes.length && oldVNode && newVNode)) {
+    return;
+  }
+  for (const key in oldVNode.props) {
+    if (!(key in newVNode.props)) {
+      parent.removeAttribute(key);
+    }
+  }
+  for (const key in newVNode.props) {
+    if (oldVNode.props?.[key] !== newVNode.props[key]) {
+      parent.setAttribute(key, newVNode.props[key]);
+    }
+  }
+  for (let i = 0; i < newVNode.children.length || i < oldVNode.children.length; i++) {
+    const newParent = parent.childNodes[i];
+    const oldChild = oldVNode.children?.[i];
+    const newChild = newVNode.children?.[i];
+    updateElement(newParent, oldChild, newChild, i);
+  }
+}
+var updateElement_default = updateElement;
+
+// src/pkg/frontendy/component/lifecicle.ts
+var FrontendyLifecicle = class {
+  onMounted() {
+  }
+  onUpdated() {
+  }
+  onUnmounted() {
+  }
+  onCreated() {
+  }
+};
+var lifecicle_default = FrontendyLifecicle;
+
+// src/pkg/frontendy/component/name.ts
+function getCounter() {
+  let count = 0;
+  return {
+    getValue: () => ++count
+  };
+}
+var counter = getCounter();
+function getComponentUniqueName() {
+  const id = counter.getValue();
+  return "component-" + id;
+}
+
+// src/pkg/frontendy/component/slot.ts
+var FrontendySlot = class {
+  constructor(name) {
+    this.value = void 0;
+    this.name = name;
+  }
+  set(value) {
+    this.value = value;
+  }
+  render() {
+    return this.value ?? null;
+  }
+};
+var slot_default = FrontendySlot;
+
+// src/pkg/frontendy/component/component.ts
+var FrontendyComponent = class extends lifecicle_default {
+  constructor(props = {}) {
+    super();
+    this.componentName = getComponentUniqueName();
+    // State
+    this.state = {};
+    this._props = {};
+    this._slots = {};
+    // VDOM
+    this.oldVNode = null;
+    this.isMounted = false;
+    this._el = null;
+    this.initProps(props);
+    this.initState();
+    this.initSlots();
+    this.onCreated();
+  }
+  initProps(props = {}) {
+    this._props = props;
+  }
+  initState() {
+    const initialState = this.data();
+    this.state = new Proxy(initialState, {
+      set: (target, prop, value) => {
+        target[prop] = value;
+        console.log(`\u{1F504} State \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D: ${String(prop)} \u2192 ${value}`);
+        this.update();
+        return true;
+      }
+    });
+  }
+  initSlots() {
+    this.slots().forEach((slotName) => {
+      this.registerSlot(slotName);
+    });
+  }
+  get props() {
+    return this._props;
+  }
+  get el() {
+    return this._el;
+  }
+  data() {
+    return {};
+  }
+  slots() {
+    return [];
+  }
+  print() {
+    console.log("Component : ", this.componentName);
+  }
+  template() {
+    return void 0;
+  }
+  mount(target) {
+    this.oldVNode = this.template() ?? null;
+    if (!this.oldVNode) {
+      this._el = null;
+      return;
+    }
+    this._el = this.oldVNode.createHTMLElement();
+    target.appendChild(this._el);
+    if (!this.isMounted) {
+      this.onMounted();
+    } else {
+      this.onUpdated();
+    }
+    this.isMounted = true;
+    return this.el;
+  }
+  unmount() {
+    if (!this.el || !this.isMounted) {
+      return;
+    }
+    const parent = this.el.parentElement;
+    if (parent) {
+      parent.removeChild(this.el);
+    }
+    this._el = null;
+    this.oldVNode = null;
+    this.isMounted = false;
+    this.onUnmounted();
+  }
+  update() {
+    if (!this.isMounted || !this.el) {
+      return;
+    }
+    const newVNode = this.template();
+    if (!newVNode) {
+      return;
+    }
+    updateElement_default(this.el, this.oldVNode, newVNode);
+    this.oldVNode = newVNode;
+  }
+  registerSlot(name) {
+    if (this._slots[name]) {
+      return this._slots[name];
+    }
+    const slot = new slot_default(name);
+    this._slots[name] = slot;
+    return slot;
+  }
+  useSlot(name) {
+    if (!this._slots[name]) {
+      throw new Error(`FrontendyComponent error : slot with name "${name}" does not exist`);
+    }
+    return this._slots[name].render();
+  }
+  setSlot(name, value) {
+    if (!this._slots[name]) {
+      throw new Error(`FrontendyComponent error : slot with name "${name}" does not exist`);
+    }
+    this._slots[name].set(value);
+    return this;
+  }
+};
+var component_default = FrontendyComponent;
+
+// src/pkg/frontendy/vdom/constructor.ts
+function elem(tag) {
+  return new VElem_default(tag);
+}
+function text(value) {
+  return new VText_default(value);
+}
+
+// src/components/content/about-page-content/AboutInfoComponent.ts
+var AboutInfoComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "home-dashboard-component";
+  }
+  template() {
+    return elem("div").setProps({
+      id: "home-dashboard-component",
+      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
+    }).setChild([
+      elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`About us`)),
+      elem("p").setProps({ class: "text-gray-700 text-base mb-4" }).addChild(text("ft_transcendence is a project that aims to provide a platform for developers to learn and practice their skills in a collaborative environment.")),
+      elem("h2").setProps({ class: "text-xl font-bold mb-2" }).addChild(text("Our team:")),
+      elem("ul").setProps({ class: "list-disc list-inside mb-4" }).setChild([
+        elem("li").addChild(text("Timur Mazitov - Project Manager")),
+        elem("li").addChild(text("Valeria Lomakina - Backend Developer")),
+        elem("li").addChild(text("Sofia Abdulkina - Backend Developer")),
+        elem("li").addChild(text("Ibrohim Ganiev - Fullstack Developer"))
+      ])
+    ]);
+  }
+};
+
+// src/pages/AboutPage.ts
+var AboutPage = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "about-page";
+  }
+  data() {
+    return {
+      title: "About Us",
+      description: "Example text about us."
+    };
+  }
+  template() {
+    return elem("div").setProps({ id: "about-page" }).setChild([
+      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(new AboutInfoComponent())
+    ]);
+  }
+};
+
 // src/components/inputs/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
   constructor(text10) {
@@ -3689,7 +3696,7 @@ var DashboardComponent = class extends component_default {
       elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(`Home`)),
       new InfoParagraphComponent("Welcome to the ft_transcendence!"),
       new InfoParagraphComponent("There will be some tools and players statistics soon."),
-      isAuthorized() ? new PlayButtonComponent() : new InfoParagraphComponent("You have to sign in to play.")
+      isAuthorized() ? new PlayButtonComponent() : new InfoParagraphComponent("You have to sign in in to play.")
     ]);
   }
 };
@@ -3957,6 +3964,13 @@ var UMS = class {
     removeTokens();
     return null;
   }
+  async userGetInfo() {
+    const response = await this.client.request({
+      method: "GET",
+      url: "/user"
+    });
+    return response;
+  }
 };
 
 // src/api/api.ts
@@ -3984,8 +3998,8 @@ var InfoContentComponent = class extends component_default {
   }
   async signoutHandler() {
     await API.ums.signOut();
-    EventBroker.getInstance().emit("update-auth");
     router_default.push("home");
+    EventBroker.getInstance().emit("update-auth");
   }
   template() {
     const status = statuses[1];
@@ -4065,12 +4079,8 @@ var DashboardComponent2 = class extends component_default {
 // src/pages/ProfilePage.ts
 var ProfilePage = class extends component_default {
   constructor() {
-    super();
+    super(...arguments);
     this.componentName = "profile-page";
-    if (!isAuthorized()) {
-      router_default.push("home");
-      throw new Error("ProfilePage error : user is not authorized");
-    }
   }
   template() {
     const dashboard = new DashboardComponent2("Profile").setSlot("content", new ProfilePageContent());
@@ -4276,8 +4286,15 @@ var routes = [
   { name: "profile", path: "/profile", component: ProfilePage },
   { name: "profile-settings", path: "/profile/settings", component: ProfileSettingsPage }
 ];
+var withoutLogin = ["home", "about"];
 var routerConfig = {
-  NotFoundPage
+  notFoundPage: NotFoundPage,
+  routeIsAvailable: (route) => {
+    console.log({ name: route.name, auth: isAuthorized() });
+    if (!withoutLogin.includes(route.name) && !isAuthorized()) {
+      return "user is unauthorized";
+    }
+  }
 };
 var router = new FrontendyRouter(routes, routerConfig);
 var router_default = router;
@@ -4908,6 +4925,17 @@ var GameConfirmationModal = class extends component_default {
   }
 };
 
+// src/store/store.ts
+var Store = class {
+  static async setupUser() {
+    if (!isAuthorized()) {
+      return;
+    }
+    const user = await API.ums.userGetInfo();
+    console.log({ user });
+  }
+};
+
 // src/components/AppComponent.ts
 var navBarLinks = [
   new NavBarLink("Home", "home", "ti ti-home"),
@@ -4956,6 +4984,9 @@ var AppComponent = class extends component_default {
     EventBroker.getInstance().on("update-auth", () => {
       this.state.isAuthorized = isAuthorized();
     });
+  }
+  onCreated() {
+    Store.setupUser();
   }
   onUnmounted() {
     EventBroker.getInstance().off("activate-confirmation-modal");

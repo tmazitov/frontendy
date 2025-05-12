@@ -1,3 +1,4 @@
+import { isAuthorized } from "../api/client";
 import FrontendyRoute from "../pkg/frontendy/router/route";
 import FrontendyRouter from "../pkg/frontendy/router/router";
 import AboutPage from "./AboutPage";
@@ -13,9 +14,17 @@ const routes:Array<FrontendyRoute> = [
     {name: "profile-settings", path: "/profile/settings", component: ProfileSettingsPage},
 ]
 
+const withoutLogin:Array<string> = ["home", "about"]
+
 const routerConfig = {
-    NotFoundPage: NotFoundPage,
-}
+    notFoundPage: NotFoundPage,
+    routeIsAvailable: (route: FrontendyRoute) => {
+        console.log({name: route.name, auth: isAuthorized()})
+        if (!withoutLogin.includes(route.name) && !isAuthorized()) {
+            return 'user is unauthorized'
+        } 
+    }
+ }
 const router = new FrontendyRouter(routes, routerConfig)
 
 export default router
