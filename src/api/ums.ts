@@ -61,10 +61,9 @@ export default class UMS {
     }
 
     public async userGetInfo() {
-        const response = await this.client.request({
+        return await this.client.request({
             method: "GET",
             url: "/user",
         })
-        return response;
     }
 }

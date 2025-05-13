@@ -3,6 +3,8 @@ import router from "../../../pages/router";
 import EventBroker from "../../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
+import Store from "../../../store/store";
+import User from "../../../types/User";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import TagComponent, { TagColor } from "../../inputs/TagComponent";
 import DeleteAccountModal from "../../modals/DeleteAccountModal";
@@ -19,7 +21,17 @@ export default class InfoContentComponent extends FrontendyComponent {
     protected data(){
         return {
             isDeleteAccountModalOpen: false,
+            user: undefined,
         }
+    }
+
+    protected onCreated(): void {
+        Store.getters.user().then((user:User|undefined) => {
+            if (!user) {
+                return 
+            }
+            this.state.user = user
+        })
     }
 
     async signoutHandler() {
@@ -58,7 +70,7 @@ export default class InfoContentComponent extends FrontendyComponent {
                     .setChild([
                         elem('h2')
                         .setProps({class: "text-xl font-bold"})
-                        .addChild(text("username")),
+                        .addChild(text(this.state.user?.nickname)),
     
                         elem('p')
                         .setProps({class: "text-gray-600 text-sm"})
@@ -66,7 +78,7 @@ export default class InfoContentComponent extends FrontendyComponent {
                         
                         elem('p')
                         .setProps({class: "text-gray-600 text-sm"})
-                        .addChild(text("Rating: 1000 - 7")),
+                        .addChild(text(`Rating: ${this.state.user?.rating}`)),
                     ]),
 
                     elem('div')

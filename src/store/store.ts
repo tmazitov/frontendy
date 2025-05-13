@@ -1,16 +1,11 @@
-import API from "../api/api";
-import { isAuthorized } from "../api/client";
+import StoreGetters from "./getters";
+import StoreSetters from "./setters";
+import StoreState from "./state";
+
 
 export default class Store {
+    private static state:StoreState = new StoreState()
 
-
-    public static async setupUser() {
-        if (!isAuthorized()) {
-            return ;
-        }
-
-        const user = await API.ums.userGetInfo()
-        console.log({user})
-    }
-
-}
+    public static setters:StoreSetters = new StoreSetters(this.state);
+    public static getters:StoreGetters = new StoreGetters(this.state);
+}   

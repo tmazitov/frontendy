@@ -65,7 +65,7 @@ export default class AppComponent extends Component {
     }
 
     protected onCreated(): void {
-        Store.setupUser()
+        Store.setters.setupUser()
     }
 
     onUnmounted(): void {

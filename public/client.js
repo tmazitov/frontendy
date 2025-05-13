@@ -2615,11 +2615,11 @@ var AxiosClient = class _AxiosClient {
     try {
       const response = await axios_default.request({
         method: "POST",
-        url: "/token/refresh",
+        url: "http://localhost:5000/auth/api/rest/refresh",
         headers: {
           "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-          "Authorization": `${tokens.accessToken}`
+          "Access-Control-Allow-Origin": "*"
+          // 'Authorization': `${tokens.accessToken}`
         },
         data: {
           "refreshToken": tokens.refreshToken
@@ -2631,6 +2631,7 @@ var AxiosClient = class _AxiosClient {
       console.log("new tokens :>> ", response.data);
       return response;
     } catch (error) {
+      console.log("refresh error :>> ", error);
       if (error.response && error.response.status == 401) {
         router_default.push("auth");
       }
@@ -3965,11 +3966,10 @@ var UMS = class {
     return null;
   }
   async userGetInfo() {
-    const response = await this.client.request({
+    return await this.client.request({
       method: "GET",
       url: "/user"
     });
-    return response;
   }
 };
 
@@ -3977,6 +3977,115 @@ var UMS = class {
 var API = class {
   static {
     this.ums = new UMS("http://localhost:5000/auth/api/rest");
+  }
+};
+
+// src/store/getters.ts
+var StoreGetters = class {
+  constructor(state) {
+    this.state = state;
+  }
+  async user() {
+    return this.state.user.getValue();
+  }
+  async userNickname() {
+    const user = await this.state.user.getValue();
+    console.log("user", user);
+    if (!user) {
+      return void 0;
+    }
+    return user.nickname;
+  }
+  async userRating() {
+    const user = await this.state.user.getValue();
+    if (!user) {
+      return void 0;
+    }
+    return user.rating;
+  }
+  async userId() {
+    const user = await this.state.user.getValue();
+    if (!user) {
+      return void 0;
+    }
+    return user.id;
+  }
+};
+
+// src/types/User.ts
+var User = class {
+  constructor(data) {
+    this.id = data.id;
+    this.nickname = data.nickname;
+    this.rating = data.rating;
+  }
+};
+
+// src/store/setters.ts
+var StoreSetters = class {
+  constructor(state) {
+    this.state = state;
+  }
+  async setupUser() {
+    if (!isAuthorized()) {
+      return;
+    }
+    try {
+      const response = await API.ums.userGetInfo();
+      if (!response) {
+        throw new Error("no response");
+      }
+      if (!response.data) {
+        throw new Error("no user data in response");
+      }
+      this.state.user.setValue(new User(response.data));
+    } catch (e) {
+      console.error("Store error: can't get user data :", e);
+    }
+  }
+};
+
+// src/store/field.ts
+var StoreField = class {
+  constructor() {
+    this.isSet = false;
+    this.pendingResolversQueue = [];
+  }
+  setValue(newValue) {
+    this.value = newValue;
+    this.isSet = true;
+    this.pendingResolversQueue.forEach((resolve) => resolve(newValue));
+    this.pendingResolversQueue = [];
+  }
+  getValue() {
+    if (this.isSet) {
+      return new Promise((resolve, reject) => {
+        resolve(this.value);
+      });
+    }
+    return new Promise((resolve) => {
+      this.pendingResolversQueue.push(resolve);
+    });
+  }
+};
+
+// src/store/state.ts
+var StoreState = class {
+  constructor() {
+    this.user = new StoreField();
+  }
+};
+
+// src/store/store.ts
+var Store = class {
+  static {
+    this.state = new StoreState();
+  }
+  static {
+    this.setters = new StoreSetters(this.state);
+  }
+  static {
+    this.getters = new StoreGetters(this.state);
   }
 };
 
@@ -3993,8 +4102,17 @@ var InfoContentComponent = class extends component_default {
   }
   data() {
     return {
-      isDeleteAccountModalOpen: false
+      isDeleteAccountModalOpen: false,
+      user: void 0
     };
+  }
+  onCreated() {
+    Store.getters.user().then((user) => {
+      if (!user) {
+        return;
+      }
+      this.state.user = user;
+    });
   }
   async signoutHandler() {
     await API.ums.signOut();
@@ -4012,9 +4130,9 @@ var InfoContentComponent = class extends component_default {
       elem("div").setProps({ class: "w-full h-32" }).setChild([
         elem("div").setProps({ class: "flex flex-col gap-2 justify-between h-full" }).setChild([
           elem("div").setProps({ class: "flex gap-2 flex-col" }).setChild([
-            elem("h2").setProps({ class: "text-xl font-bold" }).addChild(text("username")),
+            elem("h2").setProps({ class: "text-xl font-bold" }).addChild(text(this.state.user?.nickname)),
             elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Played games: 0")),
-            elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Rating: 1000 - 7"))
+            elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text(`Rating: ${this.state.user?.rating}`))
           ]),
           elem("div").setProps({ class: "flex gap-2" }).setChild([
             new ButtonComponent({ icon: "ti ti-settings", color: "blue", type: "outline" }).onClick(() => router_default.push("profile-settings")),
@@ -4925,17 +5043,6 @@ var GameConfirmationModal = class extends component_default {
   }
 };
 
-// src/store/store.ts
-var Store = class {
-  static async setupUser() {
-    if (!isAuthorized()) {
-      return;
-    }
-    const user = await API.ums.userGetInfo();
-    console.log({ user });
-  }
-};
-
 // src/components/AppComponent.ts
 var navBarLinks = [
   new NavBarLink("Home", "home", "ti ti-home"),
@@ -4986,7 +5093,7 @@ var AppComponent = class extends component_default {
     });
   }
   onCreated() {
-    Store.setupUser();
+    Store.setters.setupUser();
   }
   onUnmounted() {
     EventBroker.getInstance().off("activate-confirmation-modal");

@@ -141,11 +141,11 @@ class AxiosClient {
 		try {
 			const response = await axios.request({
 				method: "POST",
-				url: "/token/refresh",
+				url: "http://localhost:5000/auth/api/rest/refresh",
 				headers: {
 					'Content-Type': 'application/json',
 					'Access-Control-Allow-Origin': '*',
-					'Authorization': `${tokens.accessToken}`
+					// 'Authorization': `${tokens.accessToken}`
 				},
 				data: {
 					"refreshToken" : tokens.refreshToken 
@@ -157,6 +157,7 @@ class AxiosClient {
 			console.log('new tokens :>> ', response.data);
 			return response
 		} catch (error: any) {
+			console.log('refresh error :>> ', error);
 			if (error.response && error.response.status == 401) {
 				router.push('auth');
 			}
