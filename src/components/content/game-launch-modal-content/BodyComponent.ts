@@ -2,6 +2,7 @@ import games from "../../../data/games";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 import PreferModeStorage from "../../../pkg/game-launcher/preferedMode";
+import Store from "../../../store/store";
 import Game from "../../../types/Game";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import GameCurrentRatingComponent from "./GameCurrentRatingComponent";
@@ -21,8 +22,18 @@ export default class GameLauchBodyComponent extends FrontendyComponent {
 
     data() {
         return {
+            rating: undefined,
             selectedOption: PreferModeStorage.get() ?? 0,
         }
+    }
+
+    protected onCreated(): void {
+        Store.getters.userRating().then((rating:number|undefined) => {
+            if (!rating) {
+                return;
+            }
+            this.state.rating = rating
+        })
     }
 
     updateSelectedOption(gameId:number) {
@@ -52,7 +63,7 @@ export default class GameLauchBodyComponent extends FrontendyComponent {
                 elem("hr").setProps({ class: "my-4 border-gray-300" }),
 
                 new GameDescriptionComponent(games[this.state.selectedOption]),
-                new GameCurrentRatingComponent(1000-7),
+                new GameCurrentRatingComponent(this.state.rating),
 
                 new ButtonComponent({
                     label: "Find Game",

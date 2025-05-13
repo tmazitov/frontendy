@@ -11,6 +11,6 @@ export default class GameCurrentRatingComponent extends FrontendyComponent {
     template() {
         return elem("p").$vif(this.props.rating)
             .setProps({ class: "text-sm text-gray-500 mt-6 mb-2"})
-            .addChild(text(`Your rating : ${this.props.rating}`))
+            .addChild(text(`Rating : ${this.props.rating}`))
     }
 }

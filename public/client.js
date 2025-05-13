@@ -3409,6 +3409,168 @@ var PreferModeStorage = class {
   }
 };
 
+// src/store/getters.ts
+var StoreGetters = class {
+  constructor(state) {
+    this.state = state;
+  }
+  async user() {
+    return this.state.user.getValue();
+  }
+  async userNickname() {
+    const user = await this.state.user.getValue();
+    console.log("user", user);
+    if (!user) {
+      return void 0;
+    }
+    return user.nickname;
+  }
+  async userRating() {
+    const user = await this.state.user.getValue();
+    if (!user) {
+      return void 0;
+    }
+    return user.rating;
+  }
+  async userId() {
+    const user = await this.state.user.getValue();
+    if (!user) {
+      return void 0;
+    }
+    return user.id;
+  }
+};
+
+// src/api/ums.ts
+var UMS = class {
+  constructor(baseUrl) {
+    this.client = new client_default(baseUrl);
+    this.instance = axios_default.create({
+      baseURL: baseUrl,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  }
+  async signIn(form) {
+    const response = await this.instance.request({
+      method: "POST",
+      url: "/login",
+      data: form.toSubmit()
+    });
+    cacheTokens(response.data);
+    return response;
+  }
+  async signUp(form) {
+    const response = await this.instance.request({
+      method: "POST",
+      url: "/registration",
+      data: form.toSubmit()
+    });
+    cacheTokens(response.data);
+    return response;
+  }
+  async signOut() {
+    removeTokens();
+    return null;
+  }
+  async userGetInfo() {
+    return await this.client.request({
+      method: "GET",
+      url: "/user"
+    });
+  }
+};
+
+// src/api/api.ts
+var API = class {
+  static {
+    this.ums = new UMS("http://localhost:5000/auth/api/rest");
+  }
+};
+
+// src/types/User.ts
+var User = class {
+  constructor(data) {
+    this.id = data.id;
+    this.nickname = data.nickname;
+    this.rating = data.rating;
+  }
+};
+
+// src/store/setters.ts
+var StoreSetters = class {
+  constructor(state) {
+    this.state = state;
+  }
+  async setupUser() {
+    if (!isAuthorized()) {
+      return;
+    }
+    try {
+      const response = await API.ums.userGetInfo();
+      if (!response) {
+        throw new Error("no response");
+      }
+      if (!response.data) {
+        throw new Error("no user data in response");
+      }
+      this.state.user.setValue(new User(response.data));
+    } catch (e) {
+      console.error("Store error: can't get user data :", e);
+    }
+  }
+};
+
+// src/store/field.ts
+var StoreField = class {
+  constructor() {
+    this.isSet = false;
+    this.pendingResolversQueue = [];
+  }
+  setValue(newValue) {
+    this.value = newValue;
+    this.isSet = true;
+    this.pendingResolversQueue.forEach((resolve) => resolve(newValue));
+    this.pendingResolversQueue = [];
+  }
+  getValue() {
+    if (this.isSet) {
+      return new Promise((resolve, reject) => {
+        resolve(this.value);
+      });
+    }
+    return new Promise((resolve) => {
+      this.pendingResolversQueue.push(resolve);
+    });
+  }
+  clearValue() {
+    this.value = void 0;
+    this.isSet = false;
+  }
+};
+
+// src/store/state.ts
+var StoreState = class {
+  constructor() {
+    this.user = new StoreField();
+  }
+};
+
+// src/store/store.ts
+var Store = class {
+  static {
+    this.state = new StoreState();
+  }
+  static {
+    this.setters = new StoreSetters(this.state);
+  }
+  static {
+    this.getters = new StoreGetters(this.state);
+  }
+};
+
 // src/components/inputs/ButtonComponent.ts
 var ButtonComponent = class extends component_default {
   constructor(props) {
@@ -3503,7 +3665,7 @@ var GameCurrentRatingComponent = class extends component_default {
     this.componentName = "game-current-rating-component";
   }
   template() {
-    return elem("p").$vif(this.props.rating).setProps({ class: "text-sm text-gray-500 mt-6 mb-2" }).addChild(text(`Your rating : ${this.props.rating}`));
+    return elem("p").$vif(this.props.rating).setProps({ class: "text-sm text-gray-500 mt-6 mb-2" }).addChild(text(`Rating : ${this.props.rating}`));
   }
 };
 
@@ -3578,8 +3740,17 @@ var GameLauchBodyComponent = class extends component_default {
   }
   data() {
     return {
+      rating: void 0,
       selectedOption: PreferModeStorage.get() ?? 0
     };
+  }
+  onCreated() {
+    Store.getters.userRating().then((rating) => {
+      if (!rating) {
+        return;
+      }
+      this.state.rating = rating;
+    });
   }
   updateSelectedOption(gameId) {
     if (this.state.selectedOption === gameId) {
@@ -3601,7 +3772,7 @@ var GameLauchBodyComponent = class extends component_default {
       ]),
       elem("hr").setProps({ class: "my-4 border-gray-300" }),
       new GameDescriptionComponent(games_default[this.state.selectedOption]),
-      new GameCurrentRatingComponent(1e3 - 7),
+      new GameCurrentRatingComponent(this.state.rating),
       new ButtonComponent({
         label: "Find Game",
         color: "blue",
@@ -3928,164 +4099,6 @@ var GamesContentComponent = class extends component_default {
     return elem("div").setChild([
       new GamesTableComponent(games2)
     ]);
-  }
-};
-
-// src/api/ums.ts
-var UMS = class {
-  constructor(baseUrl) {
-    this.client = new client_default(baseUrl);
-    this.instance = axios_default.create({
-      baseURL: baseUrl,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      }
-    });
-  }
-  async signIn(form) {
-    const response = await this.instance.request({
-      method: "POST",
-      url: "/login",
-      data: form.toSubmit()
-    });
-    cacheTokens(response.data);
-    return response;
-  }
-  async signUp(form) {
-    const response = await this.instance.request({
-      method: "POST",
-      url: "/registration",
-      data: form.toSubmit()
-    });
-    cacheTokens(response.data);
-    return response;
-  }
-  async signOut() {
-    removeTokens();
-    return null;
-  }
-  async userGetInfo() {
-    return await this.client.request({
-      method: "GET",
-      url: "/user"
-    });
-  }
-};
-
-// src/api/api.ts
-var API = class {
-  static {
-    this.ums = new UMS("http://localhost:5000/auth/api/rest");
-  }
-};
-
-// src/store/getters.ts
-var StoreGetters = class {
-  constructor(state) {
-    this.state = state;
-  }
-  async user() {
-    return this.state.user.getValue();
-  }
-  async userNickname() {
-    const user = await this.state.user.getValue();
-    console.log("user", user);
-    if (!user) {
-      return void 0;
-    }
-    return user.nickname;
-  }
-  async userRating() {
-    const user = await this.state.user.getValue();
-    if (!user) {
-      return void 0;
-    }
-    return user.rating;
-  }
-  async userId() {
-    const user = await this.state.user.getValue();
-    if (!user) {
-      return void 0;
-    }
-    return user.id;
-  }
-};
-
-// src/types/User.ts
-var User = class {
-  constructor(data) {
-    this.id = data.id;
-    this.nickname = data.nickname;
-    this.rating = data.rating;
-  }
-};
-
-// src/store/setters.ts
-var StoreSetters = class {
-  constructor(state) {
-    this.state = state;
-  }
-  async setupUser() {
-    if (!isAuthorized()) {
-      return;
-    }
-    try {
-      const response = await API.ums.userGetInfo();
-      if (!response) {
-        throw new Error("no response");
-      }
-      if (!response.data) {
-        throw new Error("no user data in response");
-      }
-      this.state.user.setValue(new User(response.data));
-    } catch (e) {
-      console.error("Store error: can't get user data :", e);
-    }
-  }
-};
-
-// src/store/field.ts
-var StoreField = class {
-  constructor() {
-    this.isSet = false;
-    this.pendingResolversQueue = [];
-  }
-  setValue(newValue) {
-    this.value = newValue;
-    this.isSet = true;
-    this.pendingResolversQueue.forEach((resolve) => resolve(newValue));
-    this.pendingResolversQueue = [];
-  }
-  getValue() {
-    if (this.isSet) {
-      return new Promise((resolve, reject) => {
-        resolve(this.value);
-      });
-    }
-    return new Promise((resolve) => {
-      this.pendingResolversQueue.push(resolve);
-    });
-  }
-};
-
-// src/store/state.ts
-var StoreState = class {
-  constructor() {
-    this.user = new StoreField();
-  }
-};
-
-// src/store/store.ts
-var Store = class {
-  static {
-    this.state = new StoreState();
-  }
-  static {
-    this.setters = new StoreSetters(this.state);
-  }
-  static {
-    this.getters = new StoreGetters(this.state);
   }
 };
 
