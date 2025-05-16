@@ -8,6 +8,8 @@ import SignUpForm from "../../types/forms/registrationForm";
 import SignInForm from "../../types/forms/signInForm";
 import AuthForm from "../forms/AuthForm";
 import RegistrationForm from "../forms/RegistrationForm";
+import Store from "../../store/store";
+import ButtonComponent from "../inputs/ButtonComponent";
 
 export default class AuthModal extends FrontendyComponent {
 
@@ -63,10 +65,17 @@ export default class AuthModal extends FrontendyComponent {
             }
             return;
         }
+
+        Store.setters.setupUser()
         
         EventBroker.getInstance().emit("update-auth");
         
         this.setShow(false);
+    }
+
+    async signInWithGoogle() {
+        const response = await API.ums.loginWithGoogle();
+        console.log('response :>> ', response);
     }
 
     serverResponseMessage(status?:number) {
@@ -118,6 +127,15 @@ export default class AuthModal extends FrontendyComponent {
                             .setProps({ class: "text-red-500 text-sm text-center" })
                             .addChild(text(this.state.errorMessage)),
                         form,
+
+                        new ButtonComponent({
+                            label: "Proceed with Google",
+                            color: "blue",
+                            icon: "ti ti-brand-google",
+                            type: "outline",
+                            isDisabled: true,
+                        }).onClick(() => this.signInWithGoogle()),
+
                         elem("div")
                         .setProps({ class: "text-center mt-2" })
                         .addChild(

@@ -3,6 +3,8 @@ import type { AxiosResponse } from "axios";
 import type { AxiosRequestConfig } from "axios";
 import type {TokenPair} from "./tokenPair";
 import router from "../pages/router";
+import EventBroker from "../pkg/event-broker/eventBroker";
+import API from "./api";
 
 function cacheTokens(tokenPair:TokenPair){
 	localStorage.setItem('access-token', tokenPair.accessToken)
@@ -159,7 +161,13 @@ class AxiosClient {
 		} catch (error: any) {
 			console.log('refresh error :>> ', error);
 			if (error.response && error.response.status == 401) {
-				router.push('auth');
+				setTimeout(async () => {
+					// await API.ums.signOut()
+					removeTokens()
+
+					router.push("home")
+					EventBroker.getInstance().emit("update-auth");
+				})
 			}
 			return error.response
 		}

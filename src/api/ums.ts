@@ -43,6 +43,14 @@ export default class UMS {
         return response;
     }
 
+    public async loginWithGoogle() {
+        const response = await this.instance.request({
+            method: "GET",
+            url: "/google/login",
+        })
+        return response;
+    }
+
     public async signOut() {
         // let response
         // try {

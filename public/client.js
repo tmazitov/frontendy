@@ -2512,6 +2512,39 @@ var {
   mergeConfig: mergeConfig2
 } = axios_default;
 
+// src/pkg/event-broker/eventBroker.ts
+var EventBroker = class _EventBroker {
+  constructor() {
+    this.listeners = /* @__PURE__ */ new Map();
+  }
+  static getInstance() {
+    if (!_EventBroker.instance) {
+      _EventBroker.instance = new _EventBroker();
+    }
+    return _EventBroker.instance;
+  }
+  on(event, callback) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, callback);
+    }
+  }
+  off(event) {
+    if (this.listeners.has(event)) {
+      this.listeners.delete(event);
+    }
+  }
+  emit(event, ...args) {
+    if (this.listeners.has(event)) {
+      const callback = this.listeners.get(event);
+      if (callback) {
+        callback(...args);
+      }
+    } else {
+      console.warn(`EventBroker warn : no listener for event: ${event}`);
+    }
+  }
+};
+
 // src/api/client.ts
 function cacheTokens(tokenPair) {
   localStorage.setItem("access-token", tokenPair.accessToken);
@@ -2633,7 +2666,11 @@ var AxiosClient = class _AxiosClient {
     } catch (error) {
       console.log("refresh error :>> ", error);
       if (error.response && error.response.status == 401) {
-        router_default.push("auth");
+        setTimeout(async () => {
+          removeTokens();
+          router_default.push("home");
+          EventBroker.getInstance().emit("update-auth");
+        });
       }
       return error.response;
     }
@@ -3165,39 +3202,6 @@ var InfoParagraphComponent = class extends component_default {
   }
 };
 
-// src/pkg/event-broker/eventBroker.ts
-var EventBroker = class _EventBroker {
-  constructor() {
-    this.listeners = /* @__PURE__ */ new Map();
-  }
-  static getInstance() {
-    if (!_EventBroker.instance) {
-      _EventBroker.instance = new _EventBroker();
-    }
-    return _EventBroker.instance;
-  }
-  on(event, callback) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, callback);
-    }
-  }
-  off(event) {
-    if (this.listeners.has(event)) {
-      this.listeners.delete(event);
-    }
-  }
-  emit(event, ...args) {
-    if (this.listeners.has(event)) {
-      const callback = this.listeners.get(event);
-      if (callback) {
-        callback(...args);
-      }
-    } else {
-      console.warn(`EventBroker warn : no listener for event: ${event}`);
-    }
-  }
-};
-
 // src/pkg/game-launcher/gameSercher.ts
 var GameSearcher = class {
   static {
@@ -3471,6 +3475,13 @@ var UMS = class {
     cacheTokens(response.data);
     return response;
   }
+  async loginWithGoogle() {
+    const response = await this.instance.request({
+      method: "GET",
+      url: "/google/login"
+    });
+    return response;
+  }
   async signOut() {
     removeTokens();
     return null;
@@ -3493,9 +3504,11 @@ var API = class {
 // src/types/User.ts
 var User = class {
   constructor(data) {
+    this.avatarUrl = null;
     this.id = data.id;
     this.nickname = data.nickname;
     this.rating = data.rating;
+    this.avatarUrl = data.avatar_path || null;
   }
 };
 
@@ -4134,13 +4147,15 @@ var InfoContentComponent = class extends component_default {
   }
   template() {
     const status = statuses[1];
-    return elem("div").setProps({ class: "flex gap-4 w-full" }).setChild([
+    const imagePath = this.state.user && this.state.user.avatarPath ? this.state.user.avatarPath : "http://localhost:5000/auth/public/default.png";
+    console.log("imagePath :>> ", imagePath);
+    return elem("div").setProps({ class: "grid grid-cols-[8rem_1fr] gap-4 w-full" }).setChild([
       // Image container
-      elem("div").setProps({ class: "size-32" }).setChild([
-        elem("div").setProps({ class: "size-32 bg-gray-200 rounded-full" })
+      elem("div").setProps({ class: "w-32 h-32 rounded-full border-1 border-gray-400 overflow-hidden" }).setChild([
+        elem("img").setProps({ class: "w-full object-cover", src: imagePath })
       ]),
       // Information container
-      elem("div").setProps({ class: "w-full h-32" }).setChild([
+      elem("div").setProps({ class: "h-32" }).setChild([
         elem("div").setProps({ class: "flex flex-col gap-2 justify-between h-full" }).setChild([
           elem("div").setProps({ class: "flex gap-2 flex-col" }).setChild([
             elem("h2").setProps({ class: "text-xl font-bold" }).addChild(text(this.state.user?.nickname)),
@@ -4793,8 +4808,13 @@ var AuthModal = class extends component_default {
       }
       return;
     }
+    Store.setters.setupUser();
     EventBroker.getInstance().emit("update-auth");
     this.setShow(false);
+  }
+  async signInWithGoogle() {
+    const response = await API.ums.loginWithGoogle();
+    console.log("response :>> ", response);
   }
   serverResponseMessage(status) {
     switch (status) {
@@ -4830,6 +4850,13 @@ var AuthModal = class extends component_default {
         elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
           elem("div").$vif(this.state.errorMessage).setProps({ class: "text-red-500 text-sm text-center" }).addChild(text(this.state.errorMessage)),
           form,
+          new ButtonComponent({
+            label: "Proceed with Google",
+            color: "blue",
+            icon: "ti ti-brand-google",
+            type: "outline",
+            isDisabled: true
+          }).onClick(() => this.signInWithGoogle()),
           elem("div").setProps({ class: "text-center mt-2" }).addChild(
             elem("button").setProps({
               class: "text-blue-500 hover:text-blue-700 underline text-sm"

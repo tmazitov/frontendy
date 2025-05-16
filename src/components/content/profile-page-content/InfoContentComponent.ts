@@ -7,7 +7,6 @@ import Store from "../../../store/store";
 import User from "../../../types/User";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import TagComponent, { TagColor } from "../../inputs/TagComponent";
-import DeleteAccountModal from "../../modals/DeleteAccountModal";
 
 const statuses:Array<{icon:string, label:string, color: TagColor}> = [
     {icon: "ti ti-user-cancel", label : "Offline", color: "gray"},
@@ -46,51 +45,56 @@ export default class InfoContentComponent extends FrontendyComponent {
 
         const status = statuses[1];
 
+        const imagePath = this.state.user && this.state.user.avatarPath ? 
+            this.state.user.avatarPath : "http://localhost:5000/auth/public/default.png"
+        
+        console.log('imagePath :>> ', imagePath);
+
         return elem('div')
-        .setProps({class: "flex gap-4 w-full"})
+        .setProps({class: "grid grid-cols-[8rem_1fr] gap-4 w-full"})
         .setChild([
 
             // Image container
             elem('div')
-            .setProps({class: "size-32"})
+            .setProps({class: "w-32 h-32 rounded-full border-1 border-gray-400 overflow-hidden"})
             .setChild([
-                elem('div')
-                .setProps({class: "size-32 bg-gray-200 rounded-full"})
+                elem('img')
+                .setProps({class: "w-full object-cover", src: imagePath})
             ]),
 
             // Information container
             elem('div')
-            .setProps({class: "w-full h-32"})
+            .setProps({class: "h-32"})
+            .setChild([
+            elem('div')
+            .setProps({class: "flex flex-col gap-2 justify-between h-full"})
             .setChild([
                 elem('div')
-                .setProps({class: "flex flex-col gap-2 justify-between h-full"})
+                .setProps({class: "flex gap-2 flex-col"})
                 .setChild([
-                    elem('div')
-                    .setProps({class: "flex gap-2 flex-col"})
-                    .setChild([
-                        elem('h2')
-                        .setProps({class: "text-xl font-bold"})
-                        .addChild(text(this.state.user?.nickname)),
-    
-                        elem('p')
-                        .setProps({class: "text-gray-600 text-sm"})
-                        .addChild(text("Played games: 0")),
-                        
-                        elem('p')
-                        .setProps({class: "text-gray-600 text-sm"})
-                        .addChild(text(`Rating: ${this.state.user?.rating}`)),
-                    ]),
+                elem('h2')
+                .setProps({class: "text-xl font-bold"})
+                .addChild(text(this.state.user?.nickname)),
+        
+                elem('p')
+                .setProps({class: "text-gray-600 text-sm"})
+                .addChild(text("Played games: 0")),
+                
+                elem('p')
+                .setProps({class: "text-gray-600 text-sm"})
+                .addChild(text(`Rating: ${this.state.user?.rating}`)),
+                ]),
 
-                    elem('div')
-                    .setProps({class: "flex gap-2"})
-                    .setChild([
-                        new ButtonComponent({icon: "ti ti-settings", color: "blue", type: "outline"})
-                        .onClick(() => router.push("profile-settings")),
+                elem('div')
+                .setProps({class: "flex gap-2"})
+                .setChild([
+                new ButtonComponent({icon: "ti ti-settings", color: "blue", type: "outline"})
+                .onClick(() => router.push("profile-settings")),
 
-                        new ButtonComponent({icon: "ti ti-logout", color: "red", type: "outline"})
-                        .onClick(() => this.signoutHandler())
-                    ]),
-                ])
+                new ButtonComponent({icon: "ti ti-logout", color: "red", type: "outline"})
+                .onClick(() => this.signoutHandler())
+                ]),
+            ])
             ]),
         ])
     }
