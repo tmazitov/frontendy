@@ -26,10 +26,11 @@ export default class AboutInfoComponent extends FrontendyComponent {
                 elem("ul")
                 .setProps({ class : "list-disc list-inside mb-4" })
                 .setChild([
-                    elem("li").addChild(text("Timur Mazitov - Project Manager")),
+                    elem("li").addChild(text("Timur Mazitov - Teamlead and Frontend developer")),
                     elem("li").addChild(text("Valeria Lomakina - Backend Developer")),
                     elem("li").addChild(text("Sofia Abdulkina - Backend Developer")),
-                    elem("li").addChild(text("Ibrohim Ganiev - Fullstack Developer")),
+                    elem("li").addChild(text("Dastan Abdygali - Game Developer")),
+                    elem("li").addChild(text("Alban Medetbek - DevOps Engineer")),
                 ]),
             ]);
     }
