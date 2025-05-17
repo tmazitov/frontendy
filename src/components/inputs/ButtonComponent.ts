@@ -132,7 +132,7 @@ export default class ButtonComponent extends FrontendyComponent {
         if (this.props.label) {
             button.addChild(
                 elem('span')
-                    .setProps({ class: "ml-2" })
+                    .setProps({ class: this.props.icon ? "ml-2" : undefined})
                     .addChild(text(this.props.label))
             )
         }

@@ -29,7 +29,7 @@ export default class DeleteAccountModal extends FrontendyComponent {
 
         return elem("span")
             .addChild(
-                new ModalLayout("auth-modal", {
+                new ModalLayout("delete-account-modal", {
                     onClose: () => this.state.show = false,
                     customClasses: "min-h-20 min-w-[300px] max-w-[400px] rounded-lg shadow-lg bg-white"
                 })

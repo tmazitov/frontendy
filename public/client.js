@@ -2785,11 +2785,11 @@ function createElement(node) {
     }
   }
   node.children?.forEach((child) => {
-    if (child instanceof component_default) {
-      el.appendChild(child.mount(el));
-    } else {
-      el.appendChild(createElement(child));
+    const childElem = child instanceof component_default ? child.mount(el) : createElement(child);
+    if (!childElem) {
+      return;
     }
+    el.appendChild(childElem);
   });
   return el;
 }
@@ -2819,13 +2819,21 @@ var VElem = class _VElem {
     return this.props;
   }
   setChild(child) {
-    const filtered = child.filter((c) => c != null);
+    const filtered = child.filter((c) => c != null).map((c) => {
+      if (!(c instanceof _VElem) && !(c instanceof VText_default) && !(c instanceof component_default)) {
+        c = new VText_default(c.toString());
+      }
+      return c;
+    });
     this.children.push(...filtered);
     return this;
   }
   addChild(child) {
     if (!child) {
       return this;
+    }
+    if (!(child instanceof _VElem) && !(child instanceof VText_default) && !(child instanceof component_default)) {
+      child = new VText_default(child.toString());
     }
     this.children.push(child);
     return this;
@@ -2874,7 +2882,11 @@ function addNewElement(parent, newVNode) {
   if (newVNode instanceof component_default) {
     newVNode.mount(parent);
   } else {
-    parent.appendChild(createElement_default(newVNode));
+    const childElem = createElement_default(newVNode);
+    if (!childElem) {
+      return;
+    }
+    parent.appendChild(childElem);
   }
 }
 function removeNewElement(parent, index) {
@@ -3083,6 +3095,9 @@ var FrontendyComponent = class extends lifecicle_default {
       return;
     }
     this._el = this.oldVNode.createHTMLElement();
+    if (!this._el) {
+      return;
+    }
     target.appendChild(this._el);
     if (!this.isMounted) {
       this.onMounted();
@@ -3193,8 +3208,8 @@ var AboutPage = class extends component_default {
 
 // src/components/inputs/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
-  constructor(text10) {
-    super({ text: text10 });
+  constructor(text12) {
+    super({ text: text12 });
     this.componentName = "info-paragraph-component";
   }
   template() {
@@ -3345,6 +3360,9 @@ var ModalLayout = class extends component_default {
     ];
   }
   template() {
+    if (!this.state.show) {
+      return void 0;
+    }
     const header = this.useSlot("header");
     const body = this.useSlot("body");
     const footer = this.useSlot("footer");
@@ -3364,7 +3382,7 @@ var ModalLayout = class extends component_default {
       headerComp.addChild(new ModalLayoutCloseButton(closeHandler));
     }
     headerComp.addChild(header);
-    return elem("div").$vif(this.state.show).setProps({ class: `fixed top-0 left-0 z-10 flex items-center` }).setChild([
+    return elem("div").setProps({ class: `fixed top-0 left-0 z-10 flex items-center` }).setChild([
       // Backdrop (outside click --> close)
       backdrop,
       // Modal Window (with header and body slots)
@@ -3490,6 +3508,18 @@ var UMS = class {
     return await this.client.request({
       method: "GET",
       url: "/user"
+    });
+  }
+  async userUpdateAvatar(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return await this.client.request({
+      method: "POST",
+      url: "/user/avatar",
+      data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
     });
   }
 };
@@ -3661,7 +3691,7 @@ var ButtonComponent = class extends component_default {
     }
     if (this.props.label) {
       button.addChild(
-        elem("span").setProps({ class: "ml-2" }).addChild(text(this.props.label))
+        elem("span").setProps({ class: this.props.icon ? "ml-2" : void 0 }).addChild(text(this.props.label))
       );
     }
     if (this.state.clickHandler && !this.props.isDisabled) {
@@ -4115,12 +4145,183 @@ var GamesContentComponent = class extends component_default {
   }
 };
 
+// src/components/inputs/BigAvatarComponent.ts
+var BigAvatarComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "big-avatar-component";
+  }
+  data() {
+    return {
+      onClickHandler: null
+    };
+  }
+  onClick(fn) {
+    this.state.onClickHandler = fn;
+    return this;
+  }
+  template() {
+    console.log("BigAvatarComponent template", this.props.imagePath);
+    const avatar = this.state.onClickHandler ? "big-avatar-container " : "";
+    return elem("div").addEventListener("click", () => this.state.onClickHandler()).setProps({ class: avatar + "w-32 h-32 rounded-full border-1 border-gray-400 overflow-hidden relative" }).setChild([
+      elem("span").setProps({ class: "image" }).addChild(elem("img").setProps({ class: "w-full object-cover", src: this.props.imagePath })),
+      elem("div").$vif(this.state.onClickHandler).setProps({ class: "text absolute text-sm text-white bottom-4 right-0 select-none left-0 text-center opacity-0 transition-all duration-200" }).addChild("Change photo")
+    ]);
+  }
+};
+
+// src/components/inputs/InputFileComponent.ts
+var InputFileComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "input-file-component";
+  }
+  data() {
+    return {
+      selectedFile: null,
+      onSelectFileHandler: void 0
+    };
+  }
+  onSelect(callback) {
+    this.state.onSelectFileHandler = callback;
+    return this;
+  }
+  handleDrop(event) {
+    event = event;
+    event.preventDefault();
+    const files = event.dataTransfer.files;
+    this.handleFiles(files);
+  }
+  handleFiles(files) {
+    console.log("Selected files:", files);
+    this.state.selectedFile = files[0];
+  }
+  template() {
+    const selectedImageUrl = this.state.selectedFile ? URL.createObjectURL(this.state.selectedFile) : null;
+    return elem("span").setChild([
+      // Input file container
+      elem("div").addEventListener("click", () => document.getElementById("fileInput")?.click()).addEventListener("dragover", (event) => event.preventDefault()).addEventListener("drop", (event) => this.handleDrop(event)).setProps({
+        style: `display: ${selectedImageUrl ? "none" : "flex"};`,
+        class: "flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-400 rounded-xl cursor-pointer hover:bg-gray-100 transition p-4"
+      }).setChild([
+        elem("i").setProps({ class: "ti ti-photo-scan text-6xl text-gray-400" }),
+        elem("p").setProps({ class: "text-gray-600 text-center text-sm" }).addChild("Drag and drop file here, or click to select"),
+        elem("p").setProps({ class: "text-gray-400 text-xs" }).addChild("Max size: 2MB"),
+        elem("input").addEventListener("change", (event) => this.handleFiles(event.target.files)).setProps({
+          type: "file",
+          id: "fileInput",
+          class: "hidden"
+        })
+      ]),
+      // Preload image container
+      elem("div").setProps({
+        class: "flex flex-col items-center justify-center w-full h-full",
+        id: "preload",
+        style: `display: ${selectedImageUrl ? "flex" : "none"};`
+      }).setChild([
+        // Preload image
+        elem("span").addChild(new BigAvatarComponent({
+          imagePath: selectedImageUrl
+        })),
+        // Buttons 
+        elem("div").setProps({ class: "flex gap-4 mt-4" }).setChild([
+          new ButtonComponent({
+            label: "Cancel",
+            color: "red",
+            type: "outline"
+          }).onClick(() => {
+            this.state.selectedFile = null;
+            const input = document.getElementById("fileInput");
+            if (input) {
+              input.value = "";
+            }
+          }),
+          new ButtonComponent({
+            label: "Upload",
+            color: "blue"
+          }).onClick(() => {
+            console.log("Upload file", this.state.selectedFile);
+            if (this.state.onSelectFileHandler) {
+              this.state.onSelectFileHandler(this.state.selectedFile);
+            }
+          })
+        ])
+      ])
+    ]);
+  }
+};
+
+// src/components/modals/AvatarChangeModal.ts
+var AvatarChangeModal = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "avatar-change-modal";
+  }
+  data() {
+    return {
+      show: false,
+      onSubmitHandler: void 0
+    };
+  }
+  setShow(value) {
+    this.state.show = value;
+    return this;
+  }
+  onSubmit(fn) {
+    this.state.onSubmitHandler = fn;
+    return this;
+  }
+  onSubmitWrapper(file) {
+    if (!this.state.onSubmitHandler) {
+      return;
+    }
+    this.state.onSubmitHandler(file);
+    this.setShow(false);
+  }
+  template() {
+    const header = elem("h2").addChild(text("Upload new Avatar")).setProps({ class: "text-xl font-bold text-center" });
+    const body = elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
+      new InputFileComponent().onSelect(async (file) => this.onSubmitWrapper(file))
+    ]);
+    return elem("span").addChild(
+      new ModalLayout("avatar-change-modal", {
+        onClose: () => this.state.show = false,
+        customClasses: "min-h-20 min-w-[300px] max-w-[400px] rounded-lg shadow-lg bg-white"
+      }).setShow(this.state.show).setSlot("header", header).setSlot("body", body)
+    );
+  }
+};
+
+// src/components/content/profile-page-content/ProfileAvatarComponent.ts
+var ProfileAvatarComponent = class extends component_default {
+  constructor(imagePath) {
+    super({ imagePath });
+    this.componentName = "big-avatar-component";
+  }
+  data() {
+    return {
+      isAvatarChangeModalOpen: false,
+      onUpdateHandler: void 0
+    };
+  }
+  onUpdate(fn) {
+    this.state.onUpdateHandler = fn;
+    return this;
+  }
+  template() {
+    return elem("span").setChild([
+      new BigAvatarComponent({ imagePath: this.props.imagePath }).onClick(() => this.state.isAvatarChangeModalOpen = true),
+      new AvatarChangeModal().setShow(this.state.isAvatarChangeModalOpen).onSubmit(async (file) => {
+        if (!this.state.onUpdateHandler) {
+          return;
+        }
+        this.state.onUpdateHandler(file);
+      })
+    ]);
+  }
+};
+
 // src/components/content/profile-page-content/InfoContentComponent.ts
-var statuses = [
-  { icon: "ti ti-user-cancel", label: "Offline", color: "gray" },
-  { icon: "ti ti-user", label: "Online", color: "green" },
-  { icon: "ti ti-brand-apple-arcade", label: "Playing", color: "blue" }
-];
 var InfoContentComponent = class extends component_default {
   constructor() {
     super(...arguments);
@@ -4145,18 +4346,36 @@ var InfoContentComponent = class extends component_default {
     router_default.push("home");
     EventBroker.getInstance().emit("update-auth");
   }
+  async updateImageHandler(file) {
+    console.log("file :>> ", file);
+    const response = await API.ums.userUpdateAvatar(file);
+    if (response.status != 200) {
+      console.log("Error while updating avatar", response);
+      return;
+    }
+    const user = this.state.user;
+    this.state.user = void 0;
+    user.avatarUrl = response.data.avatar;
+    this.state.user = user;
+  }
   template() {
-    const status = statuses[1];
-    const imagePath = this.state.user && this.state.user.avatarPath ? this.state.user.avatarPath : "http://localhost:5000/auth/public/default.png";
+    let imagePath;
+    if (!this.state.user) {
+      imagePath = null;
+    } else if (this.state.user.avatarUrl) {
+      imagePath = `http://localhost:5000/auth/public/${this.state.user.avatarUrl}`;
+    } else {
+      imagePath = "http://localhost:5000/auth/public/default.png";
+    }
     console.log("imagePath :>> ", imagePath);
     return elem("div").setProps({ class: "grid grid-cols-[8rem_1fr] gap-4 w-full" }).setChild([
       // Image container
-      elem("div").setProps({ class: "w-32 h-32 rounded-full border-1 border-gray-400 overflow-hidden" }).setChild([
-        elem("img").setProps({ class: "w-full object-cover", src: imagePath })
+      elem("span").setChild([
+        new ProfileAvatarComponent(imagePath).onUpdate(async (file) => this.updateImageHandler(file))
       ]),
       // Information container
       elem("div").setProps({ class: "h-32" }).setChild([
-        elem("div").setProps({ class: "flex flex-col gap-2 justify-between h-full" }).setChild([
+        elem("div").setProps({ class: "flex flex-col gap-2 justify-between h-full " }).setChild([
           elem("div").setProps({ class: "flex gap-2 flex-col" }).setChild([
             elem("h2").setProps({ class: "text-xl font-bold" }).addChild(text(this.state.user?.nickname)),
             elem("p").setProps({ class: "text-gray-600 text-sm" }).addChild(text("Played games: 0")),
@@ -4355,7 +4574,7 @@ var DeleteAccountModal = class extends component_default {
   }
   template() {
     return elem("span").addChild(
-      new ModalLayout("auth-modal", {
+      new ModalLayout("delete-account-modal", {
         onClose: () => this.state.show = false,
         customClasses: "min-h-20 min-w-[300px] max-w-[400px] rounded-lg shadow-lg bg-white"
       }).setShow(this.state.show).setSlot(

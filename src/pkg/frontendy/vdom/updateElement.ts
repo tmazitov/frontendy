@@ -9,7 +9,11 @@ function addNewElement(parent: HTMLElement, newVNode: VNode | FrontendyComponent
     if (newVNode instanceof FrontendyComponent) {
         newVNode.mount(parent)
     } else {
-        parent.appendChild(createElement(newVNode));  
+        const childElem = createElement(newVNode)
+        if (!childElem) {
+            return ;
+        }
+        parent.appendChild(childElem);  
     }
 }
 

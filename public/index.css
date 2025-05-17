@@ -1,1 +1,24 @@
 /* @import "tailwindcss"; */
+
+.big-avatar-container {
+    position: relative;
+    cursor: pointer;
+}
+
+.big-avatar-container > .image::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0); /* прозрачный по умолчанию */
+    transition: background 0.3s;
+    pointer-events: none; /* не мешает кликам по контенту */
+}
+.big-avatar-container:hover > .image::after {
+    background: rgba(0, 0, 0, 0.4); /* затемнение при наведении */
+}
+
+.big-avatar-container:hover > div.text {
+    opacity: 1;
+}

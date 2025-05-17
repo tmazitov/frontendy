@@ -7,6 +7,7 @@ import Store from "../../../store/store";
 import User from "../../../types/User";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import TagComponent, { TagColor } from "../../inputs/TagComponent";
+import ProfileAvatarComponent from "./ProfileAvatarComponent";
 
 const statuses:Array<{icon:string, label:string, color: TagColor}> = [
     {icon: "ti ti-user-cancel", label : "Offline", color: "gray"},
@@ -40,14 +41,33 @@ export default class InfoContentComponent extends FrontendyComponent {
         router.push("home")
         EventBroker.getInstance().emit("update-auth");
     }
+
+    async updateImageHandler(file:File) {
+        console.log('file :>> ', file);
+
+        const response = await API.ums.userUpdateAvatar(file)
+        if (response.status != 200) {
+            console.log('Error while updating avatar', response);
+            return
+        }
+
+        const user:User = this.state.user
+        this.state.user = undefined
+        user.avatarUrl = response.data.avatar
+        this.state.user = user 
+    }
     
     template() {
 
-        const status = statuses[1];
-
-        const imagePath = this.state.user && this.state.user.avatarPath ? 
-            this.state.user.avatarPath : "http://localhost:5000/auth/public/default.png"
-        
+        let imagePath
+        if (!this.state.user) {
+            imagePath = null 
+        } else if (this.state.user.avatarUrl) {
+            imagePath = `http://localhost:5000/auth/public/${this.state.user.avatarUrl}`
+        } else {
+            imagePath = "http://localhost:5000/auth/public/default.png"
+        }
+    
         console.log('imagePath :>> ', imagePath);
 
         return elem('div')
@@ -55,11 +75,10 @@ export default class InfoContentComponent extends FrontendyComponent {
         .setChild([
 
             // Image container
-            elem('div')
-            .setProps({class: "w-32 h-32 rounded-full border-1 border-gray-400 overflow-hidden"})
+            elem('span')
             .setChild([
-                elem('img')
-                .setProps({class: "w-full object-cover", src: imagePath})
+                new ProfileAvatarComponent(imagePath)
+                .onUpdate(async (file: File) => this.updateImageHandler(file))
             ]),
 
             // Information container
@@ -67,32 +86,32 @@ export default class InfoContentComponent extends FrontendyComponent {
             .setProps({class: "h-32"})
             .setChild([
             elem('div')
-            .setProps({class: "flex flex-col gap-2 justify-between h-full"})
+            .setProps({class: "flex flex-col gap-2 justify-between h-full "})
             .setChild([
                 elem('div')
                 .setProps({class: "flex gap-2 flex-col"})
                 .setChild([
                 elem('h2')
-                .setProps({class: "text-xl font-bold"})
-                .addChild(text(this.state.user?.nickname)),
-        
-                elem('p')
-                .setProps({class: "text-gray-600 text-sm"})
-                .addChild(text("Played games: 0")),
-                
-                elem('p')
-                .setProps({class: "text-gray-600 text-sm"})
-                .addChild(text(`Rating: ${this.state.user?.rating}`)),
+                    .setProps({class: "text-xl font-bold"})
+                    .addChild(text(this.state.user?.nickname)),
+            
+                    elem('p')
+                    .setProps({class: "text-gray-600 text-sm"})
+                    .addChild(text("Played games: 0")),
+                    
+                    elem('p')
+                    .setProps({class: "text-gray-600 text-sm"})
+                    .addChild(text(`Rating: ${this.state.user?.rating}`)),
                 ]),
 
                 elem('div')
                 .setProps({class: "flex gap-2"})
                 .setChild([
-                new ButtonComponent({icon: "ti ti-settings", color: "blue", type: "outline"})
-                .onClick(() => router.push("profile-settings")),
+                    new ButtonComponent({icon: "ti ti-settings", color: "blue", type: "outline"})
+                    .onClick(() => router.push("profile-settings")),
 
-                new ButtonComponent({icon: "ti ti-logout", color: "red", type: "outline"})
-                .onClick(() => this.signoutHandler())
+                    new ButtonComponent({icon: "ti ti-logout", color: "red", type: "outline"})
+                    .onClick(() => this.signoutHandler())
                 ]),
             ])
             ]),

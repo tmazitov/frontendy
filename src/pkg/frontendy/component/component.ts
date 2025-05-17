@@ -84,6 +84,9 @@ class FrontendyComponent extends FrontendyLifecicle{
             return
         }
         this._el = this.oldVNode.createHTMLElement();
+        if (!this._el) {
+            return ;
+        }
         target.appendChild(this._el);
         if (!this.isMounted) {
             this.onMounted();

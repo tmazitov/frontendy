@@ -31,16 +31,32 @@ class VElem{
         return this.props;
     }
 
-    setChild(child: Array<VElem | VText | Component | null>) {
-        const filtered:Array<VElem | VText | Component> = child.filter(c => c != null)
+    setChild(child: Array<any>) {
+        const filtered:Array<VElem | VText | Component> = child
+            .filter(c => c != null)
+            .map(c => {
+                if (!(c instanceof VElem )
+                    && !(c instanceof VText) 
+                    && !(c instanceof Component)) {
+                        c = new VText(c.toString());
+                }
+                return c;
+            })
         this.children.push(...filtered);
         return this;
     }
 
-    addChild(child: VElem | VText | Component | null) {
+    addChild(child: any) {
         if (!child) {
             return this;
         }
+
+        if (!(child instanceof VElem )
+            && !(child instanceof VText) 
+            && !(child instanceof Component)) {
+            child = new VText(child.toString());
+        }
+            
         this.children.push(child);
         return this;
     }

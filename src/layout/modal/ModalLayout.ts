@@ -33,6 +33,11 @@ export default class ModalLayout extends FrontendyComponent {
     }
 
     template() {
+
+        if (!this.state.show) {
+            return undefined
+        }
+
         const header = this.useSlot("header");
         const body = this.useSlot("body");
         const footer = this.useSlot("footer");
@@ -64,7 +69,7 @@ export default class ModalLayout extends FrontendyComponent {
 
         headerComp.addChild(header)
 
-        return elem("div").$vif(this.state.show)
+        return elem("div")
             .setProps({ class : `fixed top-0 left-0 z-10 flex items-center` })
             .setChild([
 

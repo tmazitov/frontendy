@@ -74,4 +74,18 @@ export default class UMS {
             url: "/user",
         })
     }
+
+    public async userUpdateAvatar(file:File){
+        const formData = new FormData();
+        formData.append("file", file);
+
+        return await this.client.request({
+            method: "POST",
+            url: "/user/avatar",
+            data: formData,
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+    }
 }
