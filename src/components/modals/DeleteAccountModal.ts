@@ -1,6 +1,10 @@
+import API from "../../api/api";
 import ModalLayout from "../../layout/modal/ModalLayout";
+import router from "../../pages/router";
+import EventBroker from "../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../pkg/frontendy/component/component"
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
+import Store from "../../store/store";
 import ButtonComponent from "../inputs/ButtonComponent";
 import InfoParagraphComponent from "../inputs/InfoParagraphComponent";
 import InputComponent from "../inputs/InputComponent";
@@ -12,7 +16,7 @@ export default class DeleteAccountModal extends FrontendyComponent {
         return {
             show: false,
             errorMessage: "",
-            originalNickname: "tmazitov",
+            originalNickname: undefined,
             enteredNickname: "",
         }
     }
@@ -21,12 +25,29 @@ export default class DeleteAccountModal extends FrontendyComponent {
         return this 
     }
 
-    private onSubmit() {
+    protected onCreated(): void {
+        Store.getters.userNickname().then((nickname: string|undefined) => {
+            this.state.originalNickname = nickname
+        })
+    }
+
+    private async onSubmit() {
         this.setShow(false)
+
+        try {
+            await API.ums.userDelete()
+        } catch (error) {
+            console.error("Error during account deletion:", error);
+            return
+        }
+
+        await API.ums.signOut()
+
+        router.push("home")
+        EventBroker.getInstance().emit("update-auth");
     }
 
     template() {
-
         return elem("span")
             .addChild(
                 new ModalLayout("delete-account-modal", {
@@ -48,6 +69,10 @@ export default class DeleteAccountModal extends FrontendyComponent {
                         new InputComponent(this.state.enteredNickname, { placeholder: "Enter your nickname" })
                             .onBlur((value: string) => {
                                 console.log("blur", value)
+                                this.state.enteredNickname = value
+                            })
+                            .onEnter((value: string) => {
+                                console.log("enter", value)
                                 this.state.enteredNickname = value
                             }),
 

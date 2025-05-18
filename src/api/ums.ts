@@ -68,6 +68,13 @@ export default class UMS {
         return null;
     }
 
+    public async userDelete() {
+        return await this.client.request({
+            method: "DELETE",
+            url: "/user/delete/1",
+        })
+    }
+
     public async userGetInfo() {
         return await this.client.request({
             method: "GET",

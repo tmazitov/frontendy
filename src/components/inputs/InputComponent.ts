@@ -92,8 +92,9 @@ export default class InputComponent extends FrontendyComponent {
 
         if (this.state.enterHandler) {
             input.addEventListener("keydown", ((event: KeyboardEvent) => {
+                const target = event.target as HTMLInputElement;
                 if (event.key === "Enter") {
-                    this.state.enterHandler();
+                    this.state.enterHandler(target.value);
                 }
             }) as EventListener)
         }

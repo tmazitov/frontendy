@@ -3178,11 +3178,11 @@ var AboutInfoComponent = class extends component_default {
       elem("p").setProps({ class: "text-gray-700 text-base mb-4" }).addChild(text("ft_transcendence is a project that aims to provide a platform for developers to learn and practice their skills in a collaborative environment.")),
       elem("h2").setProps({ class: "text-xl font-bold mb-2" }).addChild(text("Our team:")),
       elem("ul").setProps({ class: "list-disc list-inside mb-4" }).setChild([
-        elem("li").addChild(text("Timur Mazitov - Teamlead and Frontend developer")),
-        elem("li").addChild(text("Valeria Lomakina - Backend Developer")),
-        elem("li").addChild(text("Sofia Abdulkina - Backend Developer")),
-        elem("li").addChild(text("Dastan Abdygali - Game Developer")),
-        elem("li").addChild(text("Alban Medetbek - DevOps Engineer"))
+        elem("li").addChild("Timur Mazitov - Team Lead and Frontend developer"),
+        elem("li").addChild("Valeria Lomakina - Backend Developer"),
+        elem("li").addChild("Sofia Abdulkina - Backend Developer"),
+        elem("li").addChild("Dastan Abdygali - Game Developer"),
+        elem("li").addChild("Alban Medetbek - DevOps Engineer")
       ])
     ]);
   }
@@ -3504,6 +3504,12 @@ var UMS = class {
   async signOut() {
     removeTokens();
     return null;
+  }
+  async userDelete() {
+    return await this.client.request({
+      method: "DELETE",
+      url: "/user/delete/1"
+    });
   }
   async userGetInfo() {
     return await this.client.request({
@@ -4537,8 +4543,9 @@ var InputComponent = class extends component_default {
     }
     if (this.state.enterHandler) {
       input.addEventListener("keydown", (event) => {
+        const target = event.target;
         if (event.key === "Enter") {
-          this.state.enterHandler();
+          this.state.enterHandler(target.value);
         }
       });
     }
@@ -4562,7 +4569,7 @@ var DeleteAccountModal = class extends component_default {
     return {
       show: false,
       errorMessage: "",
-      originalNickname: "tmazitov",
+      originalNickname: void 0,
       enteredNickname: ""
     };
   }
@@ -4570,8 +4577,22 @@ var DeleteAccountModal = class extends component_default {
     this.state.show = value;
     return this;
   }
-  onSubmit() {
+  onCreated() {
+    Store.getters.userNickname().then((nickname) => {
+      this.state.originalNickname = nickname;
+    });
+  }
+  async onSubmit() {
     this.setShow(false);
+    try {
+      await API.ums.userDelete();
+    } catch (error) {
+      console.error("Error during account deletion:", error);
+      return;
+    }
+    await API.ums.signOut();
+    router_default.push("home");
+    EventBroker.getInstance().emit("update-auth");
   }
   template() {
     return elem("span").addChild(
@@ -4588,6 +4609,9 @@ var DeleteAccountModal = class extends component_default {
           new InfoParagraphComponent(`To delete your account, please enter "${this.state.originalNickname}" in the field below:`),
           new InputComponent(this.state.enteredNickname, { placeholder: "Enter your nickname" }).onBlur((value) => {
             console.log("blur", value);
+            this.state.enteredNickname = value;
+          }).onEnter((value) => {
+            console.log("enter", value);
             this.state.enteredNickname = value;
           }),
           new ButtonComponent({
