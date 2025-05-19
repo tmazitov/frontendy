@@ -29,7 +29,7 @@ export default class DashboardComponent extends FrontendyComponent {
 
         if (header) {
             dashboard.addChild(header)  
-        } else {
+        } else if (this.props.label){
             dashboard.addChild(
                 elem("h1")
                 .setProps({ class : "text-2xl font-bold mb-4" })

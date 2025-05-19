@@ -4,7 +4,7 @@ import { elem, text } from "../../pkg/frontendy/vdom/constructor";
 export default class CounterComponent extends FrontendyComponent {
     componentName: string = 'counter-component';
 
-    data() {
+    data() { 
         return {
             count: 0,
         }

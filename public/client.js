@@ -3207,10 +3207,136 @@ var AboutPage = class extends component_default {
   }
 };
 
+// src/components/content/game-page-content/InfoBarComponent.ts
+var InfoBarComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "info-bar-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "flex justify-between items-center p-4 w-[512px] " }).setChild([
+      elem("div").setProps({ class: "text-bold text-md" }).addChild(this.props.player1Nickname),
+      elem("div").setProps({ class: "text-bold text-lg" }).addChild(`${this.props.player1Score} : ${this.props.player2Score}`),
+      elem("div").setProps({ class: "text-bold text-md" }).addChild(this.props.player2Nickname)
+    ]);
+  }
+};
+
+// src/components/content/game-page-content/DelimeterComponet.ts
+var DelimeterComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "delimeter-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "w-[1px] bg-gray-300 absolute top-[16px] bottom-[16px] left-1/2 transform -translate-x-1/2" });
+  }
+};
+
+// src/components/content/game-page-content/PaddleComponent.ts
+var PaddleComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "paddle-component";
+  }
+  template() {
+    const position = `top-[${this.props.top}px] ${this.props.side == "left" ? "left" : "right"}-[16px]`;
+    return elem("div").setProps({ class: `w-[6px] h-[42px] bg-blue-500 rounded-lg absolute ${position}` });
+  }
+};
+
+// src/components/content/game-page-content/SceneComponent.ts
+var SceneComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "scene-component";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("div").setProps({ class: "p-[16px] w-[512px] h-[320px] relative bg-gray-100 rounded-lg shadow-md" }).setChild([
+      new DelimeterComponent(),
+      new PaddleComponent({ top: 20, side: "left" }),
+      new PaddleComponent({ top: 20, side: "right" })
+    ]);
+  }
+};
+
+// src/components/content/game-page-content/GameComponent.ts
+var GameComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "game-component";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("div").setProps({ class: "flex items-center flex-col" }).setChild([
+      new InfoBarComponent({
+        player1Nickname: "Player 1",
+        player2Nickname: "Player 2",
+        player1Score: 0,
+        player2Score: 0
+      }),
+      new SceneComponent()
+    ]);
+  }
+};
+
+// src/layout/dashboard/DashboardLayout.ts
+var DashboardComponent = class extends component_default {
+  constructor(label) {
+    super({ label });
+    this.componentName = "dashboard-component";
+  }
+  slots() {
+    return [
+      "content",
+      "header"
+    ];
+  }
+  template() {
+    const content = this.useSlot("content");
+    const header = this.useSlot("header");
+    const dashboard = elem("div").setProps({
+      id: "dashboard-component",
+      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
+    });
+    if (header) {
+      dashboard.addChild(header);
+    } else if (this.props.label) {
+      dashboard.addChild(
+        elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(this.props.label))
+      );
+    }
+    dashboard.addChild(content);
+    return dashboard;
+  }
+};
+
+// src/pages/GamePage.ts
+var GamePage = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "game-page";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    const dashboard = new DashboardComponent().setSlot("content", new GameComponent());
+    return elem("div").setProps({ id: "game-page" }).setChild([
+      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(dashboard)
+    ]);
+  }
+};
+
 // src/components/inputs/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
-  constructor(text12) {
-    super({ text: text12 });
+  constructor(text13) {
+    super({ text: text13 });
     this.componentName = "info-paragraph-component";
   }
   template() {
@@ -3905,7 +4031,7 @@ var PlayButtonComponent = class extends component_default {
 };
 
 // src/components/content/home-page-content/DashboardComponent.ts
-var DashboardComponent = class extends component_default {
+var DashboardComponent2 = class extends component_default {
   constructor() {
     super(...arguments);
     this.componentName = "home-dashboard-component";
@@ -3937,7 +4063,7 @@ var HomePage = class extends component_default {
   }
   template() {
     return elem("div").setProps({ id: "home-page" }).setChild([
-      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(new DashboardComponent())
+      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(new DashboardComponent2())
     ]);
   }
 };
@@ -4417,37 +4543,6 @@ var ProfilePageContent = class extends component_default {
   }
 };
 
-// src/layout/dashboard/DashboardLayout.ts
-var DashboardComponent2 = class extends component_default {
-  constructor(label) {
-    super({ label });
-    this.componentName = "dashboard-component";
-  }
-  slots() {
-    return [
-      "content",
-      "header"
-    ];
-  }
-  template() {
-    const content = this.useSlot("content");
-    const header = this.useSlot("header");
-    const dashboard = elem("div").setProps({
-      id: "dashboard-component",
-      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
-    });
-    if (header) {
-      dashboard.addChild(header);
-    } else {
-      dashboard.addChild(
-        elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(this.props.label))
-      );
-    }
-    dashboard.addChild(content);
-    return dashboard;
-  }
-};
-
 // src/pages/ProfilePage.ts
 var ProfilePage = class extends component_default {
   constructor() {
@@ -4455,7 +4550,7 @@ var ProfilePage = class extends component_default {
     this.componentName = "profile-page";
   }
   template() {
-    const dashboard = new DashboardComponent2("Profile").setSlot("content", new ProfilePageContent());
+    const dashboard = new DashboardComponent("Profile").setSlot("content", new ProfilePageContent());
     return elem("div").setProps({ id: "profile-page" }).setChild([
       elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(dashboard)
     ]);
@@ -4659,7 +4754,7 @@ var ProfileSettingsPage = class extends component_default {
     this.componentName = "profile-settings-page";
   }
   template() {
-    const dashboard = new DashboardComponent2().setSlot("content", new ProfileSettingsPageContent()).setSlot("header", elem("div").setProps({ class: "flex gap-4 items-center mb-4" }).setChild([
+    const dashboard = new DashboardComponent().setSlot("content", new ProfileSettingsPageContent()).setSlot("header", elem("div").setProps({ class: "flex gap-4 items-center mb-4" }).setChild([
       new ButtonComponent({ color: "gray", icon: "ti ti-arrow-left", type: "blank", size: "small" }).onClick(() => router_default.push("profile")),
       elem("h1").setProps({ class: "text-2xl font-bold" }).addChild(text("Profile settings"))
     ]));
@@ -4674,7 +4769,8 @@ var routes = [
   { name: "home", path: "/", component: HomePage },
   { name: "about", path: "/about", component: AboutPage },
   { name: "profile", path: "/profile", component: ProfilePage },
-  { name: "profile-settings", path: "/profile/settings", component: ProfileSettingsPage }
+  { name: "profile-settings", path: "/profile/settings", component: ProfileSettingsPage },
+  { name: "game", path: "/lauch/game", component: GamePage }
 ];
 var withoutLogin = ["home", "about"];
 var routerConfig = {
