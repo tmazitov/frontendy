@@ -1,6 +1,6 @@
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
-import GameSearcher from "../../pkg/game-launcher/gameSercher";
+import GameLauncher from "../../pkg/game/launcher/gameLauncher";
 import Game from "../../types/Game";
 import CancelButtonComponent from "./CancelButtonComponent";
 import ElapsedTimeComponent from "./ElapsedTimeComponent";
@@ -28,7 +28,7 @@ export default class SearchGameBarComponent extends FrontendyComponent {
 
     onCancel() {
         console.log("Cancel button clicked, stopping the game search.");
-        GameSearcher.stopGameSearching();
+        GameLauncher.stopGameSearching();
     }
 
     template() {

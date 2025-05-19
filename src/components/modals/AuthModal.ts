@@ -1,6 +1,6 @@
 import { AxiosError, AxiosResponse } from "axios";
 import API from "../../api/api";
-import ModalLayout from "../../layout/modal/ModalLayout";
+import ModalLayout from "../../layouts/modal/ModalLayout";
 import EventBroker from "../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../pkg/frontendy/component/component"
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";

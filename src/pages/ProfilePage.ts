@@ -1,6 +1,6 @@
 import { isAuthorized } from "../api/client";
 import ProfilePageContent from "../components/content/profile-page-content/ProfilePageContent";
-import DashboardComponent from "../layout/dashboard/DashboardLayout";
+import DashboardComponent from "../layouts/dashboard/DashboardLayout";
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
 import router from "./router";

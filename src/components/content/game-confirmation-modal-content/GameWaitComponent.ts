@@ -1,6 +1,6 @@
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
-import GameSearcher from "../../../pkg/game-launcher/gameSercher";
+import GameLauncher from "../../../pkg/game/launcher/gameLauncher";
 import WaitPlayerBoxComponent from "./WaitPlayerBoxComponent";
 
 export default class GameWaitComponent extends FrontendyComponent {
@@ -12,7 +12,7 @@ export default class GameWaitComponent extends FrontendyComponent {
 
     template() {
 
-        const confirmed = GameSearcher.getMatchPlayer()
+        const confirmed = GameLauncher.getMatchPlayer()
 
         return elem("span")
         .setChild([

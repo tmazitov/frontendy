@@ -1,6 +1,6 @@
 import ProfileSettingsPageContent from "../components/content/profile-settings-page-content/ProfileSettingsPageContent";
 import ButtonComponent from "../components/inputs/ButtonComponent";
-import DashboardComponent from "../layout/dashboard/DashboardLayout";
+import DashboardComponent from "../layouts/dashboard/DashboardLayout";
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text, } from "../pkg/frontendy/vdom/constructor";
 import router from "./router";

@@ -1,4 +1,4 @@
-import TabsLayout from "../../../layout/tabs/TabsLayout";
+import TabsLayout from "../../../layouts/tabs/TabsLayout";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 import GamesContentComponent from "./GamesContentComponent";

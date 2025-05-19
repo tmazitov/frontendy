@@ -1,5 +1,5 @@
 import API from "../../api/api";
-import ModalLayout from "../../layout/modal/ModalLayout";
+import ModalLayout from "../../layouts/modal/ModalLayout";
 import router from "../../pages/router";
 import EventBroker from "../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../pkg/frontendy/component/component"

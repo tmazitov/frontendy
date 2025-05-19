@@ -1,5 +1,5 @@
 import API from "../../api/api";
-import ModalLayout from "../../layout/modal/ModalLayout";
+import ModalLayout from "../../layouts/modal/ModalLayout";
 import FrontendyComponent from "../../pkg/frontendy/component/component"
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
 import Store from "../../store/store";

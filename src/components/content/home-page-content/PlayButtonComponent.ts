@@ -1,7 +1,7 @@
 import EventBroker from "../../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
-import GameSearcher from "../../../pkg/game-launcher/gameSercher";
+import GameLauncher from "../../../pkg/game/launcher/gameLauncher";
 import GameLaunchModal from "../../modals/GameLauncherModal";
 
 export default class PlayButtonComponent extends FrontendyComponent {
@@ -14,7 +14,7 @@ export default class PlayButtonComponent extends FrontendyComponent {
     }
 
     onOpenModal() {
-        GameSearcher.stopGameSearching();
+        GameLauncher.stopGameSearching();
         this.state.showGameLaunchModal = true;
     }
 

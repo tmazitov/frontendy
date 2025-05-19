@@ -3285,7 +3285,7 @@ var GameComponent = class extends component_default {
   }
 };
 
-// src/layout/dashboard/DashboardLayout.ts
+// src/layouts/dashboard/DashboardLayout.ts
 var DashboardComponent = class extends component_default {
   constructor(label) {
     super({ label });
@@ -3341,220 +3341,6 @@ var InfoParagraphComponent = class extends component_default {
   }
   template() {
     return elem("p").setProps({ class: "text-gray-700 text-base mb-2" }).addChild(text(this.props.text));
-  }
-};
-
-// src/pkg/game-launcher/gameSercher.ts
-var GameSearcher = class {
-  static {
-    this.searchGameType = null;
-  }
-  static {
-    this.isConfirmed = false;
-  }
-  static startGameSearching(game, callback = null) {
-    setTimeout(() => {
-      EventBroker.getInstance().emit("activate-search-game-bar", game);
-      this.searchGameType = game;
-      if (callback) {
-        callback();
-      }
-      setTimeout(() => {
-        this.foundGame();
-      }, 5e3);
-    }, 2e3);
-  }
-  static foundGame() {
-    EventBroker.getInstance().emit("deactivate-search-game-bar");
-    EventBroker.getInstance().emit("activate-confirmation-modal", this.searchGameType);
-  }
-  static stopGameSearching() {
-    this.searchGameType = null;
-    EventBroker.getInstance().emit("deactivate-search-game-bar");
-  }
-  static confirmGame(callback = null) {
-    if (!this.searchGameType) {
-      return;
-    }
-    setTimeout(() => {
-      this.isConfirmed = true;
-      if (callback) {
-        callback();
-      }
-    }, 200);
-  }
-  static cancelGame(callback = null) {
-    if (!this.searchGameType) {
-      return;
-    }
-    EventBroker.getInstance().emit("deactivate-confirmation-modal");
-    setTimeout(() => {
-      const isWasConfirmed = this.isConfirmed;
-      this.isConfirmed = false;
-      if (callback) {
-        callback();
-      }
-      console.log("Game cancelled", isWasConfirmed);
-      if (!this.searchGameType) {
-        return;
-      }
-      const game = this.searchGameType;
-      this.searchGameType = null;
-      if (isWasConfirmed) {
-        this.startGameSearching(game);
-      }
-    }, 200);
-  }
-  static getMatchPlayer() {
-    if (!this.isConfirmed || !this.searchGameType) {
-      return [];
-    }
-    const numberOfPlayers = this.searchGameType.players;
-    const players = Array.from({ length: numberOfPlayers }, (_, index) => index + 1).map((player) => {
-      return {
-        id: player,
-        status: "waiting"
-      };
-    });
-    players[0].status = "confirmed";
-    return players;
-  }
-};
-
-// src/layout/loading/LoadingLayout.ts
-var LoadingLayout = class extends component_default {
-  constructor(props) {
-    super(props);
-    this.componentName = "loading-layout";
-  }
-  data() {
-    return {
-      show: false
-    };
-  }
-  setShow(value) {
-    this.state.show = value;
-    return this;
-  }
-  template() {
-    return elem("div").$vif(this.state.show).setProps({ class: "absolute top-0 left-0 w-full h-full flex items-center justify-center" }).setChild([
-      elem("div").setProps({ class: "absolute z-1 top-0 left-0 w-full h-full bg-gray-200 opacity-50" }),
-      elem("div").setProps({ class: "absolute z-2 left-1/2 transform -translate-x-1/2 flex flex-col items-center" }).setChild([
-        elem("i").setProps({ class: `${this.props.icon} text-xl text-blue-500 animate-spin` }),
-        elem("p").setProps({ class: "text-gray-700 mt-2" }).addChild(text(this.props.label))
-      ])
-    ]);
-  }
-};
-
-// src/layout/modal/ModalLayoutCloseButton.ts
-var buttonSize = "w-6 h-6";
-var buttonColor = "bg-white hover:bg-gray-100 active:bg-gray-200 rounded-lg ease-in-out duration-200";
-var buttonInner = "flex items-center justify-center";
-var ModalLayoutCloseButton = class extends component_default {
-  constructor(onClick) {
-    super({ onClick });
-    this.componentName = "modal-layout-close-button";
-  }
-  template() {
-    const button = elem("button").setProps({ class: `${buttonSize} ${buttonColor} ${buttonInner}` }).addChild(elem("i").setProps({ class: "ti ti-x" }));
-    if (this.props.onClick) {
-      button.addEventListener("click", this.props.onClick.bind(this));
-    }
-    return button;
-  }
-};
-
-// src/layout/modal/ModalLayout.ts
-var ModalLayout = class extends component_default {
-  constructor(name, opts = {}) {
-    super({ name, opts });
-  }
-  data() {
-    return {
-      show: false
-    };
-  }
-  setShow(value) {
-    this.state.show = value;
-    return this;
-  }
-  slots() {
-    return [
-      "header",
-      "body",
-      "footer"
-    ];
-  }
-  template() {
-    if (!this.state.show) {
-      return void 0;
-    }
-    const header = this.useSlot("header");
-    const body = this.useSlot("body");
-    const footer = this.useSlot("footer");
-    const defaultCardSize = "min-h-20 min-w-20 max-w-80 rounded-lg shadow-lg bg-white";
-    const cardSize = this.props.opts.customClasses || defaultCardSize;
-    const cardPos = "absolute left-1/2 transform -translate-x-1/2";
-    const onCloseFuncion = this.props.opts.onClose;
-    const backdrop = elem("div").setProps({ class: "w-dvw h-dvh bg-black opacity-50 " });
-    if (this.props.opts.closeOnClickOutside && onCloseFuncion) {
-      backdrop.addEventListener("click", () => {
-        onCloseFuncion.bind(this)();
-      });
-    }
-    const headerComp = elem("div").$vif(header !== null).setProps({ class: "px-6 py-4 flex gap-4 items-center " });
-    if (this.props.opts.onClose) {
-      const closeHandler = onCloseFuncion ? onCloseFuncion.bind(this) : void 0;
-      headerComp.addChild(new ModalLayoutCloseButton(closeHandler));
-    }
-    headerComp.addChild(header);
-    return elem("div").setProps({ class: `fixed top-0 left-0 z-10 flex items-center` }).setChild([
-      // Backdrop (outside click --> close)
-      backdrop,
-      // Modal Window (with header and body slots)
-      elem("div").setProps({ class: ` ${cardSize} ${cardPos}  overflow-hidden` }).setChild([
-        // Header
-        headerComp,
-        // Body
-        elem("div").setProps({ class: "p-6 pt-0" }).addChild(body),
-        // Footer
-        elem("div").$vif(footer !== null).setProps({ class: "p-6 pt-0" }).addChild(footer)
-      ])
-    ]);
-  }
-};
-
-// src/types/Game.ts
-var Game = class {
-  constructor(id, name, description, players, icon) {
-    this.id = id;
-    this.name = name;
-    this.description = description;
-    this.players = players;
-    this.icon = icon;
-  }
-};
-
-// src/data/games.ts
-var games = [
-  new Game(0, "Training", "Fight against a bot to train your skills.", 1, "ti ti-robot"),
-  new Game(1, "Duel", "Face off against another player in a 1v1 duel.", 2, "ti ti-users"),
-  new Game(2, "Turnament", "Become the target of everyone and prove you're the king of the hill.", 8, "ti ti-tournament")
-];
-var games_default = games;
-
-// src/pkg/game-launcher/preferedMode.ts
-var PreferModeStorage = class {
-  static save(modeId) {
-    localStorage.setItem("prefered-mode", modeId.toString());
-  }
-  static get() {
-    const modeId = localStorage.getItem("prefered-mode");
-    if (!modeId) {
-      return null;
-    }
-    return parseInt(modeId);
   }
 };
 
@@ -3744,6 +3530,354 @@ var Store = class {
   }
   static {
     this.getters = new StoreGetters(this.state);
+  }
+};
+
+// src/pkg/ws-client/message.ts
+var Message = class {
+  constructor(raw) {
+    console.log("Message info: Message constructor", raw);
+    const obj = JSON.parse(raw);
+    this.type = obj.type;
+    this.raw = raw;
+    this.data = obj;
+  }
+  getType() {
+    return this.type;
+  }
+  getData() {
+    return this.data;
+  }
+};
+
+// src/pkg/ws-client/client.ts
+var WebSocketClient = class {
+  constructor(addr, opts) {
+    this.listeners = /* @__PURE__ */ new Map();
+    this.socket = new WebSocket(addr);
+    this.opts = opts;
+    this.socket.onopen = this.openHandler.bind(this);
+    this.socket.onclose = this.closeHandler.bind(this);
+    this.socket.onerror = this.errorHandler.bind(this);
+    this.socket.onmessage = this.messageHandler.bind(this);
+  }
+  close() {
+    this.socket.close();
+  }
+  on(type, callback) {
+    if (this.listeners.has(type)) {
+      throw new Error(`WebSocketClient error : Listener for ${type} already exists`);
+    }
+    this.listeners.set(type, callback);
+    return this;
+  }
+  openHandler() {
+    console.log("WebSocketClient info: WebSocket WebSocketClient opened");
+    if (this.opts?.onOpenCallback) {
+      this.opts.onOpenCallback();
+    }
+  }
+  closeHandler() {
+    console.log("WebSocketClient info : WebSocket WebSocketClient closed");
+    if (this.opts?.onCloseCallback) {
+      this.opts.onCloseCallback();
+    }
+  }
+  errorHandler(error) {
+    console.error("WebSocketClient error : WebSocket error", error);
+    if (this.opts?.onErrorCallback) {
+      this.opts.onErrorCallback(error);
+    }
+  }
+  messageHandler(event) {
+    const raw = event.data;
+    let message;
+    try {
+      message = new Message(raw);
+    } catch (e) {
+      console.error("WebSocketClient error : WebSocket message parse error", e);
+      return;
+    }
+    const messageListener = this.parseMessage(message);
+    if (!messageListener) {
+      console.warn(`WebSocketClient error : WebSocket message ${message.getType()} listener not found`);
+      return;
+    }
+    const data = message.getData();
+    messageListener(data);
+    console.log(`WebSocketClient info : ${message.getType()}	|`, data);
+  }
+  parseMessage(message) {
+    const type = message.getType();
+    return this.listeners.get(type);
+  }
+};
+
+// src/pkg/game/launcher/confirmation.ts
+var PlayersConfirmation = class {
+  constructor(players) {
+    this.playersStatuses = players.map((player) => {
+      return {
+        player,
+        confirm: false
+      };
+    });
+  }
+  setConfirm(player) {
+    const playerStatus = this.playersStatuses.find((p) => p.player === player);
+    if (playerStatus) {
+      playerStatus.confirm = true;
+    }
+  }
+  getPlayersStatuses() {
+    return this.playersStatuses;
+  }
+};
+
+// src/pkg/game/launcher/gameLauncher.ts
+var GameLauncher = class {
+  static {
+    this.searchGameType = null;
+  }
+  static {
+    this.isConfirmed = false;
+  }
+  static async startGameSearching(userId, game, onConnectedCallback) {
+    try {
+      const opts = {
+        onOpenCallback: () => this.onEstablishConnection(game, onConnectedCallback)
+      };
+      const user = await Store.getters.user();
+      if (!user) {
+        return;
+      }
+      const addr = `ws://localhost:5001/matchmaking?id=${user?.id}&name=${user?.nickname}&mmr=${user?.rating}`;
+      this.userId = userId;
+      this.client = new WebSocketClient(addr, opts).on("waiting" /* MATCH_SEARCH_START */, (data) => this.matchSearchStartHandler()).on("confirm_match" /* MATCH_FOUND */, (data) => this.matchFoundHandler(data)).on("match_timeout" /* MATCH_TIMEOUT */, (data) => this.matchTimeoutHandler(data));
+    } catch (e) {
+      console.error("GameLauncher error : WebSocketClient connection error", e);
+      return;
+    }
+  }
+  static onEstablishConnection(game, onConnectedCallback) {
+    console.log("GameLauncher : WebSocket connection opened");
+    if (onConnectedCallback) {
+      onConnectedCallback();
+    }
+    this.searchGameType = game;
+  }
+  static stopGameSearching() {
+    this.searchGameType = null;
+    this.userId = void 0;
+    this.confirmation = void 0;
+    this.client?.close();
+    EventBroker.getInstance().emit("deactivate-search-game-bar");
+  }
+  static matchFoundHandler(data) {
+    console.log({ data });
+    if (!data || !data.opponent) {
+      console.error("GameLauncher error : No opponent found");
+      return;
+    }
+    this.confirmation = new PlayersConfirmation([this.userId, data.opponent]);
+    EventBroker.getInstance().emit("deactivate-search-game-bar");
+    EventBroker.getInstance().emit("activate-confirmation-modal", this.searchGameType);
+  }
+  static matchSearchStartHandler() {
+    EventBroker.getInstance().emit("activate-search-game-bar", this.searchGameType);
+  }
+  static matchTimeoutHandler(data) {
+    this.confirmation = void 0;
+    if (this.isConfirmed) {
+      EventBroker.getInstance().emit("activate-search-game-bar");
+    } else {
+      this.client?.close();
+    }
+    EventBroker.getInstance().emit("deactivate-confirmation-modal", this.searchGameType);
+  }
+  // static async confirmGame(callback: Function | null = null) {
+  //     if (!this.searchGameType) {
+  //         return;
+  //     }
+  //     setTimeout(() => {
+  //         this.isConfirmed = true;
+  //         if (callback) {
+  //             callback();
+  //         }
+  //     }, 200)
+  // }
+  // static cancelGame(callback: Function | null = null) {
+  //     if (!this.searchGameType) {
+  //         return;
+  //     }
+  //     EventBroker.getInstance().emit("deactivate-confirmation-modal");
+  //     setTimeout(() => { 
+  //         const isWasConfirmed = this.isConfirmed;
+  //         this.isConfirmed = false;
+  //         if (callback) {
+  //             callback();
+  //         }
+  //         console.log("Game cancelled", isWasConfirmed);
+  //         if (!this.searchGameType) {
+  //             return; 
+  //         }
+  //         const game = this.searchGameType;
+  //         this.searchGameType = null;
+  //         if (isWasConfirmed) {
+  //             this.startGameSearching(this.userId || 0, game)
+  //         }
+  //     }, 200)
+  // }
+  // static getMatchPlayer() {
+  //     if (!this.isConfirmed || !this.searchGameType) {
+  //         return [];
+  //     }
+  //     const numberOfPlayers = this.searchGameType.players;
+  //     const players = Array.from({ length: numberOfPlayers }, (_, index) => index + 1).map(player => {
+  //         return {
+  //             id: player,
+  //             status: "waiting",
+  //         }
+  //     });
+  //     players[0].status = "confirmed";
+  //     return players;
+  // }
+};
+
+// src/layouts/loading/LoadingLayout.ts
+var LoadingLayout = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "loading-layout";
+  }
+  data() {
+    return {
+      show: false
+    };
+  }
+  setShow(value) {
+    this.state.show = value;
+    return this;
+  }
+  template() {
+    return elem("div").$vif(this.state.show).setProps({ class: "absolute top-0 left-0 w-full h-full flex items-center justify-center" }).setChild([
+      elem("div").setProps({ class: "absolute z-1 top-0 left-0 w-full h-full bg-gray-200 opacity-50" }),
+      elem("div").setProps({ class: "absolute z-2 left-1/2 transform -translate-x-1/2 flex flex-col items-center" }).setChild([
+        elem("i").setProps({ class: `${this.props.icon} text-xl text-blue-500 animate-spin` }),
+        elem("p").setProps({ class: "text-gray-700 mt-2" }).addChild(text(this.props.label))
+      ])
+    ]);
+  }
+};
+
+// src/layouts/modal/ModalLayoutCloseButton.ts
+var buttonSize = "w-6 h-6";
+var buttonColor = "bg-white hover:bg-gray-100 active:bg-gray-200 rounded-lg ease-in-out duration-200";
+var buttonInner = "flex items-center justify-center";
+var ModalLayoutCloseButton = class extends component_default {
+  constructor(onClick) {
+    super({ onClick });
+    this.componentName = "modal-layout-close-button";
+  }
+  template() {
+    const button = elem("button").setProps({ class: `${buttonSize} ${buttonColor} ${buttonInner}` }).addChild(elem("i").setProps({ class: "ti ti-x" }));
+    if (this.props.onClick) {
+      button.addEventListener("click", this.props.onClick.bind(this));
+    }
+    return button;
+  }
+};
+
+// src/layouts/modal/ModalLayout.ts
+var ModalLayout = class extends component_default {
+  constructor(name, opts = {}) {
+    super({ name, opts });
+  }
+  data() {
+    return {
+      show: false
+    };
+  }
+  setShow(value) {
+    this.state.show = value;
+    return this;
+  }
+  slots() {
+    return [
+      "header",
+      "body",
+      "footer"
+    ];
+  }
+  template() {
+    if (!this.state.show) {
+      return void 0;
+    }
+    const header = this.useSlot("header");
+    const body = this.useSlot("body");
+    const footer = this.useSlot("footer");
+    const defaultCardSize = "min-h-20 min-w-20 max-w-80 rounded-lg shadow-lg bg-white";
+    const cardSize = this.props.opts.customClasses || defaultCardSize;
+    const cardPos = "absolute left-1/2 transform -translate-x-1/2";
+    const onCloseFuncion = this.props.opts.onClose;
+    const backdrop = elem("div").setProps({ class: "w-dvw h-dvh bg-black opacity-50 " });
+    if (this.props.opts.closeOnClickOutside && onCloseFuncion) {
+      backdrop.addEventListener("click", () => {
+        onCloseFuncion.bind(this)();
+      });
+    }
+    const headerComp = elem("div").$vif(header !== null).setProps({ class: "px-6 py-4 flex gap-4 items-center " });
+    if (this.props.opts.onClose) {
+      const closeHandler = onCloseFuncion ? onCloseFuncion.bind(this) : void 0;
+      headerComp.addChild(new ModalLayoutCloseButton(closeHandler));
+    }
+    headerComp.addChild(header);
+    return elem("div").setProps({ class: `fixed top-0 left-0 z-10 flex items-center` }).setChild([
+      // Backdrop (outside click --> close)
+      backdrop,
+      // Modal Window (with header and body slots)
+      elem("div").setProps({ class: ` ${cardSize} ${cardPos}  overflow-hidden` }).setChild([
+        // Header
+        headerComp,
+        // Body
+        elem("div").setProps({ class: "p-6 pt-0" }).addChild(body),
+        // Footer
+        elem("div").$vif(footer !== null).setProps({ class: "p-6 pt-0" }).addChild(footer)
+      ])
+    ]);
+  }
+};
+
+// src/types/Game.ts
+var Game = class {
+  constructor(id, name, description, players, icon) {
+    this.id = id;
+    this.name = name;
+    this.description = description;
+    this.players = players;
+    this.icon = icon;
+  }
+};
+
+// src/data/games.ts
+var games = [
+  new Game(0, "Training", "Fight against a bot to train your skills.", 1, "ti ti-robot"),
+  new Game(1, "Duel", "Face off against another player in a 1v1 duel.", 2, "ti ti-users"),
+  new Game(2, "Turnament", "Become the target of everyone and prove you're the king of the hill.", 8, "ti ti-tournament")
+];
+var games_default = games;
+
+// src/pkg/game/launcher/preferedMode.ts
+var PreferModeStorage = class {
+  static save(modeId) {
+    localStorage.setItem("prefered-mode", modeId.toString());
+  }
+  static get() {
+    const modeId = localStorage.getItem("prefered-mode");
+    if (!modeId) {
+      return null;
+    }
+    return parseInt(modeId);
   }
 };
 
@@ -3966,17 +4100,27 @@ var GameLauncherModal = class extends component_default {
   }
   data() {
     return {
+      userId: void 0,
       show: false,
       isLoading: false
     };
+  }
+  onCreated() {
+    Store.getters.userId().then((userId) => {
+      this.state.userId = userId;
+    });
   }
   setShow(value) {
     this.state.show = value;
     return this;
   }
   onSubmit(game) {
+    if (!this.state.userId) {
+      console.error("GameLauncherModal error : userId is undefined");
+      return;
+    }
     this.state.isLoading = true;
-    GameSearcher.startGameSearching(game, () => {
+    GameLauncher.startGameSearching(this.state.userId, game, () => {
       this.state.show = false;
       this.state.isLoading = false;
     });
@@ -4017,7 +4161,7 @@ var PlayButtonComponent = class extends component_default {
     };
   }
   onOpenModal() {
-    GameSearcher.stopGameSearching();
+    GameLauncher.stopGameSearching();
     this.state.showGameLaunchModal = true;
   }
   template() {
@@ -4094,7 +4238,7 @@ var NotFoundPage = class extends component_default {
   }
 };
 
-// src/layout/tabs/TabItemComponent.ts
+// src/layouts/tabs/TabItemComponent.ts
 var TabItemComponent = class extends component_default {
   constructor(title, isActive) {
     super({ title, isActive });
@@ -4119,7 +4263,7 @@ var TabItemComponent = class extends component_default {
   }
 };
 
-// src/layout/tabs/TabsLayout.ts
+// src/layouts/tabs/TabsLayout.ts
 var TabsLayout = class extends component_default {
   constructor(tabs) {
     super({ tabs });
@@ -4951,7 +5095,7 @@ var SearchGameBarComponent = class extends component_default {
   }
   onCancel() {
     console.log("Cancel button clicked, stopping the game search.");
-    GameSearcher.stopGameSearching();
+    GameLauncher.stopGameSearching();
   }
   template() {
     const position = `fixed left-0 bottom-0 w-full h-20 bg-gray-200 flex items-center justify-center`;
@@ -5344,7 +5488,7 @@ var GameWaitComponent = class extends component_default {
     this.componentName = "game-wait-component";
   }
   template() {
-    const confirmed = GameSearcher.getMatchPlayer();
+    const confirmed = GameLauncher.getMatchPlayer();
     return elem("span").setChild([
       elem("p").setProps({ class: "text-sm text-gray-600 mb-2 text-start" }).addChild(text(`Remaining time : ${this.props.remainingTime}`)),
       elem("div").setProps({ class: "w-full flex gap-2 justify-center" }).setChild([
@@ -5372,14 +5516,6 @@ var GameConfirmationModal = class extends component_default {
     this.state.show = value;
     if (value) {
       timer_default.addTimer("game-confirmation-modal", (counter2) => {
-        if (counter2 == 20) {
-          GameSearcher.cancelGame(() => {
-            this.state.isLoading = false;
-            this.state.show = false;
-            this.state.isConfirmed = false;
-            this.state.delay = 20;
-          });
-        }
         this.state.delay = 20 - counter2;
       });
     }
@@ -5387,10 +5523,6 @@ var GameConfirmationModal = class extends component_default {
   }
   onSubmit() {
     this.state.isLoading = true;
-    GameSearcher.confirmGame(() => {
-      this.state.isLoading = false;
-      this.state.isConfirmed = true;
-    });
   }
   time(num) {
     const seconds = num < 10 ? "0" + num : num;

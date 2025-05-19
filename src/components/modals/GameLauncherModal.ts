@@ -1,9 +1,10 @@
-import LoadingLayout from "../../layout/loading/LoadingLayout";
-import ModalLayout from "../../layout/modal/ModalLayout";
+import LoadingLayout from "../../layouts/loading/LoadingLayout";
+import ModalLayout from "../../layouts/modal/ModalLayout";
 import EventBroker from "../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
-import GameSearcher from "../../pkg/game-launcher/gameSercher";
+import GameLauncher from "../../pkg/game/launcher/gameLauncher";
+import Store from "../../store/store";
 import Game from "../../types/Game";
 import GameLauchBodyComponent from "../content/game-launch-modal-content/BodyComponent";
 
@@ -12,10 +13,18 @@ export default class GameLauncherModal extends FrontendyComponent {
 
     data() {
         return {
+            userId: undefined, 
             show: false,
             isLoading: false,
         }
     }
+
+    protected onCreated(): void {
+        Store.getters.userId().then((userId: number | undefined) => {
+            this.state.userId = userId;
+        })
+    }
+
 
     public setShow(value: boolean) {
         this.state.show = value;
@@ -23,8 +32,14 @@ export default class GameLauncherModal extends FrontendyComponent {
     }
 
     private onSubmit(game: Game) {
+        if (!this.state.userId) {
+            console.error("GameLauncherModal error : userId is undefined");
+            return;
+        }
+ 
         this.state.isLoading = true;
-        GameSearcher.startGameSearching(game, () => {
+
+        GameLauncher.startGameSearching(this.state.userId, game, () => {
             this.state.show = false;
             this.state.isLoading = false;
         });

@@ -1,8 +1,8 @@
-import LoadingLayout from "../../layout/loading/LoadingLayout";
-import ModalLayout from "../../layout/modal/ModalLayout";
+import LoadingLayout from "../../layouts/loading/LoadingLayout";
+import ModalLayout from "../../layouts/modal/ModalLayout";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
-import GameSearcher from "../../pkg/game-launcher/gameSercher";
+import GameLauncher from "../../pkg/game/launcher/gameLauncher";
 import TimerStorage from "../../pkg/timer";
 import Game from "../../types/Game";
 import GameConfirmationComponent from "../content/game-confirmation-modal-content/GameConfirmationComponent";
@@ -30,14 +30,6 @@ export default class GameConfirmationModal extends FrontendyComponent {
         this.state.show = value;
         if (value) {
             TimerStorage.addTimer("game-confirmation-modal", (counter: number) => {
-                if (counter == 20) {
-                    GameSearcher.cancelGame(() => {
-                        this.state.isLoading = false;
-                        this.state.show = false;
-                        this.state.isConfirmed = false;
-                        this.state.delay = 20;
-                    })
-                }
                 this.state.delay = 20 - counter;
             })
         }
@@ -46,10 +38,10 @@ export default class GameConfirmationModal extends FrontendyComponent {
 
     private onSubmit() {
         this.state.isLoading = true;
-        GameSearcher.confirmGame(() => {
-            this.state.isLoading = false;
-            this.state.isConfirmed = true;
-        })
+        // GameLauncher.confirmGame(() => {
+        //     this.state.isLoading = false;
+        //     this.state.isConfirmed = true;
+        // })
     }
 
     private time(num:number){
