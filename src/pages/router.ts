@@ -13,7 +13,7 @@ const routes:Array<FrontendyRoute> = [
     {name: "about", path: "/about", component: AboutPage},
     {name: "profile", path: "/profile", component: ProfilePage},
     {name: "profile-settings", path: "/profile/settings", component: ProfileSettingsPage},
-    {name: "game", path: "/lauch/game", component: GamePage},
+    {name: "game", path: "/launch/game", component: GamePage},
 ]
 
 const withoutLogin:Array<string> = ["home", "about"]
