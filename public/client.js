@@ -3335,8 +3335,8 @@ var GamePage = class extends component_default {
 
 // src/components/inputs/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
-  constructor(text13) {
-    super({ text: text13 });
+  constructor(text14) {
+    super({ text: text14 });
     this.componentName = "info-paragraph-component";
   }
   template() {
@@ -4757,9 +4757,10 @@ var InputComponent = class extends component_default {
     const elemBorder = "border-2 border-blue-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ease-in-out duration-200";
     const elemSize = "w-full h-8";
     const input = elem("input").setProps({
-      type: this.props.opts.type,
-      value: this.props.value,
       class: `p-2 bg-transparent ${elemSize} ${elemBorder}`,
+      value: this.props.value,
+      type: this.props.opts.type,
+      length: this.props.opts.length,
       placeholder: this.props.opts.placeholder ?? ""
     });
     if (this.state.inputHandler) {
@@ -5246,6 +5247,40 @@ var RegistrationForm = class extends component_default {
   }
 };
 
+// src/components/forms/OtpForm.ts
+var OtpForm = class extends component_default {
+  constructor(onSubmit) {
+    super({ onSubmit });
+    this.componentName = "otp-form";
+  }
+  data() {
+    return {
+      code: ["", "", "", "", "", ""]
+    };
+  }
+  template() {
+    const inputs = this.state.code.map((value, index) => {
+      return new InputComponent(value, { length: 1 }).onInput((newValue) => {
+        if (newValue.length > 0 && index != 5) {
+          inputs[index + 1].focus();
+        } else if (newValue.length == 0 && index != 0) {
+          inputs[index - 1].focus();
+        }
+        this.state.code[index] = newValue;
+        if (this.state.code.join("").length == 6) {
+          this.props.onSubmit(this.state.code.join(""));
+        }
+      });
+    });
+    return elem("div").setChild([
+      new InfoParagraphComponent("Enter the verification code sent to your email."),
+      elem("div").setProps({ class: "flex gap-4 p-4" }).setChild([
+        ...inputs
+      ])
+    ]);
+  }
+};
+
 // src/components/modals/AuthModal.ts
 var AuthModal = class extends component_default {
   constructor() {
@@ -5255,6 +5290,7 @@ var AuthModal = class extends component_default {
     return {
       show: false,
       isLogin: true,
+      isOtpCode: false,
       errorMessage: "",
       signInForm: new SignInForm("", ""),
       signUpForm: new SignUpForm("", "", "")
@@ -5292,9 +5328,10 @@ var AuthModal = class extends component_default {
       }
       return;
     }
-    Store.setters.setupUser();
-    EventBroker.getInstance().emit("update-auth");
-    this.setShow(false);
+    this.state.isOtpCode = true;
+  }
+  async onSubmitOtp(code) {
+    console.log("code :>> ", code);
   }
   async signInWithGoogle() {
     const response = await API.ums.loginWithGoogle();
@@ -5318,9 +5355,21 @@ var AuthModal = class extends component_default {
     this.state.isLogin = !this.state.isLogin;
     this.state.errorMessage = "";
   }
+  getAppropriateForm() {
+    if (this.state.isOtpCode) {
+      return new OtpForm(this.onSubmitOtp.bind(this));
+    }
+    return this.state.isLogin ? new AuthForm(this.state.signInForm, this.onSubmit.bind(this)) : new RegistrationForm(this.state.signUpForm, this.onSubmit.bind(this));
+  }
+  getAppropriateTitle() {
+    if (this.state.isOtpCode) {
+      return "Verification code";
+    }
+    return this.state.isLogin ? "Sign in" : "Sign up";
+  }
   template() {
-    const form = this.state.isLogin ? new AuthForm(this.state.signInForm, this.onSubmit.bind(this)) : new RegistrationForm(this.state.signUpForm, this.onSubmit.bind(this));
-    const title = this.state.isLogin ? "Sign in" : "Sign up";
+    const form = this.getAppropriateForm();
+    const title = this.getAppropriateTitle();
     const toggleText = this.state.isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in";
     return elem("span").addChild(
       new ModalLayout("auth-modal", {
@@ -5328,24 +5377,24 @@ var AuthModal = class extends component_default {
         customClasses: "min-h-20 min-w-[300px] max-w-[400px] rounded-lg shadow-lg bg-white"
       }).setShow(this.state.show).setSlot(
         "header",
-        elem("h2").addChild(text(title)).setProps({ class: "text-xl font-bold text-center" })
+        elem("h2").addChild(title).setProps({ class: "text-xl font-bold text-center" })
       ).setSlot(
         "body",
         elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
-          elem("div").$vif(this.state.errorMessage).setProps({ class: "text-red-500 text-sm text-center" }).addChild(text(this.state.errorMessage)),
+          elem("div").$vif(this.state.errorMessage).setProps({ class: "text-red-500 text-sm text-center" }).addChild(this.state.errorMessage),
           form,
-          new ButtonComponent({
-            label: "Proceed with Google",
-            color: "blue",
-            icon: "ti ti-brand-google",
-            type: "outline",
-            isDisabled: true
-          }).onClick(() => this.signInWithGoogle()),
-          elem("div").setProps({ class: "text-center mt-2" }).addChild(
+          elem("div").$vif(!this.state.isOtpCode).setProps({ class: "flex flex-col gap-2 justify-center" }).setChild([
+            new ButtonComponent({
+              label: "Proceed with Google",
+              color: "blue",
+              icon: "ti ti-brand-google",
+              type: "outline",
+              isDisabled: true
+            }).onClick(() => this.signInWithGoogle()),
             elem("button").setProps({
               class: "text-blue-500 hover:text-blue-700 underline text-sm"
-            }).addChild(text(toggleText)).addEventListener("click", this.toggleForm.bind(this))
-          )
+            }).addChild(toggleText).addEventListener("click", this.toggleForm.bind(this))
+          ])
         ])
       )
     );

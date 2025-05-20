@@ -10,6 +10,7 @@ import AuthForm from "../forms/AuthForm";
 import RegistrationForm from "../forms/RegistrationForm";
 import Store from "../../store/store";
 import ButtonComponent from "../inputs/ButtonComponent";
+import OtpForm from "../forms/OtpForm";
 
 export default class AuthModal extends FrontendyComponent {
 
@@ -21,6 +22,7 @@ export default class AuthModal extends FrontendyComponent {
         return {
             show: false,
             isLogin: true,
+            isOtpCode: false,
             errorMessage: "",
             signInForm: new SignInForm("", ""),
             signUpForm: new SignUpForm("", "", ""),
@@ -66,11 +68,16 @@ export default class AuthModal extends FrontendyComponent {
             return;
         }
 
-        Store.setters.setupUser()
+        // Store.setters.setupUser()
         
-        EventBroker.getInstance().emit("update-auth");
+        // EventBroker.getInstance().emit("update-auth");
         
-        this.setShow(false);
+        this.state.isOtpCode = true;
+        // this.setShow(false);
+    }
+
+    async onSubmitOtp(code: string) {
+        console.log('code :>> ', code);
     }
 
     async signInWithGoogle() {
@@ -98,12 +105,28 @@ export default class AuthModal extends FrontendyComponent {
         this.state.errorMessage = "";
     }
 
-    template() {
-        const form = this.state.isLogin ? 
+    getAppropriateForm() {
+        if (this.state.isOtpCode) {
+            return new OtpForm(this.onSubmitOtp.bind(this));
+        }
+
+        return this.state.isLogin ?
             new AuthForm(this.state.signInForm, this.onSubmit.bind(this)) : 
-            new RegistrationForm(this.state.signUpForm, this.onSubmit.bind(this));
-            
-        const title = this.state.isLogin ? "Sign in" : "Sign up";
+            new RegistrationForm(this.state.signUpForm, this.onSubmit.bind(this))
+    }
+
+    getAppropriateTitle() {
+        if (this.state.isOtpCode) {
+            return "Verification code";
+        }
+
+        return this.state.isLogin ? "Sign in" : "Sign up"
+    }
+
+    template() {
+        const form = this.getAppropriateForm()
+        const title = this.getAppropriateTitle();
+
         const toggleText = this.state.isLogin 
             ? "Don't have an account? Sign up" 
             : "Already have an account? Sign in";
@@ -117,7 +140,7 @@ export default class AuthModal extends FrontendyComponent {
                 .setShow(this.state.show)
                 .setSlot("header", 
                     elem("h2")
-                    .addChild(text(title))
+                    .addChild(title)
                     .setProps({ class: "text-xl font-bold text-center" }))
                 .setSlot("body",
                     elem("div")
@@ -125,27 +148,30 @@ export default class AuthModal extends FrontendyComponent {
                     .setChild([
                         elem("div").$vif(this.state.errorMessage)
                             .setProps({ class: "text-red-500 text-sm text-center" })
-                            .addChild(text(this.state.errorMessage)),
+                            .addChild(this.state.errorMessage),
+
                         form,
 
-                        new ButtonComponent({
-                            label: "Proceed with Google",
-                            color: "blue",
-                            icon: "ti ti-brand-google",
-                            type: "outline",
-                            isDisabled: true,
-                        }).onClick(() => this.signInWithGoogle()),
 
-                        elem("div")
-                        .setProps({ class: "text-center mt-2" })
-                        .addChild(
+                        elem("div").$vif(!this.state.isOtpCode)
+                        .setProps({ class: "flex flex-col gap-2 justify-center" })
+                        .setChild([
+                        
+                            new ButtonComponent({
+                                label: "Proceed with Google",
+                                color: "blue",
+                                icon: "ti ti-brand-google",
+                                type: "outline",
+                                isDisabled: true,
+                            }).onClick(() => this.signInWithGoogle()),
+                        
                             elem("button")
                             .setProps({ 
                                 class: "text-blue-500 hover:text-blue-700 underline text-sm",
                             })
-                            .addChild(text(toggleText))
+                            .addChild(toggleText)
                             .addEventListener("click", this.toggleForm.bind(this))
-                        )
+                        ])
                     ])
                 )
             )

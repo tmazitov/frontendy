@@ -6,6 +6,7 @@ type InputOptions = {
     type?: string,
     placeholder?: string,
     label?: string,
+    length?: number,
 }
 
 export default class InputComponent extends FrontendyComponent {
@@ -61,11 +62,11 @@ export default class InputComponent extends FrontendyComponent {
         const elemBorder = "border-2 border-blue-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ease-in-out duration-200";
         const elemSize = "w-full h-8";
 
-        const input = elem('input')
-        .setProps({
-            type: this.props.opts.type,
-            value: this.props.value, 
+        const input = elem('input').setProps({
             class: `p-2 bg-transparent ${elemSize} ${elemBorder}`,
+            value: this.props.value,
+            type: this.props.opts.type,
+            length: this.props.opts.length,
             placeholder: this.props.opts.placeholder ?? "",
         })
 
