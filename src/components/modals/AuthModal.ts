@@ -26,6 +26,7 @@ export default class AuthModal extends FrontendyComponent {
             isLogin: true,
             isOtpCode: false,
             errorMessage: "",
+            otpKey: undefined,
             signInForm: new SignInForm("", ""),
             signUpForm: new SignUpForm("", "", ""),
         }
@@ -35,7 +36,7 @@ export default class AuthModal extends FrontendyComponent {
         return this 
     }
 
-    async onSubmit(form: SignInForm | SignUpForm) {
+    async onSubmitForm(form: SignInForm | SignUpForm) {
         console.log('form :>> ', form);
         const error = form.validate();
         if (error) {
@@ -45,9 +46,8 @@ export default class AuthModal extends FrontendyComponent {
 
         this.state.errorMessage = "";
 
-        let response:AxiosResponse|null = null;
-
         try {
+            let response:AxiosResponse|null = null;
             if (this.state.isLogin && form instanceof SignInForm) {
                 response = await API.ums.signIn(form);
             } else if (!this.state.isLogin && form instanceof SignUpForm) {
@@ -56,10 +56,12 @@ export default class AuthModal extends FrontendyComponent {
                 throw new Error("invalid form type");
             }
             
-            
             if (response === null) {
                 throw new Error("no received response from server");
             }
+
+            const data = response.data;
+            this.state.otpKey = data.key;
 
         } catch (error: any) {
             if (error instanceof AxiosError) {
@@ -70,16 +72,27 @@ export default class AuthModal extends FrontendyComponent {
             return;
         }
 
-        // Store.setters.setupUser()
-        
-        // EventBroker.getInstance().emit("update-auth");
+
         
         this.state.isOtpCode = true;
-        // this.setShow(false);
     }
 
     async onSubmitOtp(code: string) {
-        console.log('code :>> ', code);
+
+        try{
+            await API.ums.veryfyOtpCode(code, this.state.otpKey as string);
+            Store.setters.setupUser()
+            EventBroker.getInstance().emit("update-auth");
+            this.setShow(false);
+        } catch (error: any) {
+            if (error instanceof AxiosError) {
+                this.state.errorMessage = this.serverResponseMessage(error.status);
+            } else {
+                console.error("AuthModal error :", error);
+            }
+            return;
+        }
+
     }
 
     async signInWithGoogle() {
@@ -112,8 +125,8 @@ export default class AuthModal extends FrontendyComponent {
         }
 
         return this.state.isLogin ?
-            new AuthForm(this.state.signInForm, this.onSubmit.bind(this)) : 
-            new RegistrationForm(this.state.signUpForm, this.onSubmit.bind(this))
+            new AuthForm(this.state.signInForm, this.onSubmitForm.bind(this)) : 
+            new RegistrationForm(this.state.signUpForm, this.onSubmitForm.bind(this))
     }
 
     getAppropriateTitle() {

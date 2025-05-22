@@ -3225,7 +3225,6 @@ var UMS = class {
       url: "/login",
       data: form.toSubmit()
     });
-    cacheTokens(response.data);
     return response;
   }
   async signUp(form) {
@@ -3234,7 +3233,6 @@ var UMS = class {
       url: "/registration",
       data: form.toSubmit()
     });
-    cacheTokens(response.data);
     return response;
   }
   async loginWithGoogle(data) {
@@ -3243,6 +3241,19 @@ var UMS = class {
       url: "/google/login",
       data
     });
+    return response;
+  }
+  async veryfyOtpCode(code, key) {
+    console.log({ key });
+    const response = await this.instance.request({
+      method: "POST",
+      url: "/verify_otp",
+      data: {
+        otp: code,
+        uuid: key
+      }
+    });
+    cacheTokens(response.data);
     return response;
   }
   async signOut() {
@@ -5399,6 +5410,7 @@ var AuthModal = class extends component_default {
       isLogin: true,
       isOtpCode: false,
       errorMessage: "",
+      otpKey: void 0,
       signInForm: new SignInForm("", ""),
       signUpForm: new SignUpForm("", "", "")
     };
@@ -5407,7 +5419,7 @@ var AuthModal = class extends component_default {
     this.state.show = value;
     return this;
   }
-  async onSubmit(form) {
+  async onSubmitForm(form) {
     console.log("form :>> ", form);
     const error = form.validate();
     if (error) {
@@ -5415,8 +5427,8 @@ var AuthModal = class extends component_default {
       return;
     }
     this.state.errorMessage = "";
-    let response = null;
     try {
+      let response = null;
       if (this.state.isLogin && form instanceof SignInForm) {
         response = await API.ums.signIn(form);
       } else if (!this.state.isLogin && form instanceof SignUpForm) {
@@ -5427,6 +5439,8 @@ var AuthModal = class extends component_default {
       if (response === null) {
         throw new Error("no received response from server");
       }
+      const data = response.data;
+      this.state.otpKey = data.key;
     } catch (error2) {
       if (error2 instanceof AxiosError2) {
         this.state.errorMessage = this.serverResponseMessage(error2.status);
@@ -5438,7 +5452,19 @@ var AuthModal = class extends component_default {
     this.state.isOtpCode = true;
   }
   async onSubmitOtp(code) {
-    console.log("code :>> ", code);
+    try {
+      await API.ums.veryfyOtpCode(code, this.state.otpKey);
+      Store.setters.setupUser();
+      EventBroker.getInstance().emit("update-auth");
+      this.setShow(false);
+    } catch (error) {
+      if (error instanceof AxiosError2) {
+        this.state.errorMessage = this.serverResponseMessage(error.status);
+      } else {
+        console.error("AuthModal error :", error);
+      }
+      return;
+    }
   }
   async signInWithGoogle() {
     GoogleOAuth.redirectToGoogle(Config.googleOauthClientId, Config.googleOauthRedirectUri);
@@ -5465,7 +5491,7 @@ var AuthModal = class extends component_default {
     if (this.state.isOtpCode) {
       return new OtpForm(this.onSubmitOtp.bind(this));
     }
-    return this.state.isLogin ? new AuthForm(this.state.signInForm, this.onSubmit.bind(this)) : new RegistrationForm(this.state.signUpForm, this.onSubmit.bind(this));
+    return this.state.isLogin ? new AuthForm(this.state.signInForm, this.onSubmitForm.bind(this)) : new RegistrationForm(this.state.signUpForm, this.onSubmitForm.bind(this));
   }
   getAppropriateTitle() {
     if (this.state.isOtpCode) {

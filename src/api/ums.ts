@@ -27,8 +27,6 @@ export default class UMS {
             data: form.toSubmit(),
         })
 
-        cacheTokens(response.data as TokenPair);
-
         return response;
     }
 
@@ -38,9 +36,6 @@ export default class UMS {
             url: "/registration",
             data: form.toSubmit(),
         });
-
-        cacheTokens(response.data as TokenPair);
-        
         return response;
     }
 
@@ -50,6 +45,20 @@ export default class UMS {
             url: "/google/login",
             data: data,
         })
+        return response;
+    }
+
+    public async veryfyOtpCode(code:string, key:string) {
+        console.log({key})
+        const response = await this.instance.request({
+            method: "POST",
+            url: "/verify_otp",
+            data: {
+                otp: code,
+                uuid: key,
+            }
+        })
+        cacheTokens(response.data as TokenPair);
         return response;
     }
 
