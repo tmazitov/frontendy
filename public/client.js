@@ -3207,6 +3207,186 @@ var AboutPage = class extends component_default {
   }
 };
 
+// src/api/ums.ts
+var UMS = class {
+  constructor(baseUrl) {
+    this.client = new client_default(baseUrl);
+    this.instance = axios_default.create({
+      baseURL: baseUrl,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  }
+  async signIn(form) {
+    const response = await this.instance.request({
+      method: "POST",
+      url: "/login",
+      data: form.toSubmit()
+    });
+    cacheTokens(response.data);
+    return response;
+  }
+  async signUp(form) {
+    const response = await this.instance.request({
+      method: "POST",
+      url: "/registration",
+      data: form.toSubmit()
+    });
+    cacheTokens(response.data);
+    return response;
+  }
+  async loginWithGoogle(data) {
+    const response = await this.instance.request({
+      method: "POST",
+      url: "/google/login",
+      data
+    });
+    return response;
+  }
+  async signOut() {
+    removeTokens();
+    return null;
+  }
+  async userDelete() {
+    return await this.client.request({
+      method: "DELETE",
+      url: "/user/delete/1"
+    });
+  }
+  async userGetInfo() {
+    return await this.client.request({
+      method: "GET",
+      url: "/user"
+    });
+  }
+  async userUpdateAvatar(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return await this.client.request({
+      method: "POST",
+      url: "/user/avatar",
+      data: formData,
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+  }
+};
+
+// src/api/api.ts
+var API = class {
+  static {
+    this.ums = new UMS("http://localhost:5000/auth/api/rest");
+  }
+};
+
+// src/api/oauth/google.ts
+function generateRandomString(length = 128) {
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+}
+async function sha256Base64Url(str) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hash = await fakeSha256(data);
+  return base64UrlEncode(hash);
+}
+function base64UrlEncode(buffer) {
+  return btoa(String.fromCharCode(...buffer)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+async function fakeSha256(data) {
+  let hash = 0;
+  for (let i = 0; i < data.length; i++) {
+    hash = (hash << 5) - hash + data[i];
+    hash |= 0;
+  }
+  const result = new Uint8Array(32).fill(hash & 255);
+  return result;
+}
+var GoogleOAuth = class {
+  static async redirectToGoogle(clientId, redirectUri) {
+    if (!clientId || !redirectUri) {
+      console.log({ clientId, redirectUri });
+      throw new Error("Client ID and redirect URI are required");
+    }
+    const codeVerifier = generateRandomString(128);
+    const codeChallenge = await sha256Base64Url(codeVerifier);
+    const state = generateRandomString(32);
+    sessionStorage.setItem("code_verifier", codeVerifier);
+    sessionStorage.setItem("pkce_state", state);
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=openid%20email%20profile&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+    window.location.href = authUrl;
+  }
+  static async authorizeWithGoogle(redirectUri) {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const state = params.get("state");
+    if (!code || !state) {
+      throw new Error("Invalid response from Google OAuth");
+    }
+    const savedState = sessionStorage.getItem("pkce_state");
+    const codeVerifier = sessionStorage.getItem("code_verifier");
+    if (state !== savedState) {
+      throw new Error("State mismatch!");
+    }
+    if (!codeVerifier) {
+      throw new Error("Code verifier not found!");
+    }
+    try {
+      const response = await API.ums.loginWithGoogle({
+        code,
+        codeVerifier,
+        redirectUri
+      });
+      cacheTokens(response.data);
+    } catch (error) {
+      console.error("Error during Google OAuth authorization:", error);
+      throw error;
+    }
+    sessionStorage.removeItem("pkce_state");
+    sessionStorage.removeItem("code_verifier");
+    router_default.push("home");
+  }
+};
+
+// src/config.ts
+var Config = class {
+  static {
+    this.googleOauthClientId = window.__ENV__.GOOGLE_OAUTH_CLIENT_ID || "";
+  }
+  static {
+    this.googleOauthRedirectUri = window.__ENV__.GOOGLE_OAUTH_REDIRECT_URI || "";
+  }
+};
+
+// src/pages/AuthCallbackPage.ts
+var OAuthCallbackPage = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "oauth-callback-page";
+  }
+  onCreated() {
+    GoogleOAuth.authorizeWithGoogle(Config.googleOauthRedirectUri);
+  }
+  template() {
+    return elem("div").setProps({
+      id: "oauth-callback-page",
+      class: "flex flex-col items-center justify-center h-full w-full"
+    }).setChild([
+      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild([
+        elem("h1").setProps({ class: "text-2xl font-bold" }).setChild(["OAuth Callback Page"]),
+        elem("p").setProps({ class: "text-lg" }).setChild(["This is the OAuth callback page."])
+      ])
+    ]);
+  }
+};
+
 // src/components/content/game-page-content/InfoBarComponent.ts
 var InfoBarComponent = class extends component_default {
   constructor(props) {
@@ -3373,80 +3553,6 @@ var StoreGetters = class {
       return void 0;
     }
     return user.id;
-  }
-};
-
-// src/api/ums.ts
-var UMS = class {
-  constructor(baseUrl) {
-    this.client = new client_default(baseUrl);
-    this.instance = axios_default.create({
-      baseURL: baseUrl,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      }
-    });
-  }
-  async signIn(form) {
-    const response = await this.instance.request({
-      method: "POST",
-      url: "/login",
-      data: form.toSubmit()
-    });
-    cacheTokens(response.data);
-    return response;
-  }
-  async signUp(form) {
-    const response = await this.instance.request({
-      method: "POST",
-      url: "/registration",
-      data: form.toSubmit()
-    });
-    cacheTokens(response.data);
-    return response;
-  }
-  async loginWithGoogle() {
-    const response = await this.instance.request({
-      method: "GET",
-      url: "/google/login"
-    });
-    return response;
-  }
-  async signOut() {
-    removeTokens();
-    return null;
-  }
-  async userDelete() {
-    return await this.client.request({
-      method: "DELETE",
-      url: "/user/delete/1"
-    });
-  }
-  async userGetInfo() {
-    return await this.client.request({
-      method: "GET",
-      url: "/user"
-    });
-  }
-  async userUpdateAvatar(file) {
-    const formData = new FormData();
-    formData.append("file", file);
-    return await this.client.request({
-      method: "POST",
-      url: "/user/avatar",
-      data: formData,
-      headers: {
-        "Content-Type": "multipart/form-data"
-      }
-    });
-  }
-};
-
-// src/api/api.ts
-var API = class {
-  static {
-    this.ums = new UMS("http://localhost:5000/auth/api/rest");
   }
 };
 
@@ -4915,9 +5021,10 @@ var routes = [
   { name: "about", path: "/about", component: AboutPage },
   { name: "profile", path: "/profile", component: ProfilePage },
   { name: "profile-settings", path: "/profile/settings", component: ProfileSettingsPage },
-  { name: "game", path: "/launch/game", component: GamePage }
+  { name: "game", path: "/launch/game", component: GamePage },
+  { name: "oauth-callback", path: "/oauth-callback", component: OAuthCallbackPage }
 ];
-var withoutLogin = ["home", "about"];
+var withoutLogin = ["home", "about", "oauth-callback"];
 var routerConfig = {
   notFoundPage: NotFoundPage,
   routeIsAvailable: (route) => {
@@ -5334,8 +5441,7 @@ var AuthModal = class extends component_default {
     console.log("code :>> ", code);
   }
   async signInWithGoogle() {
-    const response = await API.ums.loginWithGoogle();
-    console.log("response :>> ", response);
+    GoogleOAuth.redirectToGoogle(Config.googleOauthClientId, Config.googleOauthRedirectUri);
   }
   serverResponseMessage(status) {
     switch (status) {
@@ -5388,8 +5494,8 @@ var AuthModal = class extends component_default {
               label: "Proceed with Google",
               color: "blue",
               icon: "ti ti-brand-google",
-              type: "outline",
-              isDisabled: true
+              type: "outline"
+              // isDisabled: true,
             }).onClick(() => this.signInWithGoogle()),
             elem("button").setProps({
               class: "text-blue-500 hover:text-blue-700 underline text-sm"

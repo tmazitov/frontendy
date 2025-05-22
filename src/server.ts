@@ -19,8 +19,9 @@ async function main() {
 
   // Then the catch-all for client-side routing
   app.get("/*", async (request, reply) => {
-    const url = request.url;
-    if (path.extname(url)) {
+    const requestURL = request.raw.url ? request.raw.url : ""
+    const url = new URL(requestURL, `http://${request.headers.host}`);
+    if (path.extname(url.pathname)) {
       return reply.callNotFound();
     }
     const html = await readFile('index.html', 'utf-8');

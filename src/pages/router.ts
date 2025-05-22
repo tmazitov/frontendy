@@ -2,6 +2,7 @@ import { isAuthorized } from "../api/client";
 import FrontendyRoute from "../pkg/frontendy/router/route";
 import FrontendyRouter from "../pkg/frontendy/router/router";
 import AboutPage from "./AboutPage";
+import OAuthCallbackPage from "./AuthCallbackPage";
 import GamePage from "./GamePage";
 import HomePage from "./HomePage";
 import NotFoundPage from "./NotFoundPage";
@@ -14,9 +15,10 @@ const routes:Array<FrontendyRoute> = [
     {name: "profile", path: "/profile", component: ProfilePage},
     {name: "profile-settings", path: "/profile/settings", component: ProfileSettingsPage},
     {name: "game", path: "/launch/game", component: GamePage},
+    {name: "oauth-callback", path: "/oauth-callback", component: OAuthCallbackPage},
 ]
 
-const withoutLogin:Array<string> = ["home", "about"]
+const withoutLogin:Array<string> = ["home", "about", "oauth-callback"]
 
 const routerConfig = {
     notFoundPage: NotFoundPage,

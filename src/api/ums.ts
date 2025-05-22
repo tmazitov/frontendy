@@ -3,6 +3,7 @@ import SignUpForm from "../types/forms/registrationForm";
 import SignInForm from "../types/forms/signInForm";
 import AxiosClient, { cacheTokens, removeTokens } from "./client";
 import { TokenPair } from "./tokenPair";
+import { GoogleOAuthPayload } from "./oauth/google";
 
 export default class UMS {
 	private client: AxiosClient
@@ -43,10 +44,11 @@ export default class UMS {
         return response;
     }
 
-    public async loginWithGoogle() {
+    public async loginWithGoogle(data:GoogleOAuthPayload) {
         const response = await this.instance.request({
-            method: "GET",
+            method: "POST",
             url: "/google/login",
+            data: data,
         })
         return response;
     }

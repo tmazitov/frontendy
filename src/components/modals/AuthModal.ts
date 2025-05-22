@@ -11,6 +11,8 @@ import RegistrationForm from "../forms/RegistrationForm";
 import Store from "../../store/store";
 import ButtonComponent from "../inputs/ButtonComponent";
 import OtpForm from "../forms/OtpForm";
+import GoogleOAuth from "../../api/oauth/google";
+import Config from "../../config";
 
 export default class AuthModal extends FrontendyComponent {
 
@@ -81,8 +83,7 @@ export default class AuthModal extends FrontendyComponent {
     }
 
     async signInWithGoogle() {
-        const response = await API.ums.loginWithGoogle();
-        console.log('response :>> ', response);
+        GoogleOAuth.redirectToGoogle(Config.googleOauthClientId, Config.googleOauthRedirectUri)
     }
 
     serverResponseMessage(status?:number) {
@@ -162,7 +163,7 @@ export default class AuthModal extends FrontendyComponent {
                                 color: "blue",
                                 icon: "ti ti-brand-google",
                                 type: "outline",
-                                isDisabled: true,
+                                // isDisabled: true,
                             }).onClick(() => this.signInWithGoogle()),
                         
                             elem("button")
