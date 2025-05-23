@@ -18,6 +18,7 @@ export default class StoreSetters {
         try
         {
             const response = await API.ums.userGetInfo()
+            console.log({response, data :response.data})
             if (!response) {
                 throw new Error("no response");
             }

@@ -21,13 +21,13 @@ export default class NavBarComponent extends FrontendyComponent {
         }
     }
 
-    navigate(routeName: string) {
-        Store.getters.user().then((user: User| undefined) => {
-            this.state.nickname = user?.nickname;
-            console.log("set nickname", this.state.nickname)
+    protected onCreated(): void {
+        Store.getters.userNickname().then((nickname: string | undefined) => {
+            this.state.nickname = nickname;
         })
+    }
 
-        console.log('navigate', routeName)
+    navigate(routeName: string) {
         router.push(routeName)
     }
 

@@ -49,7 +49,6 @@ export default class UMS {
     }
 
     public async veryfyOtpCode(code:string, key:string) {
-        console.log({key})
         const response = await this.instance.request({
             method: "POST",
             url: "/verify_otp",
@@ -82,7 +81,7 @@ export default class UMS {
     public async userDelete() {
         return await this.client.request({
             method: "DELETE",
-            url: "/user/delete/1",
+            url: "/user",
         })
     }
 

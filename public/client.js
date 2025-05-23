@@ -3798,7 +3798,6 @@ var UMS = class {
     return response;
   }
   async veryfyOtpCode(code, key) {
-    console.log({ key });
     const response = await this.instance.request({
       method: "POST",
       url: "/verify_otp",
@@ -3817,7 +3816,7 @@ var UMS = class {
   async userDelete() {
     return await this.client.request({
       method: "DELETE",
-      url: "/user/delete/1"
+      url: "/user"
     });
   }
   async userGetInfo() {
@@ -3849,6 +3848,124 @@ var API = class {
 
 // src/api/oauth/google.ts
 var import_js_sha256 = __toESM(require_sha256());
+
+// src/store/getters.ts
+var StoreGetters = class {
+  constructor(state) {
+    this.state = state;
+  }
+  async user() {
+    return this.state.user.getValue();
+  }
+  async userNickname() {
+    const user = await this.state.user.getValue();
+    console.log("user", user);
+    if (!user) {
+      return void 0;
+    }
+    return user.nickname;
+  }
+  async userRating() {
+    const user = await this.state.user.getValue();
+    if (!user) {
+      return void 0;
+    }
+    return user.rating;
+  }
+  async userId() {
+    const user = await this.state.user.getValue();
+    if (!user) {
+      return void 0;
+    }
+    return user.id;
+  }
+};
+
+// src/types/User.ts
+var User = class {
+  constructor(data) {
+    this.avatarUrl = null;
+    this.id = data.id;
+    this.nickname = data.nickname;
+    this.rating = data.rating;
+    this.avatarUrl = data.avatar_path || null;
+  }
+};
+
+// src/store/setters.ts
+var StoreSetters = class {
+  constructor(state) {
+    this.state = state;
+  }
+  async setupUser() {
+    if (!isAuthorized()) {
+      return;
+    }
+    try {
+      const response = await API.ums.userGetInfo();
+      console.log({ response, data: response.data });
+      if (!response) {
+        throw new Error("no response");
+      }
+      if (!response.data) {
+        throw new Error("no user data in response");
+      }
+      this.state.user.setValue(new User(response.data));
+    } catch (e) {
+      console.error("Store error: can't get user data :", e);
+    }
+  }
+};
+
+// src/store/field.ts
+var StoreField = class {
+  constructor() {
+    this.isSet = false;
+    this.pendingResolversQueue = [];
+  }
+  setValue(newValue) {
+    this.value = newValue;
+    this.isSet = true;
+    this.pendingResolversQueue.forEach((resolve) => resolve(newValue));
+    this.pendingResolversQueue = [];
+  }
+  getValue() {
+    if (this.isSet) {
+      return new Promise((resolve, reject) => {
+        resolve(this.value);
+      });
+    }
+    return new Promise((resolve) => {
+      this.pendingResolversQueue.push(resolve);
+    });
+  }
+  clearValue() {
+    this.value = void 0;
+    this.isSet = false;
+  }
+};
+
+// src/store/state.ts
+var StoreState = class {
+  constructor() {
+    this.user = new StoreField();
+  }
+};
+
+// src/store/store.ts
+var Store = class {
+  static {
+    this.state = new StoreState();
+  }
+  static {
+    this.setters = new StoreSetters(this.state);
+  }
+  static {
+    this.getters = new StoreGetters(this.state);
+  }
+};
+
+// src/api/oauth/google.ts
 function generateRandomString(length = 128) {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
@@ -3904,7 +4021,9 @@ var GoogleOAuth = class {
     }
     sessionStorage.removeItem("pkce_state");
     sessionStorage.removeItem("code_verifier");
+    Store.setters.setupUser();
     router_default.push("home");
+    EventBroker.getInstance().emit("update-auth");
   }
 };
 
@@ -4074,121 +4193,6 @@ var InfoParagraphComponent = class extends component_default {
   }
   template() {
     return elem("p").setProps({ class: "text-gray-700 text-base mb-2" }).addChild(text(this.props.text));
-  }
-};
-
-// src/store/getters.ts
-var StoreGetters = class {
-  constructor(state) {
-    this.state = state;
-  }
-  async user() {
-    return this.state.user.getValue();
-  }
-  async userNickname() {
-    const user = await this.state.user.getValue();
-    console.log("user", user);
-    if (!user) {
-      return void 0;
-    }
-    return user.nickname;
-  }
-  async userRating() {
-    const user = await this.state.user.getValue();
-    if (!user) {
-      return void 0;
-    }
-    return user.rating;
-  }
-  async userId() {
-    const user = await this.state.user.getValue();
-    if (!user) {
-      return void 0;
-    }
-    return user.id;
-  }
-};
-
-// src/types/User.ts
-var User = class {
-  constructor(data) {
-    this.avatarUrl = null;
-    this.id = data.id;
-    this.nickname = data.nickname;
-    this.rating = data.rating;
-    this.avatarUrl = data.avatar_path || null;
-  }
-};
-
-// src/store/setters.ts
-var StoreSetters = class {
-  constructor(state) {
-    this.state = state;
-  }
-  async setupUser() {
-    if (!isAuthorized()) {
-      return;
-    }
-    try {
-      const response = await API.ums.userGetInfo();
-      if (!response) {
-        throw new Error("no response");
-      }
-      if (!response.data) {
-        throw new Error("no user data in response");
-      }
-      this.state.user.setValue(new User(response.data));
-    } catch (e) {
-      console.error("Store error: can't get user data :", e);
-    }
-  }
-};
-
-// src/store/field.ts
-var StoreField = class {
-  constructor() {
-    this.isSet = false;
-    this.pendingResolversQueue = [];
-  }
-  setValue(newValue) {
-    this.value = newValue;
-    this.isSet = true;
-    this.pendingResolversQueue.forEach((resolve) => resolve(newValue));
-    this.pendingResolversQueue = [];
-  }
-  getValue() {
-    if (this.isSet) {
-      return new Promise((resolve, reject) => {
-        resolve(this.value);
-      });
-    }
-    return new Promise((resolve) => {
-      this.pendingResolversQueue.push(resolve);
-    });
-  }
-  clearValue() {
-    this.value = void 0;
-    this.isSet = false;
-  }
-};
-
-// src/store/state.ts
-var StoreState = class {
-  constructor() {
-    this.user = new StoreField();
-  }
-};
-
-// src/store/store.ts
-var Store = class {
-  static {
-    this.state = new StoreState();
-  }
-  static {
-    this.setters = new StoreSetters(this.state);
-  }
-  static {
-    this.getters = new StoreGetters(this.state);
   }
 };
 
@@ -6116,12 +6120,12 @@ var NavBarComponent = class extends component_default {
       nickname: void 0
     };
   }
-  navigate(routeName) {
-    Store.getters.user().then((user) => {
-      this.state.nickname = user?.nickname;
-      console.log("set nickname", this.state.nickname);
+  onCreated() {
+    Store.getters.userNickname().then((nickname) => {
+      this.state.nickname = nickname;
     });
-    console.log("navigate", routeName);
+  }
+  navigate(routeName) {
     router_default.push(routeName);
   }
   template() {

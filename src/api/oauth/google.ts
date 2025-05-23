@@ -3,6 +3,8 @@ import router from '../../pages/router';
 import { cacheTokens } from '../client';
 import { TokenPair } from '../tokenPair';
 import { sha256 } from 'js-sha256';
+import EventBroker from '../../pkg/event-broker/eventBroker';
+import Store from '../../store/store';
 
 function generateRandomString(length: number = 128) {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -88,6 +90,9 @@ export default class GoogleOAuth {
         sessionStorage.removeItem("pkce_state");
         sessionStorage.removeItem("code_verifier");
 
+        Store.setters.setupUser()
+
         router.push("home")
+        EventBroker.getInstance().emit("update-auth");
     }
 }
