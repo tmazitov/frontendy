@@ -3,7 +3,7 @@ import { elem, text } from "../../pkg/frontendy/vdom/constructor";
 
 type NavBarItemProps = {
     icon: string,
-    label: string,
+    label: string|undefined,
     onClick: () => void,
 }
 

@@ -5563,10 +5563,14 @@ var NavBarComponent = class extends component_default {
   }
   data() {
     return {
-      showAuthModal: false
+      showAuthModal: false,
+      nickname: void 0
     };
   }
   navigate(routeName) {
+    Store.getters.userNickname().then((nickname) => {
+      this.state.nickname = nickname;
+    });
     console.log("navigate", routeName);
     router_default.push(routeName);
   }
@@ -5589,7 +5593,7 @@ var NavBarComponent = class extends component_default {
           // Sign in button
           this.props.isAuthorized ? new NavBarItemComponent({
             icon: "ti ti-user",
-            label: "Profile",
+            label: this.state.nickname,
             onClick: () => this.navigate("profile")
           }) : new NavBarItemComponent({
             icon: "ti ti-login-2",

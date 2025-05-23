@@ -1,6 +1,7 @@
 import router from "../../pages/router";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
+import Store from "../../store/store";
 import NavBarLink from "../../types/NavBarLink";
 import AuthModal from "../modals/AuthModal";
 import NavBarItemComponent from "./NavBarItemComponent";
@@ -15,10 +16,15 @@ export default class NavBarComponent extends FrontendyComponent {
     data() {
         return {
             showAuthModal: false,
+            nickname: undefined,
         }
     }
 
     navigate(routeName: string) {
+        Store.getters.userNickname().then((nickname: string| undefined) => {
+            this.state.nickname = nickname;
+        })
+
         console.log('navigate', routeName)
         router.push(routeName)
     }
@@ -57,7 +63,7 @@ export default class NavBarComponent extends FrontendyComponent {
                         this.props.isAuthorized ?
                             new NavBarItemComponent({
                                 icon: "ti ti-user",
-                                label: "Profile",
+                                label: this.state.nickname,
                                 onClick: () => this.navigate("profile")
                             })
                         :
