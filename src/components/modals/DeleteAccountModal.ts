@@ -32,7 +32,6 @@ export default class DeleteAccountModal extends FrontendyComponent {
     }
 
     private async onSubmit() {
-        this.setShow(false)
 
         try {
             await API.ums.userDelete()
@@ -40,9 +39,10 @@ export default class DeleteAccountModal extends FrontendyComponent {
             console.error("Error during account deletion:", error);
             return
         }
-
+        
         await API.ums.signOut()
-
+        
+        this.setShow(false)
         router.push("home")
         EventBroker.getInstance().emit("update-auth");
     }

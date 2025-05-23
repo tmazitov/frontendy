@@ -3888,7 +3888,7 @@ var User = class {
     this.id = data.id;
     this.nickname = data.nickname;
     this.rating = data.rating;
-    this.avatarUrl = data.avatar_path || null;
+    this.avatarUrl = data.avatar || null;
   }
 };
 
@@ -5111,7 +5111,7 @@ var BigAvatarComponent = class extends component_default {
     console.log("BigAvatarComponent template", this.props.imagePath);
     const avatar = this.state.onClickHandler ? "big-avatar-container " : "";
     return elem("div").addEventListener("click", () => this.state.onClickHandler()).setProps({ class: avatar + "w-32 h-32 rounded-full border-1 border-gray-400 overflow-hidden relative" }).setChild([
-      elem("span").setProps({ class: "image" }).addChild(elem("img").setProps({ class: "w-full object-cover", src: this.props.imagePath })),
+      elem("span").setProps({ class: "image" }).addChild(elem("img").setProps({ class: "w-full object-cover", referrerpolicy: "no-referrer", src: this.props.imagePath })),
       elem("div").$vif(this.state.onClickHandler).setProps({ class: "text absolute text-sm text-white bottom-4 right-0 select-none left-0 text-center opacity-0 transition-all duration-200" }).addChild("Change photo")
     ]);
   }
@@ -5307,8 +5307,11 @@ var InfoContentComponent = class extends component_default {
   }
   template() {
     let imagePath;
+    console.log({ url: this.state.user, methods: this.state.user?.avatarUrl?.startsWith });
     if (!this.state.user) {
       imagePath = null;
+    } else if (this.state.user.avatarUrl && this.state.user.avatarUrl.startsWith("http")) {
+      imagePath = this.state.user.avatarUrl;
     } else if (this.state.user.avatarUrl) {
       imagePath = `http://localhost:5000/auth/public/${this.state.user.avatarUrl}`;
     } else {
@@ -5493,7 +5496,6 @@ var DeleteAccountModal = class extends component_default {
     });
   }
   async onSubmit() {
-    this.setShow(false);
     try {
       await API.ums.userDelete();
     } catch (error) {
@@ -5501,6 +5503,7 @@ var DeleteAccountModal = class extends component_default {
       return;
     }
     await API.ums.signOut();
+    this.setShow(false);
     router_default.push("home");
     EventBroker.getInstance().emit("update-auth");
   }

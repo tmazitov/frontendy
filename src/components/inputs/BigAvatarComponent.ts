@@ -30,7 +30,7 @@ export default class BigAvatarComponent extends FrontendyComponent {
         .setChild([
             elem('span')
             .setProps({class: "image"})
-            .addChild(elem('img').setProps({class: "w-full object-cover", src: this.props.imagePath})),
+            .addChild(elem('img').setProps({class: "w-full object-cover", referrerpolicy: "no-referrer", src: this.props.imagePath})),
 
             elem('div').$vif(this.state.onClickHandler)
             .setProps({class: "text absolute text-sm text-white bottom-4 right-0 select-none left-0 text-center opacity-0 transition-all duration-200"})

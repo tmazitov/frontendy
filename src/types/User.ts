@@ -8,6 +8,6 @@ export default class User {
         this.id = data.id;
         this.nickname = data.nickname;
         this.rating = data.rating;
-        this.avatarUrl = data.avatar_path || null;
+        this.avatarUrl = data.avatar || null;
     }
 }

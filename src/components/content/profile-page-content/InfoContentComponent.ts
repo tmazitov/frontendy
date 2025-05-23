@@ -60,8 +60,11 @@ export default class InfoContentComponent extends FrontendyComponent {
     template() {
 
         let imagePath
+        console.log({url: this.state.user, methods: this.state.user?.avatarUrl?.startsWith})
         if (!this.state.user) {
-            imagePath = null 
+            imagePath = null
+        } else if (this.state.user.avatarUrl && this.state.user.avatarUrl.startsWith("http")) {
+            imagePath = this.state.user.avatarUrl
         } else if (this.state.user.avatarUrl) {
             imagePath = `http://localhost:5000/auth/public/${this.state.user.avatarUrl}`
         } else {
