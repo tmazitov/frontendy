@@ -2,6 +2,7 @@ import API from '../api';
 import router from '../../pages/router';
 import { cacheTokens } from '../client';
 import { TokenPair } from '../tokenPair';
+import { sha256 } from 'js-sha256';
 
 function generateRandomString(length: number = 128) {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -12,27 +13,11 @@ function generateRandomString(length: number = 128) {
     return result;
 }
 
-async function sha256Base64Url(str: string) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(str);
-    const hash = await fakeSha256(data);
-    return base64UrlEncode(hash);
-}
-
-function base64UrlEncode(buffer: Uint8Array) {
-    return btoa(String.fromCharCode(...buffer))
-        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-async function fakeSha256(data: Uint8Array): Promise<Uint8Array> {
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-        hash = (hash << 5) - hash + data[i];
-        hash |= 0; // Convert to 32bit integer
-    }
-    const result = new Uint8Array(32).fill(hash & 0xff);
-    return result;
-}
+function sha256Base64Url(str: string): string {
+    const hash = sha256.array(str); // returns Uint8Array
+    const binary = String.fromCharCode(...hash);
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
 
 export type GoogleOAuthPayload = {
     code: string;
@@ -58,7 +43,7 @@ export default class GoogleOAuth {
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `response_type=code&` +
         `client_id=${clientId}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `redirect_uri=${redirectUri}&` +
         `scope=openid%20email%20profile&` +
         `state=${state}&` +
         `code_challenge=${codeChallenge}&` +
