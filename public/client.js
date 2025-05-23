@@ -4230,6 +4230,9 @@ var WebSocketClient = class {
     this.listeners.set(type, callback);
     return this;
   }
+  send(type, data) {
+    this.socket.send(JSON.stringify({ type, ...data }));
+  }
   openHandler() {
     console.log("WebSocketClient info: WebSocket WebSocketClient opened");
     if (this.opts?.onOpenCallback) {
@@ -4301,29 +4304,25 @@ var GameLauncher = class {
   static {
     this.isConfirmed = false;
   }
-  static async startGameSearching(userId, game, onConnectedCallback) {
+  static async startGameSearching(accessToken, game, onConnectedCallback) {
     try {
       const opts = {
-        onOpenCallback: () => this.onEstablishConnection(game, onConnectedCallback)
+        onOpenCallback: () => this.onEstablishConnection(accessToken, game, onConnectedCallback)
       };
       const user = await Store.getters.user();
       if (!user) {
         return;
       }
-      const addr = `ws://localhost:5001/matchmaking?id=${user?.id}&name=${user?.nickname}&mmr=${user?.rating}`;
-      this.userId = userId;
-      this.client = new WebSocketClient(addr, opts).on("waiting" /* MATCH_SEARCH_START */, (data) => this.matchSearchStartHandler()).on("confirm_match" /* MATCH_FOUND */, (data) => this.matchFoundHandler(data)).on("match_timeout" /* MATCH_TIMEOUT */, (data) => this.matchTimeoutHandler(data));
+      const addr = `ws://localhost:5001/matchmaking`;
+      this.client = new WebSocketClient(addr, opts).on("searching" /* MATCH_SEARCH */, (data) => this.matchSearchStartHandler(game, onConnectedCallback)).on("match_found" /* MATCH_FOUND */, (data) => this.matchFoundHandler(data)).on("match_timeout" /* MATCH_TIMEOUT */, (data) => this.matchTimeoutHandler(data));
     } catch (e) {
       console.error("GameLauncher error : WebSocketClient connection error", e);
       return;
     }
   }
-  static onEstablishConnection(game, onConnectedCallback) {
+  static onEstablishConnection(accessToken, game, onConnectedCallback) {
     console.log("GameLauncher : WebSocket connection opened");
-    if (onConnectedCallback) {
-      onConnectedCallback();
-    }
-    this.searchGameType = game;
+    this.client?.send("join" /* JOIN */, { token: accessToken });
   }
   static stopGameSearching() {
     this.searchGameType = null;
@@ -4342,7 +4341,11 @@ var GameLauncher = class {
     EventBroker.getInstance().emit("deactivate-search-game-bar");
     EventBroker.getInstance().emit("activate-confirmation-modal", this.searchGameType);
   }
-  static matchSearchStartHandler() {
+  static matchSearchStartHandler(game, onConnectedCallback) {
+    if (onConnectedCallback) {
+      onConnectedCallback();
+    }
+    this.searchGameType = game;
     EventBroker.getInstance().emit("activate-search-game-bar", this.searchGameType);
   }
   static matchTimeoutHandler(data) {
@@ -4779,7 +4782,11 @@ var GameLauncherModal = class extends component_default {
       return;
     }
     this.state.isLoading = true;
-    GameLauncher.startGameSearching(this.state.userId, game, () => {
+    const accessToken = getTokens()?.accessToken;
+    if (!accessToken) {
+      return;
+    }
+    GameLauncher.startGameSearching(accessToken, game, () => {
       this.state.show = false;
       this.state.isLoading = false;
     });
@@ -6110,8 +6117,9 @@ var NavBarComponent = class extends component_default {
     };
   }
   navigate(routeName) {
-    Store.getters.userNickname().then((nickname) => {
-      this.state.nickname = nickname;
+    Store.getters.user().then((user) => {
+      this.state.nickname = user?.nickname;
+      console.log("set nickname", this.state.nickname);
     });
     console.log("navigate", routeName);
     router_default.push(routeName);

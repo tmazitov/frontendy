@@ -3,20 +3,20 @@ import Game from "../../../types/Game";
 import EventBroker from "../../event-broker/eventBroker";
 import WebSocketClient from "../../ws-client/client";
 import PlayersConfirmation from "./confirmation";
-import { MMRS_Messages } from "./messages";
+import { MMRS_Client_Messages, MMRS_Server_Messages } from "./messages";
 
 export default class GameLauncher {
     
     private static searchGameType: Game | null = null;
     private static isConfirmed: boolean = false;
-    private static client?: WebSocketClient<MMRS_Messages>;
+    private static client?: WebSocketClient<MMRS_Server_Messages>;
     private static confirmation?: PlayersConfirmation;
     private static userId?: number;
 
-    static async startGameSearching(userId:number, game:Game, onConnectedCallback?: Function) {
+    static async startGameSearching(accessToken:string, game:Game, onConnectedCallback?: Function) {
         try {
             const opts = {
-                onOpenCallback: () => this.onEstablishConnection(game, onConnectedCallback),
+                onOpenCallback: () => this.onEstablishConnection(accessToken, game, onConnectedCallback),
             }
 
             const user = await Store.getters.user()
@@ -24,12 +24,11 @@ export default class GameLauncher {
                 return ;
             }
 
-            const addr = `ws://localhost:5001/matchmaking?id=${user?.id}&name=${user?.nickname}&mmr=${user?.rating}`;
-            this.userId = userId;
-            this.client = new WebSocketClient<MMRS_Messages>(addr, opts)
-                .on(MMRS_Messages.MATCH_SEARCH_START, (data: any) => this.matchSearchStartHandler())
-                .on(MMRS_Messages.MATCH_FOUND, (data: any) => this.matchFoundHandler(data))
-                .on(MMRS_Messages.MATCH_TIMEOUT, (data: any) => this.matchTimeoutHandler(data))
+            const addr = `ws://localhost:5001/matchmaking`;
+            this.client = new WebSocketClient<MMRS_Server_Messages>(addr, opts)
+                .on(MMRS_Server_Messages.MATCH_SEARCH, (data: any) => this.matchSearchStartHandler(game, onConnectedCallback))
+                .on(MMRS_Server_Messages.MATCH_FOUND, (data: any) => this.matchFoundHandler(data))
+                .on(MMRS_Server_Messages.MATCH_TIMEOUT, (data: any) => this.matchTimeoutHandler(data))
                 // .on(MMRS_Messages.MATCH_WAIT, (data: any) => {}); 
                 // .on(MMRS_Messages.MATCH_CONFIRM, (data: any) => {})
                 // .on(MMRS_Messages.MATCH_REJECT, (data: any) => {})
@@ -40,12 +39,9 @@ export default class GameLauncher {
         }
     }
 
-    private static onEstablishConnection(game: Game, onConnectedCallback?: Function) {
+    private static onEstablishConnection(accessToken:string, game: Game, onConnectedCallback?: Function) {
         console.log("GameLauncher : WebSocket connection opened");
-        if (onConnectedCallback) {
-            onConnectedCallback();
-        }
-        this.searchGameType = game;
+        this.client?.send(MMRS_Client_Messages.JOIN, {token: accessToken})
     }
 
     static stopGameSearching() {
@@ -69,7 +65,11 @@ export default class GameLauncher {
         EventBroker.getInstance().emit("activate-confirmation-modal", this.searchGameType);
     }
 
-    private static matchSearchStartHandler() {
+    private static matchSearchStartHandler(game:Game, onConnectedCallback?: Function) {
+        if (onConnectedCallback) {
+            onConnectedCallback();
+        }
+        this.searchGameType = game;
         EventBroker.getInstance().emit("activate-search-game-bar", this.searchGameType);
     }
 

@@ -3,6 +3,7 @@ import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem, text } from "../../pkg/frontendy/vdom/constructor";
 import Store from "../../store/store";
 import NavBarLink from "../../types/NavBarLink";
+import User from "../../types/User";
 import AuthModal from "../modals/AuthModal";
 import NavBarItemComponent from "./NavBarItemComponent";
 
@@ -21,8 +22,9 @@ export default class NavBarComponent extends FrontendyComponent {
     }
 
     navigate(routeName: string) {
-        Store.getters.userNickname().then((nickname: string| undefined) => {
-            this.state.nickname = nickname;
+        Store.getters.user().then((user: User| undefined) => {
+            this.state.nickname = user?.nickname;
+            console.log("set nickname", this.state.nickname)
         })
 
         console.log('navigate', routeName)

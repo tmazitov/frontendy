@@ -34,6 +34,10 @@ export default class WebSocketClient<T> {
         return this;
     }
 
+    public send(type: string, data: Record<string, any>) {
+        this.socket.send(JSON.stringify({ type, ...data }));
+    }
+
     private openHandler() {
         console.log("WebSocketClient info: WebSocket WebSocketClient opened");
         if (this.opts?.onOpenCallback) {

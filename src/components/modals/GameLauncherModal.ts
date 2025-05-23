@@ -1,3 +1,4 @@
+import { getTokens } from "../../api/client";
 import LoadingLayout from "../../layouts/loading/LoadingLayout";
 import ModalLayout from "../../layouts/modal/ModalLayout";
 import EventBroker from "../../pkg/event-broker/eventBroker";
@@ -39,7 +40,12 @@ export default class GameLauncherModal extends FrontendyComponent {
  
         this.state.isLoading = true;
 
-        GameLauncher.startGameSearching(this.state.userId, game, () => {
+        const accessToken = getTokens()?.accessToken
+        if (!accessToken) {
+            return ;
+        }
+
+        GameLauncher.startGameSearching(accessToken, game, () => {
             this.state.show = false;
             this.state.isLoading = false;
         });
