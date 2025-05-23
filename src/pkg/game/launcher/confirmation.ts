@@ -1,25 +1,21 @@
 export default class PlayersConfirmation {
     
-    private playersStatuses: Array<{player: number, confirm: boolean}>;
+    private playersStatuses: Array<boolean>;
 
-    constructor( players: Array<number>) {
-        this.playersStatuses = players.map(player => {
-            return {
-                player: player,
-                confirm: false,
-            }
-        })
+    constructor(playersCount: number) {
+        this.playersStatuses = new Array(playersCount).fill(false)
     }
 
-    public setConfirm(player: number) {
-        const playerStatus = this.playersStatuses.find(p => p.player === player);
-        if (playerStatus) {
-            playerStatus.confirm = true;
+    public setConfirm() {
+        const unconfirmedIndex = this.playersStatuses.findIndex((status) => !status);
+        if (unconfirmedIndex !== -1) {
+            this.playersStatuses[unconfirmedIndex] = true;
         }
     }
 
-
     public getPlayersStatuses() {
-        return this.playersStatuses;
+        return this.playersStatuses.map((status:boolean) => {
+            return status ? "confirmed" : "waiting";
+        });
     }
 }

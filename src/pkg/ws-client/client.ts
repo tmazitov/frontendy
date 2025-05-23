@@ -34,7 +34,7 @@ export default class WebSocketClient<T> {
         return this;
     }
 
-    public send(type: string, data: Record<string, any>) {
+    public send(type: string, data?: Record<string, any> ) {
         this.socket.send(JSON.stringify({ type, ...data }));
     }
 

@@ -68,7 +68,7 @@ export default class InfoContentComponent extends FrontendyComponent {
         } else if (this.state.user.avatarUrl) {
             imagePath = `http://localhost:5000/auth/public/${this.state.user.avatarUrl}`
         } else {
-            imagePath = "http://localhost:5000/auth/public/default.png"
+            imagePath = "http://localhost:5000/auth/public/avatars/default.png"
         }
     
         console.log('imagePath :>> ', imagePath);

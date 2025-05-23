@@ -27,6 +27,7 @@ export default class AppComponent extends Component {
             currentRoute : router.getCurrentRoute(),
             searchGameType: null,
             showGameConfirmationModal: false,
+            confirmTime: undefined,
         }
     }
 
@@ -51,8 +52,9 @@ export default class AppComponent extends Component {
             TimerStorage.removeTimer("game-search-bar");
             this.state.searchGameType = null;
         })
-        EventBroker.getInstance().on("activate-confirmation-modal", () => {
+        EventBroker.getInstance().on("activate-confirmation-modal", (data:{confirmTime: number}) => {
             this.state.showGameConfirmationModal = true;
+            this.state.confirmTime = data.confirmTime;
         })
         EventBroker.getInstance().on("deactivate-confirmation-modal", () => {
             TimerStorage.removeTimer("game-confirmation-modal");
@@ -89,7 +91,7 @@ export default class AppComponent extends Component {
                 new SearchGameBarComponent()
                     .setSearchGame(this.state.searchGameType),
                 
-                new GameConfirmationModal(this.state.searchGameType)
+                new GameConfirmationModal(this.state.searchGameType, this.state.confirmTime)
                 .setShow(this.state.showGameConfirmationModal)
             ])
     }   

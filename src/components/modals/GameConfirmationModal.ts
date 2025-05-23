@@ -8,13 +8,11 @@ import Game from "../../types/Game";
 import GameConfirmationComponent from "../content/game-confirmation-modal-content/GameConfirmationComponent";
 import GameWaitComponent from "../content/game-confirmation-modal-content/GameWaitComponent";
 
-let interval: NodeJS.Timeout | undefined;
-
 export default class GameConfirmationModal extends FrontendyComponent {
     componentName: string = 'game-launch-modal';
 
-    constructor(game: Game) {
-        super({ game })
+    constructor(game: Game, time?: number) {
+        super({ game, time })
     }
 
     data() {
@@ -22,7 +20,7 @@ export default class GameConfirmationModal extends FrontendyComponent {
             show: false,
             isLoading: false,
             isConfirmed: false,
-            delay: 20,
+            delay: this.props.time ? this.props.time : 20,
         }
     }
 
@@ -30,7 +28,14 @@ export default class GameConfirmationModal extends FrontendyComponent {
         this.state.show = value;
         if (value) {
             TimerStorage.addTimer("game-confirmation-modal", (counter: number) => {
-                this.state.delay = 20 - counter;
+                if (this.state.delay == 0) {
+                    TimerStorage.removeTimer("game-confirmation-modal");
+                    this.state.isLoading = false;
+                    this.state.isConfirmed = false;
+                    this.state.show = false;
+                    return;
+                }
+                this.state.delay = (this.props.time || 20) - counter;
             })
         }
         return this 
@@ -38,10 +43,11 @@ export default class GameConfirmationModal extends FrontendyComponent {
 
     private onSubmit() {
         this.state.isLoading = true;
-        // GameLauncher.confirmGame(() => {
-        //     this.state.isLoading = false;
-        //     this.state.isConfirmed = true;
-        // })
+        GameLauncher.confirmGame(() => {
+            console.log("successfully confirmed game");
+            this.state.isLoading = false;
+            this.state.isConfirmed = true;
+        })
     }
 
     private time(num:number){

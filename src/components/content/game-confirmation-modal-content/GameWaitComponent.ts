@@ -12,7 +12,7 @@ export default class GameWaitComponent extends FrontendyComponent {
 
     template() {
 
-        const confirmed = GameLauncher.getMatchPlayer()
+        const statuses:Array<string> = GameLauncher.getConfirmationStatus() || []
 
         return elem("span")
         .setChild([
@@ -23,7 +23,7 @@ export default class GameWaitComponent extends FrontendyComponent {
             elem('div')
             .setProps({class : "w-full flex gap-2 justify-center"})
             .setChild([
-                ...confirmed.map(player => new WaitPlayerBoxComponent(player.status))
+                ...statuses.map(status => new WaitPlayerBoxComponent(status))
             ])
         ])
     }

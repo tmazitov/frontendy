@@ -4281,22 +4281,19 @@ var WebSocketClient = class {
 
 // src/pkg/game/launcher/confirmation.ts
 var PlayersConfirmation = class {
-  constructor(players) {
-    this.playersStatuses = players.map((player) => {
-      return {
-        player,
-        confirm: false
-      };
-    });
+  constructor(playersCount) {
+    this.playersStatuses = new Array(playersCount).fill(false);
   }
-  setConfirm(player) {
-    const playerStatus = this.playersStatuses.find((p) => p.player === player);
-    if (playerStatus) {
-      playerStatus.confirm = true;
+  setConfirm() {
+    const unconfirmedIndex = this.playersStatuses.findIndex((status) => !status);
+    if (unconfirmedIndex !== -1) {
+      this.playersStatuses[unconfirmedIndex] = true;
     }
   }
   getPlayersStatuses() {
-    return this.playersStatuses;
+    return this.playersStatuses.map((status) => {
+      return status ? "confirmed" : "waiting";
+    });
   }
 };
 
@@ -4336,14 +4333,13 @@ var GameLauncher = class {
     EventBroker.getInstance().emit("deactivate-search-game-bar");
   }
   static matchFoundHandler(data) {
-    console.log({ data });
-    if (!data || !data.opponent) {
+    if (!data) {
       console.error("GameLauncher error : No opponent found");
       return;
     }
-    this.confirmation = new PlayersConfirmation([this.userId, data.opponent]);
+    this.confirmation = new PlayersConfirmation(this.searchGameType?.players || 0);
     EventBroker.getInstance().emit("deactivate-search-game-bar");
-    EventBroker.getInstance().emit("activate-confirmation-modal", this.searchGameType);
+    EventBroker.getInstance().emit("activate-confirmation-modal", { confirmTime: data.timeLeft });
   }
   static matchSearchStartHandler(game, onConnectedCallback) {
     if (onConnectedCallback) {
@@ -4361,17 +4357,23 @@ var GameLauncher = class {
     }
     EventBroker.getInstance().emit("deactivate-confirmation-modal", this.searchGameType);
   }
-  // static async confirmGame(callback: Function | null = null) {
-  //     if (!this.searchGameType) {
-  //         return;
-  //     }
-  //     setTimeout(() => {
-  //         this.isConfirmed = true;
-  //         if (callback) {
-  //             callback();
-  //         }
-  //     }, 200)
-  // }
+  static async confirmGame(callback = null) {
+    if (this.isConfirmed || !this.confirmation) {
+      return;
+    }
+    this.client?.send("match_confirmed" /* CONFIRM */);
+    this.isConfirmed = true;
+    this.confirmation.setConfirm();
+    if (callback) {
+      callback();
+    }
+  }
+  static getConfirmationStatus() {
+    if (!this.isConfirmed || !this.searchGameType) {
+      return [];
+    }
+    return this.confirmation?.getPlayersStatuses();
+  }
   // static cancelGame(callback: Function | null = null) {
   //     if (!this.searchGameType) {
   //         return;
@@ -4393,20 +4395,6 @@ var GameLauncher = class {
   //             this.startGameSearching(this.userId || 0, game)
   //         }
   //     }, 200)
-  // }
-  // static getMatchPlayer() {
-  //     if (!this.isConfirmed || !this.searchGameType) {
-  //         return [];
-  //     }
-  //     const numberOfPlayers = this.searchGameType.players;
-  //     const players = Array.from({ length: numberOfPlayers }, (_, index) => index + 1).map(player => {
-  //         return {
-  //             id: player,
-  //             status: "waiting",
-  //         }
-  //     });
-  //     players[0].status = "confirmed";
-  //     return players;
   // }
 };
 
@@ -5315,7 +5303,7 @@ var InfoContentComponent = class extends component_default {
     } else if (this.state.user.avatarUrl) {
       imagePath = `http://localhost:5000/auth/public/${this.state.user.avatarUrl}`;
     } else {
-      imagePath = "http://localhost:5000/auth/public/default.png";
+      imagePath = "http://localhost:5000/auth/public/avatars/default.png";
     }
     console.log("imagePath :>> ", imagePath);
     return elem("div").setProps({ class: "grid grid-cols-[8rem_1fr] gap-4 w-full" }).setChild([
@@ -6230,11 +6218,11 @@ var GameWaitComponent = class extends component_default {
     this.componentName = "game-wait-component";
   }
   template() {
-    const confirmed = GameLauncher.getMatchPlayer();
+    const statuses = GameLauncher.getConfirmationStatus() || [];
     return elem("span").setChild([
       elem("p").setProps({ class: "text-sm text-gray-600 mb-2 text-start" }).addChild(text(`Remaining time : ${this.props.remainingTime}`)),
       elem("div").setProps({ class: "w-full flex gap-2 justify-center" }).setChild([
-        ...confirmed.map((player) => new PlayerBoxComponent(player.status))
+        ...statuses.map((status) => new PlayerBoxComponent(status))
       ])
     ]);
   }
@@ -6242,8 +6230,8 @@ var GameWaitComponent = class extends component_default {
 
 // src/components/modals/GameConfirmationModal.ts
 var GameConfirmationModal = class extends component_default {
-  constructor(game) {
-    super({ game });
+  constructor(game, time) {
+    super({ game, time });
     this.componentName = "game-launch-modal";
   }
   data() {
@@ -6251,20 +6239,25 @@ var GameConfirmationModal = class extends component_default {
       show: false,
       isLoading: false,
       isConfirmed: false,
-      delay: 20
+      delay: this.props.time ? this.props.time : 20
     };
   }
   setShow(value) {
     this.state.show = value;
     if (value) {
       timer_default.addTimer("game-confirmation-modal", (counter2) => {
-        this.state.delay = 20 - counter2;
+        this.state.delay = (this.props.time || 20) - counter2;
       });
     }
     return this;
   }
   onSubmit() {
     this.state.isLoading = true;
+    GameLauncher.confirmGame(() => {
+      console.log("successfully confirmed game");
+      this.state.isLoading = false;
+      this.state.isConfirmed = true;
+    });
   }
   time(num) {
     const seconds = num < 10 ? "0" + num : num;
@@ -6312,7 +6305,8 @@ var AppComponent = class extends component_default {
       isAuthorized: isAuthorized(),
       currentRoute: router_default.getCurrentRoute(),
       searchGameType: null,
-      showGameConfirmationModal: false
+      showGameConfirmationModal: false,
+      confirmTime: void 0
     };
   }
   isNavigatablePage() {
@@ -6335,8 +6329,9 @@ var AppComponent = class extends component_default {
       timer_default.removeTimer("game-search-bar");
       this.state.searchGameType = null;
     });
-    EventBroker.getInstance().on("activate-confirmation-modal", () => {
+    EventBroker.getInstance().on("activate-confirmation-modal", (data) => {
       this.state.showGameConfirmationModal = true;
+      this.state.confirmTime = data.confirmTime;
     });
     EventBroker.getInstance().on("deactivate-confirmation-modal", () => {
       timer_default.removeTimer("game-confirmation-modal");
@@ -6361,7 +6356,7 @@ var AppComponent = class extends component_default {
       elem("span").$vif(true).addChild(new NavBarComponent(navBarLinks, this.state.isAuthorized)),
       new FrontendyRouterView(router_default),
       new SearchGameBarComponent().setSearchGame(this.state.searchGameType),
-      new GameConfirmationModal(this.state.searchGameType).setShow(this.state.showGameConfirmationModal)
+      new GameConfirmationModal(this.state.searchGameType, this.state.confirmTime).setShow(this.state.showGameConfirmationModal)
     ]);
   }
 };

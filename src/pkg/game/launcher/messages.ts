@@ -1,5 +1,5 @@
 enum MMRS_Server_Messages {
-    MATCH_REJECT = "reject_match",   // when match was rejected by server by timeout
+    MATCH_REJECT = "reject_match",
     MATCH_TIMEOUT = "match_timeout",
     MATCH_SEARCH = "searching",
     MATCH_FOUND = "match_found",
@@ -8,6 +8,8 @@ enum MMRS_Server_Messages {
 
 enum MMRS_Client_Messages {
     JOIN = "join",
+    CONFIRM = "match_confirmed",
+    // REJECT = "reject_match",
 }
 
 export {

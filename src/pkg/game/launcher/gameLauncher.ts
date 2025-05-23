@@ -53,16 +53,14 @@ export default class GameLauncher {
     }
 
     private static matchFoundHandler(data: any) {
-
-        console.log({data})
-        if (!data || !data.opponent) { 
+        if (!data) { 
             console.error("GameLauncher error : No opponent found");
             return;
         }
 
-        this.confirmation = new PlayersConfirmation([this.userId, data.opponent]);
+        this.confirmation = new PlayersConfirmation(this.searchGameType?.players || 0);
         EventBroker.getInstance().emit("deactivate-search-game-bar");
-        EventBroker.getInstance().emit("activate-confirmation-modal", this.searchGameType);
+        EventBroker.getInstance().emit("activate-confirmation-modal", {confirmTime: data.timeLeft});
     }
 
     private static matchSearchStartHandler(game:Game, onConnectedCallback?: Function) {
@@ -83,19 +81,28 @@ export default class GameLauncher {
         EventBroker.getInstance().emit("deactivate-confirmation-modal", this.searchGameType);
     }   
 
+    public static async confirmGame(callback: Function | null = null) {
+        if (this.isConfirmed || !this.confirmation) {
+            return; 
+        }
+        this.client?.send(MMRS_Client_Messages.CONFIRM)
+        this.isConfirmed = true;
+        this.confirmation.setConfirm()
 
-    // static async confirmGame(callback: Function | null = null) {
-    //     if (!this.searchGameType) {
-    //         return;
-    //     }
+        if (callback) {
+            callback();
+        }
+    }
 
-    //     setTimeout(() => {
-    //         this.isConfirmed = true;
-    //         if (callback) {
-    //             callback();
-    //         }
-    //     }, 200)
-    // }
+
+    public static getConfirmationStatus() {
+
+        if (!this.isConfirmed || !this.searchGameType) {
+            return [];
+        }
+
+        return this.confirmation?.getPlayersStatuses();
+    }
 
     // static cancelGame(callback: Function | null = null) {
     //     if (!this.searchGameType) {
@@ -121,20 +128,4 @@ export default class GameLauncher {
     //     }, 200)
     // }
 
-    // static getMatchPlayer() {
-
-    //     if (!this.isConfirmed || !this.searchGameType) {
-    //         return [];
-    //     }
-
-    //     const numberOfPlayers = this.searchGameType.players;
-    //     const players = Array.from({ length: numberOfPlayers }, (_, index) => index + 1).map(player => {
-    //         return {
-    //             id: player,
-    //             status: "waiting",
-    //         }
-    //     });
-    //     players[0].status = "confirmed";
-    //     return players;
-    // }
 }
