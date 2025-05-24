@@ -3663,6 +3663,7 @@ var FrontendyComponent = class extends lifecicle_default {
   }
   unmount() {
     if (!this.el || !this.isMounted) {
+      console.warn(`Component ${this.componentName} is not mounted or has no element to unmount.`);
       return;
     }
     const parent = this.el.parentElement;
@@ -4063,6 +4064,115 @@ var OAuthCallbackPage = class extends component_default {
   }
 };
 
+// src/components/content/game-page-content/InfoBarComponent.ts
+var InfoBarComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "info-bar-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "flex justify-between items-center p-4 w-[512px] " }).setChild([
+      elem("div").setProps({ class: "text-bold text-md" }).addChild(this.props.player1Nickname),
+      elem("div").setProps({ class: "text-bold text-lg" }).addChild(`${this.props.player1Score} : ${this.props.player2Score}`),
+      elem("div").setProps({ class: "text-bold text-md" }).addChild(this.props.player2Nickname)
+    ]);
+  }
+};
+
+// src/components/content/game-page-content/DelimeterComponet.ts
+var DelimeterComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "delimeter-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "w-[1px] bg-gray-300 absolute top-[16px] bottom-[16px] left-1/2 transform -translate-x-1/2" });
+  }
+};
+
+// src/components/content/game-page-content/PaddleComponent.ts
+var PaddleComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "paddle-component";
+  }
+  template() {
+    const position = `top-[${this.props.top}px] ${this.props.side == "left" ? "left" : "right"}-[16px]`;
+    return elem("div").setProps({ class: `w-[6px] h-[42px] bg-blue-500 rounded-lg absolute ${position}` });
+  }
+};
+
+// src/components/content/game-page-content/SceneComponent.ts
+var SceneComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "scene-component";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("div").setProps({ class: "p-[16px] w-[512px] h-[320px] relative bg-gray-100 rounded-lg shadow-md" }).setChild([
+      new DelimeterComponent(),
+      new PaddleComponent({ top: 20, side: "left" }),
+      new PaddleComponent({ top: 20, side: "right" })
+    ]);
+  }
+};
+
+// src/components/content/game-page-content/GameComponent.ts
+var GameComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "game-component";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("div").setProps({ class: "flex items-center flex-col" }).setChild([
+      new InfoBarComponent({
+        player1Nickname: "Player 1",
+        player2Nickname: "Player 2",
+        player1Score: 0,
+        player2Score: 0
+      }),
+      new SceneComponent()
+    ]);
+  }
+};
+
+// src/layouts/dashboard/DashboardLayout.ts
+var DashboardComponent = class extends component_default {
+  constructor(label) {
+    super({ label });
+    this.componentName = "dashboard-component";
+  }
+  slots() {
+    return [
+      "content",
+      "header"
+    ];
+  }
+  template() {
+    const content = this.useSlot("content");
+    const header = this.useSlot("header");
+    const dashboard = elem("div").setProps({
+      id: "dashboard-component",
+      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
+    });
+    if (header) {
+      dashboard.addChild(header);
+    } else if (this.props.label) {
+      dashboard.addChild(
+        elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(this.props.label))
+      );
+    }
+    dashboard.addChild(content);
+    return dashboard;
+  }
+};
+
 // src/pkg/ws-client/message.ts
 var Message = class {
   constructor(raw) {
@@ -4146,7 +4256,7 @@ var WebSocketClient = class {
   }
 };
 
-// src/pkg/game/proc/ws.ts
+// src/pkg/game/play/ws.ts
 var GameProc = class _GameProc {
   static connect() {
     if (_GameProc.conn !== void 0) {
@@ -4192,147 +4302,71 @@ var GameProc = class _GameProc {
   }
 };
 
-// src/components/content/game-page-content/InfoBarComponent.ts
-var InfoBarComponent = class extends component_default {
-  constructor(props) {
-    super(props);
-    this.componentName = "info-bar-component";
-  }
-  template() {
-    return elem("div").setProps({ class: "flex justify-between items-center p-4 w-[512px] " }).setChild([
-      elem("div").setProps({ class: "text-bold text-md" }).addChild(this.props.player1Nickname),
-      elem("div").setProps({ class: "text-bold text-lg" }).addChild(`${this.props.player1Score} : ${this.props.player2Score}`),
-      elem("div").setProps({ class: "text-bold text-md" }).addChild(this.props.player2Nickname)
-    ]);
-  }
-};
-
-// src/components/content/game-page-content/DelimeterComponet.ts
-var DelimeterComponent = class extends component_default {
+// src/pkg/game/play/moveController.ts
+var MoveController = class {
   constructor() {
-    super(...arguments);
-    this.componentName = "delimeter-component";
+    this.direction = 0;
+    this.pressedKeys = /* @__PURE__ */ new Set();
   }
-  template() {
-    return elem("div").setProps({ class: "w-[1px] bg-gray-300 absolute top-[16px] bottom-[16px] left-1/2 transform -translate-x-1/2" });
-  }
-};
-
-// src/components/content/game-page-content/PaddleComponent.ts
-var PaddleComponent = class extends component_default {
-  constructor(props) {
-    super(props);
-    this.componentName = "paddle-component";
-  }
-  template() {
-    const position = `top-[${this.props.top}px] ${this.props.side == "left" ? "left" : "right"}-[16px]`;
-    return elem("div").setProps({ class: `w-[6px] h-[42px] bg-blue-500 rounded-lg absolute ${position}` });
-  }
-};
-
-// src/components/content/game-page-content/SceneComponent.ts
-var SceneComponent = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "scene-component";
-  }
-  data() {
-    return {};
-  }
-  template() {
-    return elem("div").setProps({ class: "p-[16px] w-[512px] h-[320px] relative bg-gray-100 rounded-lg shadow-md" }).setChild([
-      new DelimeterComponent(),
-      new PaddleComponent({ top: 20, side: "left" }),
-      new PaddleComponent({ top: 20, side: "right" })
-    ]);
-  }
-};
-
-// src/components/content/game-page-content/GameComponent.ts
-var GameComponent = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "game-component";
-  }
-  data() {
-    return {};
-  }
-  onCreated() {
-    GameProc.connect();
-    let direction = 0;
-    const pressedKeys = /* @__PURE__ */ new Set();
-    window.addEventListener("keydown", (event) => {
-      console.log("Key pressed:", event.key, "Direction:", direction);
-      if (direction != 1 && event.key === "w") {
-        GameProc.playerMoveUp();
-        direction = 1;
-        pressedKeys.add(event.key);
-      }
-      if (direction != -1 && event.key === "s") {
-        GameProc.playerMoveDown();
-        direction = -1;
-        pressedKeys.add(event.key);
-      }
-    });
-    window.addEventListener("keyup", (event) => {
-      if (pressedKeys.has(event.key)) {
-        pressedKeys.delete(event.key);
-      }
-      if (pressedKeys.size === 0) {
-        direction = 0;
-        GameProc.playerStop();
-      } else {
-        if (direction != 1 && pressedKeys.has("w")) {
-          GameProc.playerMoveUp();
-          direction = 1;
-        } else if (direction != -1 && pressedKeys.has("s")) {
-          GameProc.playerMoveDown();
-          direction = -1;
-        }
-      }
-    });
-  }
-  template() {
-    return elem("div").setProps({ class: "flex items-center flex-col" }).setChild([
-      new InfoBarComponent({
-        player1Nickname: "Player 1",
-        player2Nickname: "Player 2",
-        player1Score: 0,
-        player2Score: 0
-      }),
-      new SceneComponent()
-    ]);
-  }
-};
-
-// src/layouts/dashboard/DashboardLayout.ts
-var DashboardComponent = class extends component_default {
-  constructor(label) {
-    super({ label });
-    this.componentName = "dashboard-component";
-  }
-  slots() {
-    return [
-      "content",
-      "header"
-    ];
-  }
-  template() {
-    const content = this.useSlot("content");
-    const header = this.useSlot("header");
-    const dashboard = elem("div").setProps({
-      id: "dashboard-component",
-      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
-    });
-    if (header) {
-      dashboard.addChild(header);
-    } else if (this.props.label) {
-      dashboard.addChild(
-        elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(this.props.label))
-      );
+  move(event) {
+    if (this.direction != 1 && event.key === "w") {
+      GameProc.playerMoveUp();
+      this.direction = 1;
     }
-    dashboard.addChild(content);
-    return dashboard;
+    if (this.direction != -1 && event.key === "s") {
+      GameProc.playerMoveDown();
+      this.direction = -1;
+    }
+    if (event.key === "s" || event.key === "w") {
+      this.pressedKeys.add(event.key);
+    }
+  }
+  stop(event) {
+    if (event.key !== "s" && event.key !== "w") {
+      return;
+    }
+    if (this.pressedKeys.has(event.key)) {
+      this.pressedKeys.delete(event.key);
+    }
+    if (this.pressedKeys.size === 0) {
+      this.direction = 0;
+      GameProc.playerStop();
+      return;
+    }
+    if (this.direction != 1 && this.pressedKeys.has("w")) {
+      GameProc.playerMoveUp();
+      this.direction = 1;
+    } else if (this.direction != -1 && this.pressedKeys.has("s")) {
+      GameProc.playerMoveDown();
+      this.direction = -1;
+    }
+  }
+};
+
+// src/pkg/game/play/player.ts
+var Player = class {
+  static {
+    this.moveController = new MoveController();
+  }
+  static setup() {
+    GameProc.connect();
+    console.log("Player setup complete. Listening for key events...");
+    this.moveHandler = (event) => this.moveController.move(event);
+    this.stopHandler = (event) => this.moveController.stop(event);
+    window.addEventListener("keydown", this.moveHandler);
+    window.addEventListener("keyup", this.stopHandler);
+  }
+  static cleanup() {
+    GameProc.close();
+    console.log("Player cleanup complete. Removing key event listeners...");
+    if (this.moveHandler) {
+      window.removeEventListener("keydown", this.moveHandler);
+    }
+    if (this.stopHandler) {
+      window.removeEventListener("keyup", this.stopHandler);
+    }
+    this.moveHandler = void 0;
+    this.stopHandler = void 0;
   }
 };
 
@@ -4344,6 +4378,13 @@ var GamePage = class extends component_default {
   }
   data() {
     return {};
+  }
+  onMounted() {
+    Player.setup();
+  }
+  onUnmounted() {
+    console.log("GameComponent unmounted");
+    Player.cleanup();
   }
   template() {
     const dashboard = new DashboardComponent().setSlot("content", new GameComponent());
@@ -5678,6 +5719,7 @@ var router = new FrontendyRouter(routes, routerConfig);
 var router_default = router;
 
 // src/pkg/frontendy/router/RouterView.ts
+var lastRenderedRouteComponent = void 0;
 var FrontendyRouterView = class extends component_default {
   constructor(router2) {
     super({ router: router2 });
@@ -5694,15 +5736,19 @@ var FrontendyRouterView = class extends component_default {
     return this.props.router.findRoute(currentUrl);
   }
   updateCurrentRoute() {
-    this.state.currentRoute = this.calcCurrentRoute();
+    const newRoute = this.calcCurrentRoute();
+    if (this.state.currentRoute !== newRoute) {
+      this.state.currentRoute = newRoute;
+    }
   }
   template() {
     const renderComponentType = this.state.currentRoute !== void 0 ? this.state.currentRoute.component : this.props.router.getUndefinedMessageComponent();
     if (renderComponentType === void 0) {
       throw new Error("RouterView error : No component found for the current route.");
     }
+    lastRenderedRouteComponent = new renderComponentType();
     return elem("div").setProps({ id: "router-view" }).setChild([
-      new renderComponentType()
+      lastRenderedRouteComponent
     ]);
   }
 };

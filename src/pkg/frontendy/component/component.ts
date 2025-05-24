@@ -99,6 +99,7 @@ class FrontendyComponent extends FrontendyLifecicle{
 
     public unmount() {
         if (!this.el || !this.isMounted) {
+            console.warn(`Component ${this.componentName} is not mounted or has no element to unmount.`);
             return
         }
 

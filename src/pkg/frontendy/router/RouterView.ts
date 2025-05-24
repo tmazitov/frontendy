@@ -2,6 +2,7 @@ import FrontendyComponent from "../component/component";
 import { elem } from "../vdom/constructor";
 import FrontendyRouter from "./router";
 
+let lastRenderedRouteComponent:FrontendyComponent | undefined = undefined;
 export default class FrontendyRouterView extends FrontendyComponent {
     componentName: string = 'router-view';
 
@@ -23,7 +24,10 @@ export default class FrontendyRouterView extends FrontendyComponent {
     }
 
     updateCurrentRoute() {
-        this.state.currentRoute = this.calcCurrentRoute();
+        const newRoute = this.calcCurrentRoute();
+        if (this.state.currentRoute !== newRoute) {
+            this.state.currentRoute = newRoute;
+        } 
     }
 
     template() {
@@ -35,10 +39,15 @@ export default class FrontendyRouterView extends FrontendyComponent {
             throw new Error("RouterView error : No component found for the current route.");
         }
 
+        // if (lastRenderedRouteComponent) {
+        //     lastRenderedRouteComponent.unmount();
+        // }
+        lastRenderedRouteComponent = new renderComponentType();
+
         return elem("div")
             .setProps({ id: "router-view" })
             .setChild([
-                new renderComponentType(),
+                lastRenderedRouteComponent,
             ])
     }
 }

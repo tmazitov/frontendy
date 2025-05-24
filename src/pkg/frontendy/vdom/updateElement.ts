@@ -103,21 +103,12 @@ function updateElement(parent: HTMLElement | Text,
     if (newIsComponent || oldIsComponent) {
         if (newIsComponent && oldIsComponent ) {
 
-            // if (newVNode.componentName !== oldVNode.componentName)  {
-            //     console.log("UPD_ELEM : 2 different components", newVNode.componentName, "and", oldVNode.componentName);
-            // } else {
-            //     console.log("UPD_ELEM : 2 same components ", newVNode.componentName);
-            // }
-
             const parentParent = parent.parentElement;
             if (!parentParent) {
-                // console.log("UPD_ELEM : parentParent is null", parent);
                 return
             }
-            // console.log("UPD_ELEM : before replace", parentParent);
             newVNode.mount(parentParent)
             oldVNode.unmount();
-            // console.log("UPD_ELEM : after replace", parentParent);
         } else {
             addNewElement(parent, newVNode);
         }

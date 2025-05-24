@@ -1,57 +1,58 @@
 import WebSocketClient from "../../ws-client/client";
 import { PlayerAction } from "./player";
+import ServerAction from "./server";
 
-export default class GameProc {
-    private static conn: WebSocketClient<PlayerAction> | undefined;
+export default class GameWebSocket {
+    private static conn: WebSocketClient<ServerAction> | undefined;
 
     public static connect():void {
-        if (GameProc.conn !== undefined) {
+        if (GameWebSocket.conn !== undefined) {
             console.warn("WebSocket connection already exists.");
             return;
         }
 
-        GameProc.conn = new WebSocketClient<PlayerAction>("ws://localhost:5002/", {
+        GameWebSocket.conn = new WebSocketClient<ServerAction>("ws://localhost:5002/", {
             onOpenCallback: () => {
-                console.log("WebSocket connection opened.");
+                console.log("GameWebSocket connection opened.");
             },
             onCloseCallback: () => {
-                console.log("WebSocket connection closed.");
-                GameProc.conn = undefined;
+                console.log("GameWebSocket connection closed.");
+                GameWebSocket.conn = undefined;
             },
             onErrorCallback: (error: Event) => {
-                console.error("WebSocket error:", error);
+                console.error("GameWebSocket error:", error);
             }
         })
     }
 
     public static close():void {    
-        if (GameProc.conn === undefined) {
+        if (GameWebSocket.conn === undefined) {
             console.warn("WebSocket connection does not exist.");
             return;
         }
 
-        GameProc.conn.close();
-        GameProc.conn = undefined;
+        GameWebSocket.conn.close();
+        GameWebSocket.conn = undefined;
     }
 
     private static send(action: PlayerAction, payload?: any):void {
-        if (GameProc.conn === undefined) {
+        if (GameWebSocket.conn === undefined) {
             console.warn("WebSocket connection does not exist. Cannot send action.");
             return;
         }
 
-        GameProc.conn.send(action, payload);
+        GameWebSocket.conn.send(action, payload);
     }
 
     public static playerMoveDown():void {
-        GameProc.send(PlayerAction.MoveDown);
+        GameWebSocket.send(PlayerAction.MoveDown);
     }
 
     public static playerMoveUp():void {
-        GameProc.send(PlayerAction.MoveUp);
+        GameWebSocket.send(PlayerAction.MoveUp);
     }
 
     public static playerStop():void {
-        GameProc.send(PlayerAction.Stop);
+        GameWebSocket.send(PlayerAction.Stop);
     }
 }   
