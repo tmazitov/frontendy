@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 import SignUpForm from "../types/forms/registrationForm";
 import SignInForm from "../types/forms/signInForm";
-import AxiosClient, { cacheTokens, removeTokens } from "./client";
+import AxiosClient, { cacheTokens, getTokens, removeTokens } from "./client";
 import { TokenPair } from "./tokenPair";
 import { GoogleOAuthPayload } from "./oauth/google";
 
@@ -79,9 +79,15 @@ export default class UMS {
     }
 
     public async userDelete() {
+
+        const refreshToken = getTokens().refreshToken
+
         return await this.client.request({
             method: "DELETE",
             url: "/user",
+            data: {
+                refreshToken,
+            }
         })
     }
 
