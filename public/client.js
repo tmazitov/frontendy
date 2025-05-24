@@ -4079,100 +4079,6 @@ var InfoBarComponent = class extends component_default {
   }
 };
 
-// src/components/content/game-page-content/DelimeterComponet.ts
-var DelimeterComponent = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "delimeter-component";
-  }
-  template() {
-    return elem("div").setProps({ class: "w-[1px] bg-gray-300 absolute top-[16px] bottom-[16px] left-1/2 transform -translate-x-1/2" });
-  }
-};
-
-// src/components/content/game-page-content/PaddleComponent.ts
-var PaddleComponent = class extends component_default {
-  constructor(props) {
-    super(props);
-    this.componentName = "paddle-component";
-  }
-  template() {
-    const position = `top-[${this.props.top}px] ${this.props.side == "left" ? "left" : "right"}-[16px]`;
-    return elem("div").setProps({ class: `w-[6px] h-[42px] bg-blue-500 rounded-lg absolute ${position}` });
-  }
-};
-
-// src/components/content/game-page-content/SceneComponent.ts
-var SceneComponent = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "scene-component";
-  }
-  data() {
-    return {};
-  }
-  template() {
-    return elem("div").setProps({ class: "p-[16px] w-[512px] h-[320px] relative bg-gray-100 rounded-lg shadow-md" }).setChild([
-      new DelimeterComponent(),
-      new PaddleComponent({ top: 20, side: "left" }),
-      new PaddleComponent({ top: 20, side: "right" })
-    ]);
-  }
-};
-
-// src/components/content/game-page-content/GameComponent.ts
-var GameComponent = class extends component_default {
-  constructor() {
-    super(...arguments);
-    this.componentName = "game-component";
-  }
-  data() {
-    return {};
-  }
-  template() {
-    return elem("div").setProps({ class: "flex items-center flex-col" }).setChild([
-      new InfoBarComponent({
-        player1Nickname: "Player 1",
-        player2Nickname: "Player 2",
-        player1Score: 0,
-        player2Score: 0
-      }),
-      new SceneComponent()
-    ]);
-  }
-};
-
-// src/layouts/dashboard/DashboardLayout.ts
-var DashboardComponent = class extends component_default {
-  constructor(label) {
-    super({ label });
-    this.componentName = "dashboard-component";
-  }
-  slots() {
-    return [
-      "content",
-      "header"
-    ];
-  }
-  template() {
-    const content = this.useSlot("content");
-    const header = this.useSlot("header");
-    const dashboard = elem("div").setProps({
-      id: "dashboard-component",
-      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
-    });
-    if (header) {
-      dashboard.addChild(header);
-    } else if (this.props.label) {
-      dashboard.addChild(
-        elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(this.props.label))
-      );
-    }
-    dashboard.addChild(content);
-    return dashboard;
-  }
-};
-
 // src/pkg/ws-client/message.ts
 var Message = class {
   constructor(raw) {
@@ -4257,48 +4163,57 @@ var WebSocketClient = class {
 };
 
 // src/pkg/game/play/ws.ts
-var GameProc = class _GameProc {
+var GameWebSocket = class _GameWebSocket {
   static connect() {
-    if (_GameProc.conn !== void 0) {
+    if (_GameWebSocket.conn !== void 0) {
       console.warn("WebSocket connection already exists.");
       return;
     }
-    _GameProc.conn = new WebSocketClient("ws://localhost:5002/", {
+    _GameWebSocket.conn = new WebSocketClient("ws://localhost:5002/", {
       onOpenCallback: () => {
-        console.log("WebSocket connection opened.");
+        console.log("GameWebSocket connection opened.");
       },
       onCloseCallback: () => {
-        console.log("WebSocket connection closed.");
-        _GameProc.conn = void 0;
+        console.log("GameWebSocket connection closed.");
+        _GameWebSocket.conn = void 0;
       },
       onErrorCallback: (error) => {
-        console.error("WebSocket error:", error);
+        console.error("GameWebSocket error:", error);
       }
     });
   }
+  static on(action, callback) {
+    if (_GameWebSocket.conn === void 0) {
+      console.warn("WebSocket connection does not exist. Cannot register action listener.");
+      setTimeout(() => this.on(action, callback), 100);
+      return;
+    }
+    _GameWebSocket.conn.on(action, callback);
+    console.log("Registering action listener for:", action);
+  }
   static close() {
-    if (_GameProc.conn === void 0) {
+    if (_GameWebSocket.conn === void 0) {
       console.warn("WebSocket connection does not exist.");
       return;
     }
-    _GameProc.conn.close();
-    _GameProc.conn = void 0;
+    _GameWebSocket.conn.close();
+    _GameWebSocket.conn = void 0;
   }
   static send(action, payload) {
-    if (_GameProc.conn === void 0) {
+    if (_GameWebSocket.conn === void 0) {
       console.warn("WebSocket connection does not exist. Cannot send action.");
       return;
     }
-    _GameProc.conn.send(action, payload);
+    _GameWebSocket.conn.send(action, payload);
   }
   static playerMoveDown() {
-    _GameProc.send("move_down" /* MoveDown */);
+    _GameWebSocket.send("move_down" /* MoveDown */);
   }
   static playerMoveUp() {
-    _GameProc.send("move_up" /* MoveUp */);
+    _GameWebSocket.send("move_up" /* MoveUp */);
   }
   static playerStop() {
-    _GameProc.send("stop" /* Stop */);
+    _GameWebSocket.send("stop" /* Stop */);
   }
 };
 
@@ -4310,11 +4225,11 @@ var MoveController = class {
   }
   move(event) {
     if (this.direction != 1 && event.key === "w") {
-      GameProc.playerMoveUp();
+      GameWebSocket.playerMoveUp();
       this.direction = 1;
     }
     if (this.direction != -1 && event.key === "s") {
-      GameProc.playerMoveDown();
+      GameWebSocket.playerMoveDown();
       this.direction = -1;
     }
     if (event.key === "s" || event.key === "w") {
@@ -4330,18 +4245,25 @@ var MoveController = class {
     }
     if (this.pressedKeys.size === 0) {
       this.direction = 0;
-      GameProc.playerStop();
+      GameWebSocket.playerStop();
       return;
     }
     if (this.direction != 1 && this.pressedKeys.has("w")) {
-      GameProc.playerMoveUp();
+      GameWebSocket.playerMoveUp();
       this.direction = 1;
     } else if (this.direction != -1 && this.pressedKeys.has("s")) {
-      GameProc.playerMoveDown();
+      GameWebSocket.playerMoveDown();
       this.direction = -1;
     }
   }
 };
+
+// src/pkg/game/play/server.ts
+var ServerAction = /* @__PURE__ */ ((ServerAction2) => {
+  ServerAction2["SYNC"] = "sync";
+  return ServerAction2;
+})(ServerAction || {});
+var server_default = ServerAction;
 
 // src/pkg/game/play/player.ts
 var Player = class {
@@ -4349,7 +4271,7 @@ var Player = class {
     this.moveController = new MoveController();
   }
   static setup() {
-    GameProc.connect();
+    GameWebSocket.connect();
     console.log("Player setup complete. Listening for key events...");
     this.moveHandler = (event) => this.moveController.move(event);
     this.stopHandler = (event) => this.moveController.stop(event);
@@ -4357,7 +4279,7 @@ var Player = class {
     window.addEventListener("keyup", this.stopHandler);
   }
   static cleanup() {
-    GameProc.close();
+    GameWebSocket.close();
     console.log("Player cleanup complete. Removing key event listeners...");
     if (this.moveHandler) {
       window.removeEventListener("keydown", this.moveHandler);
@@ -4367,6 +4289,122 @@ var Player = class {
     }
     this.moveHandler = void 0;
     this.stopHandler = void 0;
+  }
+  static onUpdatePosition(fn) {
+    GameWebSocket.on(server_default.SYNC, fn);
+  }
+};
+
+// src/components/content/game-page-content/DelimeterComponet.ts
+var DelimeterComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "delimeter-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "w-[1px] bg-gray-300 absolute top-[16px] bottom-[16px] left-1/2 transform -translate-x-1/2" });
+  }
+};
+
+// src/components/content/game-page-content/PaddleComponent.ts
+var PaddleComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "paddle-component";
+  }
+  template() {
+    const position = `top-[${this.props.top + 16}px] ${this.props.side == "left" ? "left" : "right"}-[16px]`;
+    return elem("div").setProps({ class: `w-[6px] h-[42px] bg-blue-500 rounded-lg absolute ${position}` });
+  }
+};
+
+// src/components/content/game-page-content/SceneComponent.ts
+var SceneComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "scene-component";
+  }
+  data() {
+    return {
+      player1Config: { top: 0, side: "left" },
+      player2Config: { top: 0, side: "right" }
+      // ballConfig: {top: 0, left: 0},
+    };
+  }
+  onCreated() {
+    Player.onUpdatePosition((data) => {
+      const state = data.payload;
+      if (!state) {
+        return;
+      }
+      console.log("new state!", state, "is change 1", this.state.player1Config.top, state.player1Pos, "is change 2", this.state.player2Config.top, state.player2Pos);
+      if (this.state.player1Config.top !== state.player1Pos) {
+        this.state.player1Config = { top: state.player1Pos, side: "left" };
+      }
+      if (this.state.player2Config.top !== state.player2Pos) {
+        this.state.player2Config = { top: state.player2Pos, side: "right" };
+      }
+    });
+  }
+  template() {
+    return elem("div").setProps({ class: "p-[16px] w-[512px] h-[320px] relative bg-gray-100 rounded-lg shadow-md" }).setChild([
+      new DelimeterComponent(),
+      new PaddleComponent(this.state.player1Config),
+      new PaddleComponent(this.state.player2Config)
+    ]);
+  }
+};
+
+// src/components/content/game-page-content/GameComponent.ts
+var GameComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "game-component";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("div").setProps({ class: "flex items-center flex-col" }).setChild([
+      new InfoBarComponent({
+        player1Nickname: "Player 1",
+        player2Nickname: "Player 2",
+        player1Score: 0,
+        player2Score: 0
+      }),
+      new SceneComponent()
+    ]);
+  }
+};
+
+// src/layouts/dashboard/DashboardLayout.ts
+var DashboardComponent = class extends component_default {
+  constructor(label) {
+    super({ label });
+    this.componentName = "dashboard-component";
+  }
+  slots() {
+    return [
+      "content",
+      "header"
+    ];
+  }
+  template() {
+    const content = this.useSlot("content");
+    const header = this.useSlot("header");
+    const dashboard = elem("div").setProps({
+      id: "dashboard-component",
+      class: "max-w-2xl w-full rounded-lg overflow-hidden shadow-md bg-white p-6"
+    });
+    if (header) {
+      dashboard.addChild(header);
+    } else if (this.props.label) {
+      dashboard.addChild(
+        elem("h1").setProps({ class: "text-2xl font-bold mb-4" }).addChild(text(this.props.label))
+      );
+    }
+    dashboard.addChild(content);
+    return dashboard;
   }
 };
 

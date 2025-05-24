@@ -15,9 +15,10 @@ export default class PaddleComponent extends FrontendyComponent {
         super(props);
     }
 
+
     template() {
         
-        const position = `top-[${this.props.top}px] ${this.props.side == 'left' ? 'left' : 'right'}-[16px]`
+        const position = `top-[${this.props.top + 16}px] ${this.props.side == 'left' ? 'left' : 'right'}-[16px]`
 
         return elem('div')
             .setProps({ class: `w-[6px] h-[42px] bg-blue-500 rounded-lg absolute ${position}`})

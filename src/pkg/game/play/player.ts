@@ -1,4 +1,6 @@
 import MoveController from "./moveController";
+import ServerAction from "./server";
+import GameState from "./state";
 import GameWebSocket from "./ws";
 
 enum PlayerAction {
@@ -38,6 +40,10 @@ export default class Player {
 
         this.moveHandler = undefined;
         this.stopHandler = undefined;
+    }
+
+    public static onUpdatePosition(fn:(state:GameState) => void): void {
+        GameWebSocket.on(ServerAction.SYNC, fn)
     }
 
 }

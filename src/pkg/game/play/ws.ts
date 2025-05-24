@@ -25,6 +25,18 @@ export default class GameWebSocket {
         })
     }
 
+    public static on(action: ServerAction, callback: (data: any) => void): void {
+        if (GameWebSocket.conn === undefined) {
+            console.warn("WebSocket connection does not exist. Cannot register action listener.");
+            setTimeout(() => this.on(action, callback), 100);
+            return;
+        }
+
+        
+        GameWebSocket.conn.on(action, callback);
+        console.log("Registering action listener for:", action);
+    }
+
     public static close():void {    
         if (GameWebSocket.conn === undefined) {
             console.warn("WebSocket connection does not exist.");
