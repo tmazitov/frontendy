@@ -4,6 +4,7 @@ import SignInForm from "../types/forms/signInForm";
 import AxiosClient, { cacheTokens, getTokens, removeTokens } from "./client";
 import { TokenPair } from "./tokenPair";
 import { GoogleOAuthPayload } from "./oauth/google";
+import PasswordUpdateForm from "../types/forms/updatePasswordForm";
 
 export default class UMS {
 	private client: AxiosClient
@@ -109,6 +110,14 @@ export default class UMS {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
+        })
+    }
+
+    public async userUpdatePassword(form: PasswordUpdateForm) {
+        return await this.client.request({
+            method: "PATCH",
+            url: "/user/password",
+            data: form.toSubmit(),
         })
     }
 }

@@ -16,7 +16,9 @@ export default class MessageComponent extends FrontendyComponent {
         const color = this.props.opts.color || "gray"
 
         return elem('p')
-            .setProps({class : `text-${color}-700 text-sm`})
-            .addChild(text(this.props.message))
+            .setProps({
+                class : `${this.props.message ? 'block' : 'hidden'} text-${color}-700 text-sm`
+            })
+            .addChild(this.props.message)
     }
 }

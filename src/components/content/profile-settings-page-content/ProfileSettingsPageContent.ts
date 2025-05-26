@@ -1,8 +1,8 @@
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
+import PasswordUpdateForm from "../../forms/PasswordUpdateForm";
 import AccordionComponent from "../../inputs/AccordionComponent";
-import ButtonComponent from "../../inputs/ButtonComponent";
-import DeleteAccountModal from "../../modals/DeleteAccountModal";
+import DeleteAccountComponent from "./DeleteAccountContent";
 
 export default class ProfileSettingsPageContent extends FrontendyComponent {
     componentName: string = 'profile-settings-page-content';    
@@ -19,19 +19,12 @@ export default class ProfileSettingsPageContent extends FrontendyComponent {
             .setChild([
                 new AccordionComponent({
                     items: [
-                        {title: "Change Nickname", content: "Profile settings will be here."},
-                        {title: "Change Password", content: "Security settings will be here."},
+                        {title: "Change Nickname", content: "There will be a form to change your nickname here."},
+                        {title: "Change Password", content: PasswordUpdateForm},
+                        {title: "Danger Zone", content: DeleteAccountComponent},
                     ]
                 }),
 
-                new ButtonComponent({   
-                    label: "Delete account",
-                    icon: "ti ti-trash",
-                    color: "red",
-                    type: "outline",
-                }).onClick(() => this.state.isDeleteAccountModalOpen = true),
-
-                new DeleteAccountModal().setShow(this.state.isDeleteAccountModalOpen)
             ])
     }
 }

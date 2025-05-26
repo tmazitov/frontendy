@@ -65,7 +65,7 @@ export default class InputComponent extends FrontendyComponent {
         const input = elem('input').setProps({
             class: `p-2 bg-transparent ${elemSize} ${elemBorder}`,
             value: this.props.value,
-            type: this.props.opts.type,
+            type: this.props.opts.type ?? "text",
             length: this.props.opts.length,
             placeholder: this.props.opts.placeholder ?? "",
         })

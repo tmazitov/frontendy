@@ -3842,6 +3842,13 @@ var UMS = class {
       }
     });
   }
+  async userUpdatePassword(form) {
+    return await this.client.request({
+      method: "PATCH",
+      url: "/user/password",
+      data: form.toSubmit()
+    });
+  }
 };
 
 // src/api/api.ts
@@ -4574,8 +4581,8 @@ var GamePage = class extends component_default {
 
 // src/components/inputs/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
-  constructor(text14) {
-    super({ text: text14 });
+  constructor(text15) {
+    super({ text: text15 });
     this.componentName = "info-paragraph-component";
   }
   template() {
@@ -5579,42 +5586,25 @@ var ProfilePage = class extends component_default {
   }
 };
 
-// src/components/inputs/AccordionComponent.ts
-var AccordionComponent = class extends component_default {
-  constructor(props) {
-    super(props);
-    this.componentName = "accodion-component";
+// src/types/forms/updatePasswordForm.ts
+var PasswordUpdateForm = class {
+  constructor(oldPassword, newPassword) {
+    this.oldPassword = oldPassword;
+    this.newPassword = newPassword;
   }
-  data() {
-    return {
-      opened: void 0
-    };
-  }
-  contentGenerator(item) {
-    if (typeof item.content === "string") {
-      return elem("div").setProps({ class: "accordion-content" }).addChild(item.content);
+  validate() {
+    if (this.newPassword.length < 8) {
+      return "New password must be at least 8 characters long.";
     }
-    return new item.content();
+    if (this.oldPassword === this.newPassword) {
+      return "New password must be different from the old password.";
+    }
   }
-  changeOpened(index) {
-    this.state.opened = this.state.opened === index ? void 0 : index;
-  }
-  template() {
-    const itemsComponents = this.props.items.map((item, index) => {
-      const isOpen = this.state.opened === index;
-      console.log("item title: ", item.title, " isOpen: ", isOpen);
-      const content = this.contentGenerator(item);
-      return elem("div").setProps({ class: "accordion-item" }).setChild([
-        elem("div").setProps({ class: `accordion-item-header ${isOpen ? "opened" : "closed"} text-lg ${isOpen ? "text-blue-500" : "text-black"} font-semibold cursor-pointer flex justify-between` }).addEventListener("click", () => this.changeOpened(index)).setChild([
-          elem("p").setProps({ class: "select-none transition duration-200 ease-in-out" }).addChild(item.title),
-          elem("i").setProps({ class: `h-4 w-4 ti ti-chevron-right transition duration-200 ease-in-out` })
-        ]),
-        elem("span").setProps({ class: `${isOpen ? "block" : "hidden"} transition-all duration-200 ease-in-out` }).addChild(content)
-      ]);
-    });
-    return elem("div").setProps({ class: "accordion-component flex flex-col gap-2" }).setChild([
-      ...itemsComponents
-    ]);
+  toSubmit() {
+    return {
+      oldPassword: this.oldPassword,
+      newPassword: this.newPassword
+    };
   }
 };
 
@@ -5676,7 +5666,7 @@ var InputComponent = class extends component_default {
     const input = elem("input").setProps({
       class: `p-2 bg-transparent ${elemSize} ${elemBorder}`,
       value: this.props.value,
-      type: this.props.opts.type,
+      type: this.props.opts.type ?? "text",
       length: this.props.opts.length,
       placeholder: this.props.opts.placeholder ?? ""
     });
@@ -5713,6 +5703,124 @@ var InputComponent = class extends component_default {
       ]);
     }
     return input;
+  }
+};
+
+// src/components/inputs/MessageComponent.ts
+var MessageComponent = class extends component_default {
+  constructor(message, opts = {}) {
+    super({ message, opts });
+    this.componentName = "message-component";
+  }
+  template() {
+    const color = this.props.opts.color || "gray";
+    return elem("p").setProps({
+      class: `${this.props.message ? "block" : "hidden"} text-${color}-700 text-sm`
+    }).addChild(this.props.message);
+  }
+};
+
+// src/components/forms/PasswordUpdateForm.ts
+var PasswordUpdateForm2 = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "update-password-form-component";
+  }
+  data() {
+    return {
+      form: new PasswordUpdateForm("", ""),
+      successMessage: void 0,
+      errorMessage: void 0
+    };
+  }
+  async onSubmit() {
+    const error = this.state.form.validate();
+    if (error) {
+      this.state.errorMessage = error;
+      return;
+    }
+    try {
+      const response = await API.ums.userUpdatePassword(this.state.form);
+      if (response.status == 205) {
+        this.state.successMessage = "Password updated successfully.";
+        this.state.errorMessage = void 0;
+        this.state.form = new PasswordUpdateForm("", "");
+      }
+    } catch (error2) {
+      console.error("Error updating password:", error2);
+      this.state.successMessage = void 0;
+      if (error2 instanceof AxiosError2) {
+        if (error2.response && error2.response.status === 400) {
+          this.state.errorMessage = "Invalid entered data.";
+        } else if (error2.response && error2.response.status === 403) {
+          this.state.errorMessage = "Invalid current password.";
+        } else {
+          this.state.errorMessage = "An unexpected error occurred. Please try again later.";
+        }
+      } else {
+        this.state.errorMessage = "Failed to update password. Please try again.";
+      }
+      return;
+    }
+  }
+  template() {
+    const newPasswordInput = new InputComponent(this.state.form.newPassword, {
+      label: "New Password",
+      type: "password"
+    }).onInput((value) => this.state.form.newPassword = value);
+    const oldPasswordInput = new InputComponent(this.state.form.oldPassword, {
+      label: "Current Password",
+      type: "password"
+    }).onInput((value) => this.state.form.oldPassword = value).onEnter(() => newPasswordInput.focus());
+    return elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
+      new MessageComponent(this.state.successMessage, { color: "green" }),
+      new MessageComponent(this.state.errorMessage, { color: "red" }),
+      oldPasswordInput,
+      newPasswordInput,
+      new ButtonComponent({
+        label: "Update",
+        color: "blue"
+      }).onClick(() => this.onSubmit())
+    ]);
+  }
+};
+
+// src/components/inputs/AccordionComponent.ts
+var AccordionComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "accodion-component";
+  }
+  data() {
+    return {
+      opened: void 0
+    };
+  }
+  contentGenerator(item) {
+    if (typeof item.content === "string") {
+      return elem("div").setProps({ class: "accordion-content" }).addChild(item.content);
+    }
+    return new item.content();
+  }
+  changeOpened(index) {
+    this.state.opened = this.state.opened === index ? void 0 : index;
+  }
+  template() {
+    const itemsComponents = this.props.items.map((item, index) => {
+      const isOpen = this.state.opened === index;
+      console.log("item title: ", item.title, " isOpen: ", isOpen);
+      const content = this.contentGenerator(item);
+      return elem("div").setProps({ class: "accordion-item" }).setChild([
+        elem("div").setProps({ class: `accordion-item-header ${isOpen ? "opened" : "closed"} text-grey-800 text-lg ${isOpen ? "text-blue-500" : "text-black"} font-semibold cursor-pointer flex justify-between items-center` }).addEventListener("click", () => this.changeOpened(index)).setChild([
+          elem("p").setProps({ class: "select-none transition duration-200 ease-in-out" }).addChild(item.title),
+          elem("div").setProps({ class: "flex items-center justify-center h-6 w-6" }).addChild(elem("i").setProps({ class: `ti ti-chevron-right transition duration-200 ease-in-out` }))
+        ]),
+        elem("div").setProps({ class: `${isOpen ? "max-h-full p-4 opacity-100" : "max-h-0 opacity-0"} transition-all duration-200 ease-in-out  overflow-hidden` }).addChild(content)
+      ]);
+    });
+    return elem("div").setProps({ class: "accordion-component flex flex-col gap-2" }).setChild([
+      ...itemsComponents
+    ]);
   }
 };
 
@@ -5785,6 +5893,28 @@ var DeleteAccountModal = class extends component_default {
   }
 };
 
+// src/components/content/profile-settings-page-content/DeleteAccountContent.ts
+var DeleteAccountComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "delete-account-component";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("span").setChild([
+      new ButtonComponent({
+        label: "Delete account",
+        icon: "ti ti-trash",
+        color: "red",
+        type: "outline"
+      }).onClick(() => this.state.isDeleteAccountModalOpen = true),
+      new DeleteAccountModal().setShow(this.state.isDeleteAccountModalOpen)
+    ]);
+  }
+};
+
 // src/components/content/profile-settings-page-content/ProfileSettingsPageContent.ts
 var ProfileSettingsPageContent = class extends component_default {
   constructor() {
@@ -5800,17 +5930,11 @@ var ProfileSettingsPageContent = class extends component_default {
     return elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
       new AccordionComponent({
         items: [
-          { title: "Change Nickname", content: "Profile settings will be here." },
-          { title: "Change Password", content: "Security settings will be here." }
+          { title: "Change Nickname", content: "There will be a form to change your nickname here." },
+          { title: "Change Password", content: PasswordUpdateForm2 },
+          { title: "Danger Zone", content: DeleteAccountComponent }
         ]
-      }),
-      new ButtonComponent({
-        label: "Delete account",
-        icon: "ti ti-trash",
-        color: "red",
-        type: "outline"
-      }).onClick(() => this.state.isDeleteAccountModalOpen = true),
-      new DeleteAccountModal().setShow(this.state.isDeleteAccountModalOpen)
+      })
     ]);
   }
 };

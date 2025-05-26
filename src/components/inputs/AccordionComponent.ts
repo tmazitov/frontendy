@@ -49,19 +49,20 @@ export default class AccordionComponent extends FrontendyComponent {
                 .setProps({ class: "accordion-item" })
                 .setChild([
                     elem('div')
-                    .setProps({ class: `accordion-item-header ${isOpen ? 'opened' : 'closed'} text-lg ${isOpen ? 'text-blue-500' : 'text-black'} font-semibold cursor-pointer flex justify-between` })
+                    .setProps({ class: `accordion-item-header ${isOpen ? 'opened' : 'closed'} text-grey-800 text-lg ${isOpen ? 'text-blue-500' : 'text-black'} font-semibold cursor-pointer flex justify-between items-center` })
                     .addEventListener('click', () => this.changeOpened(index))
                     .setChild([
                         elem('p')
                         .setProps({ class: "select-none transition duration-200 ease-in-out" })
                         .addChild(item.title),
 
-                        elem('i')
-                        .setProps({ class: `h-4 w-4 ti ti-chevron-right transition duration-200 ease-in-out` })
+                        elem('div')
+                        .setProps({ class: "flex items-center justify-center h-6 w-6" })
+                        .addChild(elem('i').setProps({ class: `ti ti-chevron-right transition duration-200 ease-in-out` }))
                     ]),
 
-                    elem('span')
-                    .setProps({ class: `${isOpen ? 'block' : 'hidden'} transition-all duration-200 ease-in-out` })
+                    elem('div')
+                    .setProps({ class: `${isOpen ? 'max-h-full p-4 opacity-100' : 'max-h-0 opacity-0'} transition-all duration-200 ease-in-out  overflow-hidden` })
                     .addChild(content)
                 ])
         })
