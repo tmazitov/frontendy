@@ -18,7 +18,7 @@ const routes:Array<FrontendyRoute> = [
     {name: "oauth-callback", path: "/oauth-callback", component: OAuthCallbackPage},
 ]
 
-const withoutLogin:Array<string> = ["home", "about", "oauth-callback"]
+const withoutLogin:Array<string> = ["home", "about", "oauth-callback", "game"]
 
 const routerConfig = {
     notFoundPage: NotFoundPage,
@@ -26,7 +26,7 @@ const routerConfig = {
         console.log({name: route.name, auth: isAuthorized()})
         if (!withoutLogin.includes(route.name) && !isAuthorized()) {
             return 'user is unauthorized'
-        } 
+        }
     }
  }
 const router = new FrontendyRouter(routes, routerConfig)

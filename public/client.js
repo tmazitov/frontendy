@@ -5743,7 +5743,7 @@ var routes = [
   { name: "game", path: "/launch/game", component: GamePage },
   { name: "oauth-callback", path: "/oauth-callback", component: OAuthCallbackPage }
 ];
-var withoutLogin = ["home", "about", "oauth-callback"];
+var withoutLogin = ["home", "about", "oauth-callback", "game"];
 var routerConfig = {
   notFoundPage: NotFoundPage,
   routeIsAvailable: (route) => {
