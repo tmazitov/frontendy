@@ -31,3 +31,11 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.accordion-item-header.opened > i {
+    transform: rotate(90deg);
+}
+
+.accordion-item-header.closed > i {
+    transform: rotate(0deg);
+}

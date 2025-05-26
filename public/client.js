@@ -5579,6 +5579,45 @@ var ProfilePage = class extends component_default {
   }
 };
 
+// src/components/inputs/AccordionComponent.ts
+var AccordionComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "accodion-component";
+  }
+  data() {
+    return {
+      opened: void 0
+    };
+  }
+  contentGenerator(item) {
+    if (typeof item.content === "string") {
+      return elem("div").setProps({ class: "accordion-content" }).addChild(item.content);
+    }
+    return new item.content();
+  }
+  changeOpened(index) {
+    this.state.opened = this.state.opened === index ? void 0 : index;
+  }
+  template() {
+    const itemsComponents = this.props.items.map((item, index) => {
+      const isOpen = this.state.opened === index;
+      console.log("item title: ", item.title, " isOpen: ", isOpen);
+      const content = this.contentGenerator(item);
+      return elem("div").setProps({ class: "accordion-item" }).setChild([
+        elem("div").setProps({ class: `accordion-item-header ${isOpen ? "opened" : "closed"} text-lg ${isOpen ? "text-blue-500" : "text-black"} font-semibold cursor-pointer flex justify-between` }).addEventListener("click", () => this.changeOpened(index)).setChild([
+          elem("p").setProps({ class: "select-none transition duration-200 ease-in-out" }).addChild(item.title),
+          elem("i").setProps({ class: `h-4 w-4 ti ti-chevron-right transition duration-200 ease-in-out` })
+        ]),
+        elem("span").setProps({ class: `${isOpen ? "block" : "hidden"} transition-all duration-200 ease-in-out` }).addChild(content)
+      ]);
+    });
+    return elem("div").setProps({ class: "accordion-component flex flex-col gap-2" }).setChild([
+      ...itemsComponents
+    ]);
+  }
+};
+
 // src/components/inputs/InputLabelComponent.ts
 var InputLabelComponent = class extends component_default {
   constructor(label) {
@@ -5758,7 +5797,13 @@ var ProfileSettingsPageContent = class extends component_default {
     };
   }
   template() {
-    return elem("div").setChild([
+    return elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
+      new AccordionComponent({
+        items: [
+          { title: "Change Nickname", content: "Profile settings will be here." },
+          { title: "Change Password", content: "Security settings will be here." }
+        ]
+      }),
       new ButtonComponent({
         label: "Delete account",
         icon: "ti ti-trash",

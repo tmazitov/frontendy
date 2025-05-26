@@ -1,5 +1,6 @@
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
+import AccordionComponent from "../../inputs/AccordionComponent";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import DeleteAccountModal from "../../modals/DeleteAccountModal";
 
@@ -14,8 +15,16 @@ export default class ProfileSettingsPageContent extends FrontendyComponent {
 
     template() {
         return elem('div')
+            .setProps({class: "flex flex-col gap-4"})
             .setChild([
-                new ButtonComponent({
+                new AccordionComponent({
+                    items: [
+                        {title: "Change Nickname", content: "Profile settings will be here."},
+                        {title: "Change Password", content: "Security settings will be here."},
+                    ]
+                }),
+
+                new ButtonComponent({   
                     label: "Delete account",
                     icon: "ti ti-trash",
                     color: "red",
