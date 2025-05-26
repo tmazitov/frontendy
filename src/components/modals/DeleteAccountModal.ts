@@ -44,6 +44,7 @@ export default class DeleteAccountModal extends FrontendyComponent {
         
         this.setShow(false)
         router.push("home")
+        Store.setters.deleteUser()
         EventBroker.getInstance().emit("update-auth");
     }
 
