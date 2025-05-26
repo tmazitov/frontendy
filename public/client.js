@@ -3246,7 +3246,6 @@ var FrontendyRouter = class {
     this.routerView = routerView;
   }
   findRoute(path) {
-    console.log("path", path);
     const route = this.routes.find((route2) => route2.path === path);
     if (!route) {
       return void 0;
@@ -3928,6 +3927,9 @@ var StoreSetters = class {
     user.nickname = nickname;
     this.state.user.setValue(user);
   }
+  deleteUser() {
+    this.state.user.clearValue();
+  }
   async setupUser() {
     if (!isAuthorized()) {
       return;
@@ -3981,6 +3983,7 @@ var StoreField = class {
   clearValue() {
     this.value = void 0;
     this.isSet = false;
+    this.onUpdateCallbacks.forEach((callback) => callback(void 0));
   }
 };
 
@@ -4021,7 +4024,6 @@ function sha256Base64Url(str) {
 var GoogleOAuth = class {
   static async redirectToGoogle(clientId, redirectUri) {
     if (!clientId || !redirectUri) {
-      console.log({ clientId, redirectUri });
       throw new Error("Client ID and redirect URI are required");
     }
     const codeVerifier = generateRandomString(128);
@@ -4224,7 +4226,6 @@ var OAuthCallbackPage = class extends component_default {
       await GoogleOAuth.authorizeWithGoogle(Config.googleOauthRedirectUri);
     } catch (error) {
       this.state.authIsFailed = true;
-      console.log("im here");
       console.log("Error during OAuth authorization:", error);
     }
   }
@@ -5347,7 +5348,6 @@ var BigAvatarComponent = class extends component_default {
     return this;
   }
   template() {
-    console.log("BigAvatarComponent template", this.props.imagePath);
     const avatar = this.state.onClickHandler ? "big-avatar-container " : "";
     return elem("div").addEventListener("click", () => this.state.onClickHandler()).setProps({ class: avatar + "w-32 h-32 rounded-full border-1 border-gray-400 overflow-hidden relative" }).setChild([
       elem("span").setProps({ class: "image" }).addChild(elem("img").setProps({ class: "w-full object-cover", referrerpolicy: "no-referrer", src: this.props.imagePath })),
@@ -5379,7 +5379,6 @@ var InputFileComponent = class extends component_default {
     this.handleFiles(files);
   }
   handleFiles(files) {
-    console.log("Selected files:", files);
     this.state.selectedFile = files[0];
   }
   template() {
@@ -5426,7 +5425,6 @@ var InputFileComponent = class extends component_default {
             label: "Upload",
             color: "blue"
           }).onClick(() => {
-            console.log("Upload file", this.state.selectedFile);
             if (this.state.onSelectFileHandler) {
               this.state.onSelectFileHandler(this.state.selectedFile);
             }
@@ -5530,10 +5528,10 @@ var InfoContentComponent = class extends component_default {
   async signoutHandler() {
     await API.ums.signOut();
     router_default.push("home");
+    Store.setters.deleteUser();
     EventBroker.getInstance().emit("update-auth");
   }
   async updateImageHandler(file) {
-    console.log("file :>> ", file);
     const response = await API.ums.userUpdateAvatar(file);
     if (response.status != 200) {
       console.log("Error while updating avatar", response);
@@ -5546,7 +5544,6 @@ var InfoContentComponent = class extends component_default {
   }
   template() {
     let imagePath;
-    console.log({ url: this.state.user, methods: this.state.user?.avatarUrl?.startsWith });
     if (!this.state.user) {
       imagePath = null;
     } else if (this.state.user.avatarUrl && this.state.user.avatarUrl.startsWith("http")) {
@@ -5556,7 +5553,6 @@ var InfoContentComponent = class extends component_default {
     } else {
       imagePath = "http://localhost:5000/auth/public/avatars/default.png";
     }
-    console.log("imagePath :>> ", imagePath);
     return elem("div").setProps({ class: "grid grid-cols-[8rem_1fr] gap-4 w-full" }).setChild([
       // Image container
       elem("span").setChild([
@@ -5892,7 +5888,6 @@ var AccordionComponent = class extends component_default {
   template() {
     const itemsComponents = this.props.items.map((item, index) => {
       const isOpen = this.state.opened === index;
-      console.log("item title: ", item.title, " isOpen: ", isOpen);
       const content = this.contentGenerator(item);
       return elem("div").setProps({ class: "accordion-item" }).setChild([
         elem("div").setProps({ class: `accordion-item-header ${isOpen ? "opened" : "closed"} text-grey-800 text-lg ${isOpen ? "text-blue-500" : "text-black"} font-semibold cursor-pointer flex justify-between items-center` }).addEventListener("click", () => this.changeOpened(index)).setChild([
@@ -5957,10 +5952,8 @@ var DeleteAccountModal = class extends component_default {
           new InfoParagraphComponent("This action cannot be undone."),
           new InfoParagraphComponent(`To delete your account, please enter "${this.state.originalNickname}" in the field below:`),
           new InputComponent(this.state.enteredNickname, { placeholder: "Enter your nickname" }).onBlur((value) => {
-            console.log("blur", value);
             this.state.enteredNickname = value;
           }).onEnter((value) => {
-            console.log("enter", value);
             this.state.enteredNickname = value;
           }),
           new ButtonComponent({
@@ -6053,7 +6046,6 @@ var withoutLogin = ["home", "about", "oauth-callback", "game"];
 var routerConfig = {
   notFoundPage: NotFoundPage,
   routeIsAvailable: (route) => {
-    console.log({ name: route.name, auth: isAuthorized() });
     if (!withoutLogin.includes(route.name) && !isAuthorized()) {
       return "user is unauthorized";
     }
@@ -6232,7 +6224,6 @@ var SearchGameBarComponent = class extends component_default {
     return this;
   }
   onCancel() {
-    console.log("Cancel button clicked, stopping the game search.");
     GameLauncher.stopGameSearching();
   }
   template() {
@@ -6439,7 +6430,6 @@ var AuthModal = class extends component_default {
     return this;
   }
   async onSubmitForm(form) {
-    console.log("form :>> ", form);
     const error = form.validate();
     if (error) {
       this.state.errorMessage = error;

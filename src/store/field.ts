@@ -32,5 +32,6 @@ export default class StoreField<T> {
     public clearValue(): void {
         this.value = undefined;
         this.isSet = false;
+        this.onUpdateCallbacks.forEach(callback => callback(undefined));
     }    
 }

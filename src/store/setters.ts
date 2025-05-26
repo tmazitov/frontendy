@@ -20,6 +20,10 @@ export default class StoreSetters {
         this.state.user.setValue(user)
     }
 
+    deleteUser() {
+        this.state.user.clearValue()
+    }
+
     async setupUser() {
         if (!isAuthorized()) {
             return ;

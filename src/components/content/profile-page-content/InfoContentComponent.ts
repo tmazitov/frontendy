@@ -39,6 +39,7 @@ export default class InfoContentComponent extends FrontendyComponent {
         await API.ums.signOut()
 
         router.push("home")
+        Store.setters.deleteUser()
         EventBroker.getInstance().emit("update-auth");
     }
 
