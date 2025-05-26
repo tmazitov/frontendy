@@ -37,7 +37,6 @@ export default class AuthModal extends FrontendyComponent {
     }
 
     async onSubmitForm(form: SignInForm | SignUpForm) {
-        console.log('form :>> ', form);
         const error = form.validate();
         if (error) {
             this.state.errorMessage = error;

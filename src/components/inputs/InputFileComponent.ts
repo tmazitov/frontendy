@@ -28,7 +28,6 @@ export default class InputFileComponent extends FrontendyComponent {
     }
 
     private handleFiles(files: FileList) {
-        console.log('Selected files:', files);
         this.state.selectedFile = files[0];
         // You can now upload the files or display them in the UI
     }
@@ -111,7 +110,6 @@ export default class InputFileComponent extends FrontendyComponent {
                         label: "Upload",
                         color: 'blue',
                     }).onClick(() => {
-                        console.log("Upload file", this.state.selectedFile);
                         // Handle file upload here
                         if (this.state.onSelectFileHandler) {
                             this.state.onSelectFileHandler(this.state.selectedFile);

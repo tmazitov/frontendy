@@ -20,8 +20,6 @@ export default class BigAvatarComponent extends FrontendyComponent {
     }
 
     template() {
-        console.log("BigAvatarComponent template", this.props.imagePath)
-
         const avatar = this.state.onClickHandler ? "big-avatar-container " : ""
 
         return elem('div')

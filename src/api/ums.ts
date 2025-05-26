@@ -120,4 +120,14 @@ export default class UMS {
             data: form.toSubmit(),
         })
     }
+
+    public async userUpdateNickname(nickname: string) {
+        return await this.client.request({
+            method: "PATCH",
+            url: "/user/nickname",
+            data: {
+                nickname,
+            }
+        })
+    }
 }

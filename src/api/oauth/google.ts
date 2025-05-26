@@ -31,7 +31,6 @@ export default class GoogleOAuth {
     static async redirectToGoogle(clientId: string, redirectUri: string) {
 
         if (!clientId || !redirectUri) {
-            console.log({ clientId, redirectUri });
             throw new Error("Client ID and redirect URI are required");
         }
 

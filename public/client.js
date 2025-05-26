@@ -3849,6 +3849,15 @@ var UMS = class {
       data: form.toSubmit()
     });
   }
+  async userUpdateNickname(nickname) {
+    return await this.client.request({
+      method: "PATCH",
+      url: "/user/nickname",
+      data: {
+        nickname
+      }
+    });
+  }
 };
 
 // src/api/api.ts
@@ -3866,26 +3875,28 @@ var StoreGetters = class {
   constructor(state) {
     this.state = state;
   }
-  async user() {
-    return this.state.user.getValue();
+  async user(onUpdate) {
+    return this.state.user.getValue(onUpdate);
   }
-  async userNickname() {
-    const user = await this.state.user.getValue();
-    console.log("user", user);
+  async userNickname(onUpdate) {
+    const onUpdateCallback = onUpdate ? (value) => onUpdate(value?.nickname) : void 0;
+    const user = await this.state.user.getValue(onUpdateCallback);
     if (!user) {
       return void 0;
     }
     return user.nickname;
   }
-  async userRating() {
-    const user = await this.state.user.getValue();
+  async userRating(onUpdate) {
+    const onUpdateCallback = onUpdate ? (value) => onUpdate(value?.rating) : void 0;
+    const user = await this.state.user.getValue(onUpdateCallback);
     if (!user) {
       return void 0;
     }
     return user.rating;
   }
-  async userId() {
-    const user = await this.state.user.getValue();
+  async userId(onUpdate) {
+    const onUpdateCallback = onUpdate ? (value) => onUpdate(value?.id) : void 0;
+    const user = await this.state.user.getValue(onUpdateCallback);
     if (!user) {
       return void 0;
     }
@@ -3908,6 +3919,14 @@ var User = class {
 var StoreSetters = class {
   constructor(state) {
     this.state = state;
+  }
+  async updateUserNickname(nickname) {
+    const user = await this.state.user.getValue();
+    if (!user) {
+      return;
+    }
+    user.nickname = nickname;
+    this.state.user.setValue(user);
   }
   async setupUser() {
     if (!isAuthorized()) {
@@ -3934,16 +3953,24 @@ var StoreField = class {
   constructor() {
     this.isSet = false;
     this.pendingResolversQueue = [];
+    this.onUpdateCallbacks = [];
   }
   setValue(newValue) {
     this.value = newValue;
     this.isSet = true;
     this.pendingResolversQueue.forEach((resolve) => resolve(newValue));
     this.pendingResolversQueue = [];
+    this.onUpdateCallbacks.forEach((callback) => callback(this.value));
   }
-  getValue() {
+  getValue(onUpdate) {
+    if (onUpdate) {
+      this.onUpdateCallbacks.push(onUpdate);
+    }
     if (this.isSet) {
       return new Promise((resolve, reject) => {
+        if (onUpdate) {
+          onUpdate(this.value);
+        }
         resolve(this.value);
       });
     }
@@ -5493,7 +5520,7 @@ var InfoContentComponent = class extends component_default {
     };
   }
   onCreated() {
-    Store.getters.user().then((user) => {
+    Store.getters.user((user) => {
       if (!user) {
         return;
       }
@@ -5583,28 +5610,6 @@ var ProfilePage = class extends component_default {
     return elem("div").setProps({ id: "profile-page" }).setChild([
       elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild(dashboard)
     ]);
-  }
-};
-
-// src/types/forms/updatePasswordForm.ts
-var PasswordUpdateForm = class {
-  constructor(oldPassword, newPassword) {
-    this.oldPassword = oldPassword;
-    this.newPassword = newPassword;
-  }
-  validate() {
-    if (this.newPassword.length < 8) {
-      return "New password must be at least 8 characters long.";
-    }
-    if (this.oldPassword === this.newPassword) {
-      return "New password must be different from the old password.";
-    }
-  }
-  toSubmit() {
-    return {
-      oldPassword: this.oldPassword,
-      newPassword: this.newPassword
-    };
   }
 };
 
@@ -5717,6 +5722,85 @@ var MessageComponent = class extends component_default {
     return elem("p").setProps({
       class: `${this.props.message ? "block" : "hidden"} text-${color}-700 text-sm`
     }).addChild(this.props.message);
+  }
+};
+
+// src/components/forms/NicknameUpdateForm.ts
+var NicknameUpdateForm = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "nickname-update-form";
+  }
+  data() {
+    return {
+      form: { nickname: void 0 },
+      successMessage: void 0,
+      errorMessage: void 0
+    };
+  }
+  onCreated() {
+    Store.getters.userNickname().then((nickname) => {
+      this.state.form = { nickname };
+    });
+  }
+  async onSubmit() {
+    if (!this.state.form.nickname) {
+      this.state.errorMessage = "Nickname cannot be empty.";
+      this.state.successMessage = void 0;
+      return;
+    }
+    try {
+      const response = await API.ums.userUpdateNickname(this.state.form.nickname);
+      if (response.status == 200) {
+        this.state.successMessage = "Nickname updated successfully.";
+        this.state.errorMessage = void 0;
+        Store.setters.updateUserNickname(this.state.form.nickname);
+      }
+    } catch (error) {
+      this.state.successMessage = void 0;
+      if (error instanceof AxiosError2) {
+        if (error.response?.status == 409) {
+          this.state.errorMessage = "Nickname is already taken.";
+        } else if (error.response?.status == 500) {
+          this.state.errorMessage = "Failed to update user nickname.";
+        }
+      }
+    }
+  }
+  template() {
+    return elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
+      new MessageComponent(this.state.successMessage, { color: "green" }),
+      new MessageComponent(this.state.errorMessage, { color: "red" }),
+      new InputComponent(this.state.form.nickname, {
+        label: "Nickname"
+      }).onInput((value) => this.state.form.nickname = value),
+      new ButtonComponent({
+        label: "Update",
+        color: "blue"
+      }).onClick(() => this.onSubmit())
+    ]);
+  }
+};
+
+// src/types/forms/updatePasswordForm.ts
+var PasswordUpdateForm = class {
+  constructor(oldPassword, newPassword) {
+    this.oldPassword = oldPassword;
+    this.newPassword = newPassword;
+  }
+  validate() {
+    if (this.newPassword.length < 8) {
+      return "New password must be at least 8 characters long.";
+    }
+    if (this.oldPassword === this.newPassword) {
+      return "New password must be different from the old password.";
+    }
+  }
+  toSubmit() {
+    return {
+      oldPassword: this.oldPassword,
+      newPassword: this.newPassword
+    };
   }
 };
 
@@ -5930,7 +6014,7 @@ var ProfileSettingsPageContent = class extends component_default {
     return elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
       new AccordionComponent({
         items: [
-          { title: "Change Nickname", content: "There will be a form to change your nickname here." },
+          { title: "Change Nickname", content: NicknameUpdateForm },
           { title: "Change Password", content: PasswordUpdateForm2 },
           { title: "Danger Zone", content: DeleteAccountComponent }
         ]
@@ -6503,7 +6587,7 @@ var NavBarComponent = class extends component_default {
     };
   }
   onCreated() {
-    Store.getters.userNickname().then((nickname) => {
+    Store.getters.userNickname((nickname) => {
       this.state.nickname = nickname;
     });
   }

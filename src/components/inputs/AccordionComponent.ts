@@ -42,7 +42,6 @@ export default class AccordionComponent extends FrontendyComponent {
         const itemsComponents = this.props.items.map((item:AccordionItem, index:number) => {
 
             const isOpen = this.state.opened === index;
-            console.log("item title: ", item.title, " isOpen: ", isOpen,);
             const content = this.contentGenerator(item);
 
             return elem('div')

@@ -27,7 +27,6 @@ export default class SearchGameBarComponent extends FrontendyComponent {
     }
 
     onCancel() {
-        console.log("Cancel button clicked, stopping the game search.");
         GameLauncher.stopGameSearching();
     }
 

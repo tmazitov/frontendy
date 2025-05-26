@@ -11,6 +11,15 @@ export default class StoreSetters {
         this.state = state;
     }
 
+    async updateUserNickname(nickname: string) {
+        const user = await this.state.user.getValue()
+        if (!user) {
+            return ;
+        }
+        user.nickname = nickname;
+        this.state.user.setValue(user)
+    }
+
     async setupUser() {
         if (!isAuthorized()) {
             return ;

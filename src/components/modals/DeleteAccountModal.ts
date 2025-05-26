@@ -68,11 +68,9 @@ export default class DeleteAccountModal extends FrontendyComponent {
 
                         new InputComponent(this.state.enteredNickname, { placeholder: "Enter your nickname" })
                             .onBlur((value: string) => {
-                                console.log("blur", value)
                                 this.state.enteredNickname = value
                             })
                             .onEnter((value: string) => {
-                                console.log("enter", value)
                                 this.state.enteredNickname = value
                             }),
 

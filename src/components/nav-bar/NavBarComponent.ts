@@ -22,7 +22,7 @@ export default class NavBarComponent extends FrontendyComponent {
     }
 
     protected onCreated(): void {
-        Store.getters.userNickname().then((nickname: string | undefined) => {
+        Store.getters.userNickname((nickname: string | undefined) => {
             this.state.nickname = nickname;
         })
     }

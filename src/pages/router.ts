@@ -23,7 +23,6 @@ const withoutLogin:Array<string> = ["home", "about", "oauth-callback", "game"]
 const routerConfig = {
     notFoundPage: NotFoundPage,
     routeIsAvailable: (route: FrontendyRoute) => {
-        console.log({name: route.name, auth: isAuthorized()})
         if (!withoutLogin.includes(route.name) && !isAuthorized()) {
             return 'user is unauthorized'
         }

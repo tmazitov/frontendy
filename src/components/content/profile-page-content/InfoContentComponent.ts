@@ -26,7 +26,7 @@ export default class InfoContentComponent extends FrontendyComponent {
     }
 
     protected onCreated(): void {
-        Store.getters.user().then((user:User|undefined) => {
+        Store.getters.user((user:User|undefined) => {
             if (!user) {
                 return 
             }
@@ -43,7 +43,6 @@ export default class InfoContentComponent extends FrontendyComponent {
     }
 
     async updateImageHandler(file:File) {
-        console.log('file :>> ', file);
 
         const response = await API.ums.userUpdateAvatar(file)
         if (response.status != 200) {
@@ -60,7 +59,6 @@ export default class InfoContentComponent extends FrontendyComponent {
     template() {
 
         let imagePath
-        console.log({url: this.state.user, methods: this.state.user?.avatarUrl?.startsWith})
         if (!this.state.user) {
             imagePath = null
         } else if (this.state.user.avatarUrl && this.state.user.avatarUrl.startsWith("http")) {
@@ -71,7 +69,6 @@ export default class InfoContentComponent extends FrontendyComponent {
             imagePath = "http://localhost:5000/auth/public/avatars/default.png"
         }
     
-        console.log('imagePath :>> ', imagePath);
 
         return elem('div')
         .setProps({class: "grid grid-cols-[8rem_1fr] gap-4 w-full"})

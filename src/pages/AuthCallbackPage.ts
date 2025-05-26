@@ -21,7 +21,6 @@ export default class OAuthCallbackPage extends FrontendyComponent {
             await GoogleOAuth.authorizeWithGoogle(Config.googleOauthRedirectUri)
         } catch (error) {
             this.state.authIsFailed = true;
-            console.log("im here")
             console.log("Error during OAuth authorization:", error);
         }
     }
