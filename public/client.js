@@ -4197,7 +4197,7 @@ var OAuthCallbackPage = class extends component_default {
   template() {
     return elem("div").setProps({
       id: "oauth-callback-page",
-      class: "flex flex-col items-center justify-center h-full w-full"
+      class: "flex flex-col items-center justify-center h-full w-full pt-8"
     }).addChild(
       this.state.authIsFailed ? new AuthFailedMessageComponent() : new InProccessMessageComponent()
     );
