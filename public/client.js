@@ -4032,6 +4032,138 @@ var GoogleOAuth = class {
   }
 };
 
+// src/components/inputs/ButtonComponent.ts
+var ButtonComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "button-component";
+  }
+  data() {
+    return {
+      clickHandler: () => {
+      }
+    };
+  }
+  onClick(fn) {
+    this.state.clickHandler = fn;
+    return this;
+  }
+  getButtonColor() {
+    const type = this.props.type || "default";
+    const color = this.props.color || "gray";
+    switch (type) {
+      case "default":
+        return `bg-${color}-500 hover:bg-${color}-600 active:bg-${color}-700 text-white`;
+      case "outline":
+        return `border border-${color}-300 hover:bg-${color}-100 active:bg-${color}-200 text-${color}-500`;
+      case "blank":
+        return `bg-${color}-100 hover:bg-${color}-200 active:bg-${color}-300 text-gray-800`;
+      default:
+        return `bg-${color}-200 hover:bg-${color}-300 active:bg-${color}-400 text-gray-800`;
+    }
+  }
+  getButtonSize(iconOnly) {
+    const size = this.props.size || "medium";
+    let sizeStyles = "";
+    if (iconOnly) {
+      switch (size) {
+        case "small":
+          sizeStyles = "w-6 h-6 p-2";
+          break;
+        case "large":
+          sizeStyles = "w-10 h-10 p-6";
+          break;
+        default:
+          sizeStyles = "w-8 h-8 p-4";
+      }
+    } else {
+      switch (size) {
+        case "small":
+          sizeStyles = "w-6 h-6 px-2 py-1 text-sm";
+          break;
+        case "large":
+          sizeStyles = "px-6 py-3 text-lg";
+          break;
+        default:
+          sizeStyles = "px-4 py-2 text-base";
+      }
+    }
+    if (this.props.fullWidth) {
+      sizeStyles += " w-full";
+    }
+    return `${sizeStyles}`;
+  }
+  template() {
+    const iconOnly = !this.props.label && this.props.icon;
+    const buttonSize2 = `${this.getButtonSize(iconOnly)} rounded-lg`;
+    const buttonColor2 = this.getButtonColor();
+    const buttonAnime = "transition duration-200 ease-in-out cursor-pointer";
+    const buttonDisabledStyle = this.props.isDisabled ? "opacity-50 cursor-not-allowed" : "";
+    const button = elem("button").setProps({
+      class: `${buttonColor2} ${buttonSize2} ${buttonAnime} ${buttonDisabledStyle} flex justify-center items-center`
+    });
+    if (this.props.icon) {
+      button.addChild(
+        elem("i").setProps({ class: this.props.icon })
+      );
+    }
+    if (this.props.label) {
+      button.addChild(
+        elem("span").setProps({ class: this.props.icon ? "ml-2" : void 0 }).addChild(text(this.props.label))
+      );
+    }
+    if (this.state.clickHandler && !this.props.isDisabled) {
+      button.addEventListener("click", this.state.clickHandler);
+    }
+    return button;
+  }
+};
+
+// src/components/content/auth-callback-content/AuthFailedMessageComponent.ts
+var AuthFailedMessageComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "auth-failed-message-component";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("div").setProps({ class: "rounded-lg overflow-hidden shadow-md gap-2 bg-white p-6  max-w-2xl w-full flex flex-col items-center" }).setChild([
+      elem("i").setProps({ class: "ti ti-bug text-xl text-red-500" }),
+      elem("h1").setProps({ class: "text-2xl font-bold" }).addChild("Authorization Failed"),
+      elem("div").setChild([
+        elem("p").setProps({ class: "text-md text-center" }).addChild("An error occurred during the authorization process.")
+      ]),
+      new ButtonComponent({
+        label: "Home",
+        color: "blue"
+      }).onClick(() => router_default.push("home"))
+    ]);
+  }
+};
+
+// src/components/content/auth-callback-content/InProccessMessageComponent.ts
+var InProccessMessageComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "in-proccess-message-component";
+  }
+  data() {
+    return {};
+  }
+  template() {
+    return elem("div").setProps({ class: "rounded-lg overflow-hidden shadow-md gap-2 bg-white p-6  max-w-2xl w-full flex flex-col items-center" }).setChild([
+      elem("i").setProps({ class: "ti ti-loader loading text-xl text-blue-500" }),
+      elem("h1").setProps({ class: "text-2xl font-bold" }).addChild("Authorizing..."),
+      elem("div").setChild([
+        elem("p").setProps({ class: "text-md text-center" }).addChild("Please wait until the authorization process is completed."),
+        elem("p").setProps({ class: "text-md text-center" }).addChild("This may take a few seconds.")
+      ])
+    ]);
+  }
+};
+
 // src/config.ts
 var Config = class {
   static {
@@ -4048,19 +4180,27 @@ var OAuthCallbackPage = class extends component_default {
     super(...arguments);
     this.componentName = "oauth-callback-page";
   }
-  onCreated() {
-    GoogleOAuth.authorizeWithGoogle(Config.googleOauthRedirectUri);
+  data() {
+    return {
+      authIsFailed: false
+    };
+  }
+  async onCreated() {
+    try {
+      await GoogleOAuth.authorizeWithGoogle(Config.googleOauthRedirectUri);
+    } catch (error) {
+      this.state.authIsFailed = true;
+      console.log("im here");
+      console.log("Error during OAuth authorization:", error);
+    }
   }
   template() {
     return elem("div").setProps({
       id: "oauth-callback-page",
       class: "flex flex-col items-center justify-center h-full w-full"
-    }).setChild([
-      elem("div").setProps({ class: "flex flex-col items-center p-4 pt-8" }).addChild([
-        elem("h1").setProps({ class: "text-2xl font-bold" }).setChild(["OAuth Callback Page"]),
-        elem("p").setProps({ class: "text-lg" }).setChild(["This is the OAuth callback page."])
-      ])
-    ]);
+    }).addChild(
+      this.state.authIsFailed ? new AuthFailedMessageComponent() : new InProccessMessageComponent()
+    );
   }
 };
 
@@ -4696,93 +4836,6 @@ var PreferModeStorage = class {
       return null;
     }
     return parseInt(modeId);
-  }
-};
-
-// src/components/inputs/ButtonComponent.ts
-var ButtonComponent = class extends component_default {
-  constructor(props) {
-    super(props);
-    this.componentName = "button-component";
-  }
-  data() {
-    return {
-      clickHandler: () => {
-      }
-    };
-  }
-  onClick(fn) {
-    this.state.clickHandler = fn;
-    return this;
-  }
-  getButtonColor() {
-    const type = this.props.type || "default";
-    const color = this.props.color || "gray";
-    switch (type) {
-      case "default":
-        return `bg-${color}-500 hover:bg-${color}-600 active:bg-${color}-700 text-white`;
-      case "outline":
-        return `border border-${color}-300 hover:bg-${color}-100 active:bg-${color}-200 text-${color}-500`;
-      case "blank":
-        return `bg-${color}-100 hover:bg-${color}-200 active:bg-${color}-300 text-gray-800`;
-      default:
-        return `bg-${color}-200 hover:bg-${color}-300 active:bg-${color}-400 text-gray-800`;
-    }
-  }
-  getButtonSize(iconOnly) {
-    const size = this.props.size || "medium";
-    let sizeStyles = "";
-    if (iconOnly) {
-      switch (size) {
-        case "small":
-          sizeStyles = "w-6 h-6 p-2";
-          break;
-        case "large":
-          sizeStyles = "w-10 h-10 p-6";
-          break;
-        default:
-          sizeStyles = "w-8 h-8 p-4";
-      }
-    } else {
-      switch (size) {
-        case "small":
-          sizeStyles = "w-6 h-6 px-2 py-1 text-sm";
-          break;
-        case "large":
-          sizeStyles = "px-6 py-3 text-lg";
-          break;
-        default:
-          sizeStyles = "px-4 py-2 text-base";
-      }
-    }
-    if (this.props.fullWidth) {
-      sizeStyles += " w-full";
-    }
-    return `${sizeStyles}`;
-  }
-  template() {
-    const iconOnly = !this.props.label && this.props.icon;
-    const buttonSize2 = `${this.getButtonSize(iconOnly)} rounded-lg`;
-    const buttonColor2 = this.getButtonColor();
-    const buttonAnime = "transition duration-200 ease-in-out cursor-pointer";
-    const buttonDisabledStyle = this.props.isDisabled ? "opacity-50 cursor-not-allowed" : "";
-    const button = elem("button").setProps({
-      class: `${buttonColor2} ${buttonSize2} ${buttonAnime} ${buttonDisabledStyle} flex justify-center items-center`
-    });
-    if (this.props.icon) {
-      button.addChild(
-        elem("i").setProps({ class: this.props.icon })
-      );
-    }
-    if (this.props.label) {
-      button.addChild(
-        elem("span").setProps({ class: this.props.icon ? "ml-2" : void 0 }).addChild(text(this.props.label))
-      );
-    }
-    if (this.state.clickHandler && !this.props.isDisabled) {
-      button.addEventListener("click", this.state.clickHandler);
-    }
-    return button;
   }
 };
 
