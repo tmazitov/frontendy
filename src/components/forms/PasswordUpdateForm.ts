@@ -27,7 +27,7 @@ export default class PasswordUpdateForm extends FrontendyComponent {
 
         try {
             const response = await API.ums.userUpdatePassword(this.state.form)
-            if (response.status == 205) {
+            if (response.status == 205 || response.status == 201) {
                 this.state.successMessage = "Password updated successfully.";
                 this.state.errorMessage = undefined;
                 this.state.form = new PasswordUpdateFormInst("", ""); // Reset form after successful update

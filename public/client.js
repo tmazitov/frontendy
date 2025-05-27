@@ -5898,7 +5898,7 @@ var PasswordUpdateForm2 = class extends component_default {
     }
     try {
       const response = await API.ums.userUpdatePassword(this.state.form);
-      if (response.status == 205) {
+      if (response.status == 205 || response.status == 201) {
         this.state.successMessage = "Password updated successfully.";
         this.state.errorMessage = void 0;
         this.state.form = new PasswordUpdateForm("", "");
