@@ -4,6 +4,7 @@ enum MMRS_Server_Messages {
     MATCH_SEARCH = "searching",
     MATCH_FOUND = "match_found",
     MATCH_READY = "match_ready",
+    UNAUTHORIZED = "unauthorized",
 }
 
 enum MMRS_Client_Messages {

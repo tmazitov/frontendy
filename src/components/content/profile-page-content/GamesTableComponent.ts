@@ -6,8 +6,8 @@ import GamesTableRowComponent from "./GamesTableRowComponent";
 export default class GamesTableComponent extends FrontendyComponent {
     componentName: string = 'games-table-component';
 
-    constructor(games: GameStat[]) {
-        super({games});
+    constructor(userId:number, games: GameStat[]) {
+        super({games, userId});
     }
 
     template() {
@@ -40,7 +40,7 @@ export default class GamesTableComponent extends FrontendyComponent {
                     ]),
                 ]),
                 elem('tbody').setChild(this.props.games.map((game:GameStat) => {
-                    return new GamesTableRowComponent(game);
+                    return new GamesTableRowComponent(this.props.userId, game);
                 }))
         ]))
     }

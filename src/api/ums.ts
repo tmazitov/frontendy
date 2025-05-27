@@ -5,6 +5,8 @@ import AxiosClient, { cacheTokens, getTokens, removeTokens } from "./client";
 import { TokenPair } from "./tokenPair";
 import { GoogleOAuthPayload } from "./oauth/google";
 import PasswordUpdateForm from "../types/forms/updatePasswordForm";
+import router from "../pages/router";
+import EventBroker from "../pkg/event-broker/eventBroker";
 
 export default class UMS {
 	private client: AxiosClient
@@ -62,6 +64,42 @@ export default class UMS {
         return response;
     }
 
+    public async refresh() {
+        const tokens = getTokens()
+		console.log('old tokens :>> ', tokens);
+
+		try {
+			const response = await this.instance.request({
+				method: "POST",
+				url: "/refresh",
+				headers: {
+					'Content-Type': 'application/json',
+					'Access-Control-Allow-Origin': '*',
+				},
+				data: {
+					"refreshToken" : tokens.refreshToken 
+				}
+			})
+			if (response && response.data) {
+				cacheTokens(response.data)
+			}
+			console.log('new tokens :>> ', response.data);
+			return response
+		} catch (error: any) {
+			console.log('refresh error :>> ', error);
+			if (error.response && error.response.status == 401) {
+				setTimeout(async () => {
+					// await API.ums.signOut()
+					removeTokens()
+
+					router.push("home")
+					EventBroker.getInstance().emit("update-auth");
+				})
+			}
+			return error.response
+		}
+    }
+ 
     public async signOut() {
         // let response
         // try {

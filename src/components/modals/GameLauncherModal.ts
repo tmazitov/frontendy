@@ -1,3 +1,4 @@
+import API from "../../api/api";
 import { getTokens } from "../../api/client";
 import LoadingLayout from "../../layouts/loading/LoadingLayout";
 import ModalLayout from "../../layouts/modal/ModalLayout";
@@ -45,9 +46,14 @@ export default class GameLauncherModal extends FrontendyComponent {
             return ;
         }
 
-        GameLauncher.startGameSearching(accessToken, game, () => {
-            this.state.show = false;
-            this.state.isLoading = false;
+        GameLauncher.startGameSearching(accessToken, game, {
+            onConnectedCallback: () => {
+                this.state.show = false;
+                this.state.isLoading = false;
+            },
+            onUnauthorizedCallback: () => {
+                API.ums.refresh().then((response) => this.onSubmit(game))
+            }
         });
     }
 

@@ -1,3 +1,4 @@
+import GameStat from "../types/GameStat";
 import User from "../types/User";
 import StoreState from "./state";
 
@@ -6,6 +7,10 @@ export default class StoreGetters {
 
     constructor(state: StoreState) {
         this.state = state;
+    }
+
+    public async gameStats(onUpdate?:(value:GameStat[]|undefined) => void): Promise<GameStat[] | undefined> {
+        return this.state.gameStats.getValue(onUpdate);
     }
 
     public async user(onUpdate?:(value:User|undefined) => void): Promise<User | undefined> {

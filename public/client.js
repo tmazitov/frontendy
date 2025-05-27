@@ -3118,10 +3118,8 @@ function isAuthorized() {
   const tokens = getTokens();
   return !!tokens.accessToken && !!tokens.refreshToken;
 }
+var IS_REFRESHING = false;
 var AxiosClient = class _AxiosClient {
-  static {
-    this.isRefreshing = false;
-  }
   static {
     this.requestQueue = [];
   }
@@ -3158,7 +3156,7 @@ var AxiosClient = class _AxiosClient {
         const tokens = getTokens();
         if (error.response && error.response.status === 401 && tokens.accessToken && !originalRequest._retry) {
           originalRequest._retry = true;
-          if (_AxiosClient.isRefreshing) {
+          if (IS_REFRESHING) {
             return new Promise((resolve, reject) => {
               _AxiosClient.requestQueue.push((token) => {
                 originalRequest.headers["Authorization"] = `${token}`;
@@ -3166,7 +3164,7 @@ var AxiosClient = class _AxiosClient {
               });
             });
           }
-          _AxiosClient.isRefreshing = true;
+          IS_REFRESHING = true;
           try {
             const newTokens = await this.refreshTokens();
             _AxiosClient.requestQueue.forEach((callback) => callback(newTokens.accessToken));
@@ -3176,7 +3174,7 @@ var AxiosClient = class _AxiosClient {
           } catch (refreshError) {
             return Promise.reject(refreshError);
           } finally {
-            _AxiosClient.isRefreshing = false;
+            IS_REFRESHING = false;
           }
         }
         return Promise.reject(error);
@@ -3761,6 +3759,20 @@ var AboutPage = class extends component_default {
   }
 };
 
+// src/api/mmrs.ts
+var MMRS = class {
+  constructor(baseUrl) {
+    this.client = new client_default(baseUrl);
+  }
+  async userMatchStats() {
+    const response = await this.client.request({
+      method: "GET",
+      url: "/stats"
+    });
+    return response;
+  }
+};
+
 // src/api/ums.ts
 var UMS = class {
   constructor(baseUrl) {
@@ -3808,6 +3820,38 @@ var UMS = class {
     });
     cacheTokens(response.data);
     return response;
+  }
+  async refresh() {
+    const tokens = getTokens();
+    console.log("old tokens :>> ", tokens);
+    try {
+      const response = await this.instance.request({
+        method: "POST",
+        url: "/refresh",
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        },
+        data: {
+          "refreshToken": tokens.refreshToken
+        }
+      });
+      if (response && response.data) {
+        cacheTokens(response.data);
+      }
+      console.log("new tokens :>> ", response.data);
+      return response;
+    } catch (error) {
+      console.log("refresh error :>> ", error);
+      if (error.response && error.response.status == 401) {
+        setTimeout(async () => {
+          removeTokens();
+          router_default.push("home");
+          EventBroker.getInstance().emit("update-auth");
+        });
+      }
+      return error.response;
+    }
   }
   async signOut() {
     removeTokens();
@@ -3864,6 +3908,9 @@ var API = class {
   static {
     this.ums = new UMS("http://localhost:5000/auth/api/rest");
   }
+  static {
+    this.mmrs = new MMRS("http://localhost:5001/mmrs/api/rest");
+  }
 };
 
 // src/api/oauth/google.ts
@@ -3873,6 +3920,9 @@ var import_js_sha256 = __toESM(require_sha256());
 var StoreGetters = class {
   constructor(state) {
     this.state = state;
+  }
+  async gameStats(onUpdate) {
+    return this.state.gameStats.getValue(onUpdate);
   }
   async user(onUpdate) {
     return this.state.user.getValue(onUpdate);
@@ -3902,6 +3952,24 @@ var StoreGetters = class {
     return user.id;
   }
 };
+
+// src/types/GameStat.ts
+var GameStat = class {
+  constructor(data) {
+    this.uid = data.uid || data.id;
+    this.date = new Date(data.staredAt || data.started_at);
+    this.typeId = data.typeId || data.mode;
+    this.statusId = data.statusId || data.status;
+    this.winnerId = data.winnerId || data.winner_id;
+  }
+  getDateTime() {
+    const minutes = this.date.getMinutes();
+    const hours = this.date.getHours();
+    const time = (hours < 10 ? "0" : "") + hours + ":" + (minutes < 10 ? "0" : "") + minutes;
+    return this.date.toLocaleDateString() + " " + time;
+  }
+};
+var GameStat_default = GameStat;
 
 // src/types/User.ts
 var User = class {
@@ -3948,6 +4016,31 @@ var StoreSetters = class {
       console.error("Store error: can't get user data :", e);
     }
   }
+  async setupGameStats() {
+    if (!isAuthorized()) {
+      return;
+    }
+    try {
+      const response = await API.mmrs.userMatchStats();
+      if (!response) {
+        throw new Error("no response");
+      }
+      if (response.status == 204) {
+        this.state.gameStats.setValue([]);
+      } else if (response.status == 200) {
+        if (!response.data || response.data instanceof Array === false) {
+          throw new Error("no game stats data in response");
+        }
+        console.log("StoreSetters: setupGameStats response:", response.data);
+        const gameStats = response.data.map((stat) => new GameStat_default(stat));
+        this.state.gameStats.setValue(gameStats);
+      } else {
+        throw new Error("unexpected response status: " + response.status);
+      }
+    } catch (e) {
+      console.error("Store error: can't get game stats :", e);
+    }
+  }
 };
 
 // src/store/field.ts
@@ -3991,6 +4084,7 @@ var StoreField = class {
 var StoreState = class {
   constructor() {
     this.user = new StoreField();
+    this.gameStats = new StoreField();
   }
 };
 
@@ -4644,17 +4738,17 @@ var GameLauncher = class {
   static {
     this.isConfirmed = false;
   }
-  static async startGameSearching(accessToken, game, onConnectedCallback) {
+  static async startGameSearching(accessToken, game, options = {}) {
     try {
       const opts = {
-        onOpenCallback: () => this.onEstablishConnection(accessToken, game, onConnectedCallback)
+        onOpenCallback: () => this.onEstablishConnection(accessToken, game, options.onConnectedCallback)
       };
       const user = await Store.getters.user();
       if (!user) {
         return;
       }
       const addr = `ws://localhost:5001/matchmaking`;
-      this.client = new WebSocketClient(addr, opts).on("searching" /* MATCH_SEARCH */, (data) => this.matchSearchStartHandler(game, onConnectedCallback)).on("match_found" /* MATCH_FOUND */, (data) => this.matchFoundHandler(data)).on("match_timeout" /* MATCH_TIMEOUT */, (data) => this.matchTimeoutHandler(data));
+      this.client = new WebSocketClient(addr, opts).on("searching" /* MATCH_SEARCH */, (data) => this.matchSearchStartHandler(game, options.onConnectedCallback)).on("match_found" /* MATCH_FOUND */, (data) => this.matchFoundHandler(data)).on("match_timeout" /* MATCH_TIMEOUT */, (data) => this.matchTimeoutHandler(data)).on("unauthorized" /* UNAUTHORIZED */, (data) => this.unatuhorizedHandler(data, options.onUnauthorizedCallback));
     } catch (e) {
       console.error("GameLauncher error : WebSocketClient connection error", e);
       return;
@@ -4670,6 +4764,11 @@ var GameLauncher = class {
     this.confirmation = void 0;
     this.client?.close();
     EventBroker.getInstance().emit("deactivate-search-game-bar");
+  }
+  static unatuhorizedHandler(data, onUnauthorizedCallback) {
+    if (onUnauthorizedCallback) {
+      onUnauthorizedCallback();
+    }
   }
   static matchFoundHandler(data) {
     if (!data) {
@@ -5030,9 +5129,14 @@ var GameLauncherModal = class extends component_default {
     if (!accessToken) {
       return;
     }
-    GameLauncher.startGameSearching(accessToken, game, () => {
-      this.state.show = false;
-      this.state.isLoading = false;
+    GameLauncher.startGameSearching(accessToken, game, {
+      onConnectedCallback: () => {
+        this.state.show = false;
+        this.state.isLoading = false;
+      },
+      onUnauthorizedCallback: () => {
+        API.ums.refresh().then((response) => this.onSubmit(game));
+      }
     });
   }
   template() {
@@ -5204,41 +5308,31 @@ var TabsLayout = class extends component_default {
   }
 };
 
-// src/types/GameStat.ts
-var GameStat = class {
-  constructor(data) {
-    this.uid = data.uid;
-    this.date = new Date(data.date);
-    this.typeId = data.typeId;
-    this.statusId = data.statusId;
-    this.winnerId = data.winnerId;
-  }
-  getDateTime() {
-    const minutes = this.date.getMinutes();
-    const hours = this.date.getHours();
-    const time = (hours < 10 ? "0" : "") + hours + ":" + (minutes < 10 ? "0" : "") + minutes;
-    return this.date.toLocaleDateString() + " " + time;
-  }
-};
-var GameStat_default = GameStat;
-
 // src/components/content/profile-page-content/GamesTableRowComponent.ts
 var GamesTableRowComponent = class extends component_default {
-  constructor(gameStat) {
-    super({ gameStat });
+  constructor(userId, gameStat) {
+    super({ userId, gameStat });
     this.componentName = "games-table-row-component";
   }
   getGameTypeName() {
     return games_default.find((game) => game.id === this.props.gameStat.typeId)?.name || "Unknown";
   }
   getGameResult() {
-    return this.props.gameStat.winnerId === 0 ? "Win" : "Lose";
+    if (this.props.gameStat.winnerId == null) {
+      return "Playing";
+    }
+    return this.props.gameStat.winnerId === this.props.userId ? "Win" : "Lose";
+  }
+  getGameResultStyle() {
+    if (this.props.gameStat.winnerId == null) {
+      return "blue";
+    }
+    return this.props.gameStat.winnerId === this.props.userId ? "green" : "red";
   }
   template() {
-    const gameResultStyle = this.props.gameStat.winnerId === 0 ? "green" : "red";
     return elem("tr").setProps({ class: "border-t-1 border-gray-200" }).setChild([
       elem("td").setProps({ class: "p-2 text-sm" }).addChild(text("#" + this.props.gameStat.uid)),
-      elem("td").setProps({ class: `p-2 border-l-1 border-gray-200 text-sm` }).addChild(new TagComponent({ label: this.getGameResult(), color: gameResultStyle })),
+      elem("td").setProps({ class: `p-2 border-l-1 border-gray-200 text-sm` }).addChild(new TagComponent({ label: this.getGameResult(), color: this.getGameResultStyle() })),
       elem("td").setProps({ class: "p-2 border-l-1 border-gray-200 text-sm" }).addChild(text(this.props.gameStat.getDateTime())),
       elem("td").setProps({ class: "p-2 border-l-1 border-gray-200 text-sm" }).addChild(text(this.getGameTypeName()))
     ]);
@@ -5247,8 +5341,8 @@ var GamesTableRowComponent = class extends component_default {
 
 // src/components/content/profile-page-content/GamesTableComponent.ts
 var GamesTableComponent = class extends component_default {
-  constructor(games3) {
-    super({ games: games3 });
+  constructor(userId, games2) {
+    super({ games: games2, userId });
     this.componentName = "games-table-component";
   }
   template() {
@@ -5263,7 +5357,7 @@ var GamesTableComponent = class extends component_default {
           ])
         ]),
         elem("tbody").setChild(this.props.games.map((game) => {
-          return new GamesTableRowComponent(game);
+          return new GamesTableRowComponent(this.props.userId, game);
         }))
       ])
     );
@@ -5271,64 +5365,47 @@ var GamesTableComponent = class extends component_default {
 };
 
 // src/components/content/profile-page-content/GamesContentComponent.ts
-var games2 = [
-  new GameStat_default({ uid: "1234", date: "2023-03-01", typeId: 0, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-02", typeId: 1, winnerId: 1 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-03", typeId: 2, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-04", typeId: 2, winnerId: 1 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-01", typeId: 0, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-02", typeId: 1, winnerId: 1 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-03", typeId: 2, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-04", typeId: 2, winnerId: 1 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-01", typeId: 0, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-02", typeId: 1, winnerId: 1 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-03", typeId: 2, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-04", typeId: 2, winnerId: 1 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-01", typeId: 0, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-02", typeId: 1, winnerId: 1 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-03", typeId: 2, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-04", typeId: 2, winnerId: 1 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 }),
-  new GameStat_default({ uid: "1234", date: "2023-03-05", typeId: 1, winnerId: 0 })
-];
 var GamesContentComponent = class extends component_default {
   constructor() {
     super(...arguments);
     this.componentName = "games-content";
   }
   data() {
-    return {};
+    return {
+      games: void 0,
+      userId: 0
+    };
+  }
+  onCreated() {
+    Store.setters.setupGameStats().then(() => {
+      Store.getters.gameStats((stats) => {
+        this.state.games = stats || [];
+      });
+    });
+    Store.getters.userId((userId) => {
+      if (userId === void 0) {
+        return;
+      }
+      this.state.userId = userId;
+    });
   }
   template() {
-    return elem("div").setChild([
-      new GamesTableComponent(games2)
-    ]);
+    let content;
+    const isLoading = this.state.games === void 0;
+    if (isLoading) {
+      content = elem("div").setProps({ class: "flex flex-col items-center justify-center h-full w-full" }).setChild([
+        elem("i").setProps({ class: "ti ti-loader loading text-blue-500" }),
+        "Loading games..."
+      ]);
+    } else if (this.state.games.length === 0) {
+      content = elem("div").setProps({ class: "flex flex-col items-center justify-center h-full w-full text-gray-400" }).setChild([
+        elem("i").setProps({ class: "ti ti-brand-apple-arcade " }),
+        "No games found"
+      ]);
+    } else {
+      content = new GamesTableComponent(this.state.userId, this.state.games);
+    }
+    return elem("div").addChild(content);
   }
 };
 
@@ -5936,6 +6013,7 @@ var DeleteAccountModal = class extends component_default {
     await API.ums.signOut();
     this.setShow(false);
     router_default.push("home");
+    Store.setters.deleteUser();
     EventBroker.getInstance().emit("update-auth");
   }
   template() {

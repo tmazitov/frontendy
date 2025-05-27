@@ -28,10 +28,12 @@ function isAuthorized() {
 	return !!tokens.accessToken && !!tokens.refreshToken
 }
 
+let IS_REFRESHING = false
+
 class AxiosClient {
 	private axiosInstance;
 	
-	static isRefreshing = false;
+	
 	static requestQueue: Array<(token: string) => void> = [];
   
 	constructor(baseUrl:string) {
@@ -77,7 +79,7 @@ class AxiosClient {
 				originalRequest._retry = true;
 
 				// Если процесс обновления токенов уже идет, добавляем запрос в очередь
-				if (AxiosClient.isRefreshing) {
+				if (IS_REFRESHING) {
 					return new Promise((resolve, reject) => {
 						AxiosClient.requestQueue.push((token: string) => {
 							originalRequest.headers['Authorization'] = `${token}`;
@@ -87,7 +89,7 @@ class AxiosClient {
 				}
 
 				// Начинаем процесс обновления токенов
-				AxiosClient.isRefreshing = true;
+				IS_REFRESHING = true;
 
 				try {
 					const newTokens = await this.refreshTokens();
@@ -102,7 +104,7 @@ class AxiosClient {
 				} catch (refreshError) {
 					return Promise.reject(refreshError);
 				} finally {
-					AxiosClient.isRefreshing = false;
+					IS_REFRESHING = false;
 				}
 			}
 
@@ -181,4 +183,5 @@ export {
 	cacheTokens,
 	getTokens,
 	removeTokens,
+	IS_REFRESHING
 }

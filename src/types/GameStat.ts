@@ -6,11 +6,11 @@ class GameStat {
     winnerId: number;
 
     constructor(data:any) {
-        this.uid = data.uid;
-        this.date = new Date(data.date);
-        this.typeId = data.typeId;
-        this.statusId = data.statusId;
-        this.winnerId = data.winnerId;
+        this.uid = data.uid || data.id;
+        this.date = new Date(data.staredAt || data.started_at);
+        this.typeId = data.typeId || data.mode;
+        this.statusId = data.statusId || data.status;
+        this.winnerId = data.winnerId || data.winner_id;
     }
 
     getDateTime(): string {

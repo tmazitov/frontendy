@@ -7,8 +7,8 @@ import TagComponent from "../../inputs/TagComponent";
 export default class GamesTableRowComponent extends FrontendyComponent {
     componentName: string = 'games-table-row-component';
 
-    constructor(gameStat: GameStat) {
-        super({gameStat});
+    constructor(userId:number, gameStat: GameStat) {
+        super({userId, gameStat});
     }
 
     getGameTypeName() {
@@ -16,13 +16,23 @@ export default class GamesTableRowComponent extends FrontendyComponent {
     }
 
     getGameResult() {
-        return this.props.gameStat.winnerId === 0 ? 'Win' : 'Lose';
+        if (this.props.gameStat.winnerId == null) {
+            return 'Playing'
+        }
+
+        return this.props.gameStat.winnerId === this.props.userId ? 'Win' : 'Lose';
+    }
+
+    getGameResultStyle() {
+
+        if (this.props.gameStat.winnerId == null) {
+            return 'blue'
+        }
+
+        return this.props.gameStat.winnerId === this.props.userId ? 'green' : 'red'
     }
 
     template() {
-
-        const gameResultStyle = this.props.gameStat.winnerId === 0 ? 'green' : 'red';
-
         return elem('tr')
         .setProps({class: 'border-t-1 border-gray-200'})
         .setChild([
@@ -32,7 +42,7 @@ export default class GamesTableRowComponent extends FrontendyComponent {
 
             elem('td')
             .setProps({class: `p-2 border-l-1 border-gray-200 text-sm`})
-            .addChild(new TagComponent({label: this.getGameResult(), color: gameResultStyle})),
+            .addChild(new TagComponent({label: this.getGameResult(), color: this.getGameResultStyle()})),
 
             elem('td')
             .setProps({class: 'p-2 border-l-1 border-gray-200 text-sm'})

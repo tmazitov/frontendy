@@ -5,6 +5,11 @@ import WebSocketClient from "../../ws-client/client";
 import PlayersConfirmation from "./confirmation";
 import { MMRS_Client_Messages, MMRS_Server_Messages } from "./messages";
 
+type GameLauncherOptions = {
+    onConnectedCallback?: Function;
+    onUnauthorizedCallback?: Function;
+}
+
 export default class GameLauncher {
     
     private static searchGameType: Game | null = null;
@@ -13,10 +18,10 @@ export default class GameLauncher {
     private static confirmation?: PlayersConfirmation;
     private static userId?: number;
 
-    static async startGameSearching(accessToken:string, game:Game, onConnectedCallback?: Function) {
+    static async startGameSearching(accessToken:string, game:Game, options: GameLauncherOptions = {}) {
         try {
             const opts = {
-                onOpenCallback: () => this.onEstablishConnection(accessToken, game, onConnectedCallback),
+                onOpenCallback: () => this.onEstablishConnection(accessToken, game, options.onConnectedCallback),
             }
 
             const user = await Store.getters.user()
@@ -26,9 +31,10 @@ export default class GameLauncher {
 
             const addr = `ws://localhost:5001/matchmaking`;
             this.client = new WebSocketClient<MMRS_Server_Messages>(addr, opts)
-                .on(MMRS_Server_Messages.MATCH_SEARCH, (data: any) => this.matchSearchStartHandler(game, onConnectedCallback))
+                .on(MMRS_Server_Messages.MATCH_SEARCH, (data: any) => this.matchSearchStartHandler(game, options.onConnectedCallback))
                 .on(MMRS_Server_Messages.MATCH_FOUND, (data: any) => this.matchFoundHandler(data))
                 .on(MMRS_Server_Messages.MATCH_TIMEOUT, (data: any) => this.matchTimeoutHandler(data))
+                .on(MMRS_Server_Messages.UNAUTHORIZED, (data:any) => this.unatuhorizedHandler(data, options.onUnauthorizedCallback))
                 // .on(MMRS_Messages.MATCH_WAIT, (data: any) => {}); 
                 // .on(MMRS_Messages.MATCH_CONFIRM, (data: any) => {})
                 // .on(MMRS_Messages.MATCH_REJECT, (data: any) => {})
@@ -50,6 +56,12 @@ export default class GameLauncher {
         this.confirmation = undefined
         this.client?.close();
         EventBroker.getInstance().emit("deactivate-search-game-bar");
+    }
+
+    private static unatuhorizedHandler(data: any, onUnauthorizedCallback?:Function) {
+        if (onUnauthorizedCallback) {
+            onUnauthorizedCallback();
+        }
     }
 
     private static matchFoundHandler(data: any) {

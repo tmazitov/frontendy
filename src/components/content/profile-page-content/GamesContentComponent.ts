@@ -1,67 +1,58 @@
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
+import Store from "../../../store/store";
 import GameStat from "../../../types/GameStat";
 import GamesTableComponent from "./GamesTableComponent";
 
-
-const games = [
-    new GameStat({uid: "1234", date: '2023-03-01', typeId: 0, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-02', typeId: 1, winnerId: 1}),
-    new GameStat({uid: "1234", date: '2023-03-03', typeId: 2, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-04', typeId: 2, winnerId: 1}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-01', typeId: 0, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-02', typeId: 1, winnerId: 1}),
-    new GameStat({uid: "1234", date: '2023-03-03', typeId: 2, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-04', typeId: 2, winnerId: 1}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-01', typeId: 0, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-02', typeId: 1, winnerId: 1}),
-    new GameStat({uid: "1234", date: '2023-03-03', typeId: 2, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-04', typeId: 2, winnerId: 1}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-01', typeId: 0, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-02', typeId: 1, winnerId: 1}),
-    new GameStat({uid: "1234", date: '2023-03-03', typeId: 2, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-04', typeId: 2, winnerId: 1}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-    new GameStat({uid: "1234", date: '2023-03-05', typeId: 1, winnerId: 0}),
-]
 
 export default class GamesContentComponent extends FrontendyComponent {
     componentName: string = 'games-content';
 
     data() {
-        return {}
+        return {
+            games: undefined,
+            userId: 0,
+        }
+    }
+
+    protected onCreated(): void {
+        Store.setters.setupGameStats().then(() => {
+            Store.getters.gameStats((stats:GameStat[] | undefined) => {
+                this.state.games = stats || [];
+            } )
+        })
+        Store.getters.userId((userId:number | undefined) => {
+            if (userId === undefined) {
+                return;
+            }
+            this.state.userId = userId;
+        })
     }
 
     template() {
-        return elem('div')
-            .setChild([
-                new GamesTableComponent(games)
-            ])
+
+        let content
+        const isLoading = this.state.games === undefined;
+        if (isLoading) {
+            content = elem('div')
+                .setProps({class: "flex flex-col items-center justify-center h-full w-full"})
+                .setChild([
+                    elem('i')
+                    .setProps({class: "ti ti-loader loading text-blue-500"}),
+                    'Loading games...'
+                ]);
+        } else if (this.state.games.length === 0) {
+            content = elem('div')
+                .setProps({class: "flex flex-col items-center justify-center h-full w-full text-gray-400"})
+                .setChild([
+                    elem('i')
+                    .setProps({class: "ti ti-brand-apple-arcade "}),
+                    'No games found'
+                ]);
+        } else {
+            content = new GamesTableComponent(this.state.userId, this.state.games)
+        }
+
+        return elem('div').addChild(content)
     }
 }
