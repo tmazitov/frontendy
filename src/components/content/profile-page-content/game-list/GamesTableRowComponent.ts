@@ -1,8 +1,8 @@
-import games from "../../../data/games";
-import FrontendyComponent from "../../../pkg/frontendy/component/component";
-import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
-import GameStat from "../../../types/GameStat";
-import TagComponent from "../../inputs/TagComponent";
+import games from "../../../../data/games";
+import FrontendyComponent from "../../../../pkg/frontendy/component/component";
+import { elem, text } from "../../../../pkg/frontendy/vdom/constructor";
+import GameStat from "../../../../types/GameStat";
+import TagComponent from "../../../inputs/TagComponent";
 
 export default class GamesTableRowComponent extends FrontendyComponent {
     componentName: string = 'games-table-row-component';

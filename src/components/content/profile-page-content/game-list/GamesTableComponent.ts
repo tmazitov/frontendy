@@ -1,6 +1,6 @@
-import FrontendyComponent from "../../../pkg/frontendy/component/component";
-import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
-import GameStat from "../../../types/GameStat";
+import FrontendyComponent from "../../../../pkg/frontendy/component/component";
+import { elem, text } from "../../../../pkg/frontendy/vdom/constructor";
+import GameStat from "../../../../types/GameStat";
 import GamesTableRowComponent from "./GamesTableRowComponent";
 
 export default class GamesTableComponent extends FrontendyComponent {
@@ -12,7 +12,7 @@ export default class GamesTableComponent extends FrontendyComponent {
 
     template() {
         return elem('div')
-        .setProps({class : "max-h-[320px] overflow-y-auto"})
+        .setProps({class : "max-h-[320px] w-full overflow-y-auto"})
         .addChild(
             elem('table')
             .setProps({class: 'min-w-full table-auto'})
@@ -44,4 +44,4 @@ export default class GamesTableComponent extends FrontendyComponent {
                 }))
         ]))
     }
-}
+}   

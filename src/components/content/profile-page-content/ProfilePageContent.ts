@@ -2,7 +2,7 @@ import TabsLayout from "../../../layouts/tabs/TabsLayout";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 import FriendListComponent from "./friend-list/FrienListComponent";
-import GamesContentComponent from "./GamesContentComponent";
+import GamesContentComponent from "./game-list/GamesContentComponent";
 import InfoContentComponent from "./InfoContentComponent";
 
 export default class ProfilePageContent extends FrontendyComponent {

@@ -4906,7 +4906,7 @@ var LoadingLayout = class extends component_default {
   }
   template() {
     return elem("div").$vif(this.state.show).setProps({ class: "absolute top-0 left-0 w-full h-full flex items-center justify-center" }).setChild([
-      elem("div").setProps({ class: "absolute z-1 top-0 left-0 w-full h-full bg-gray-200 opacity-50" }),
+      elem("div").setProps({ class: `${this.props.withoutShadow ? "hidden" : ""} absolute z-1 top-0 left-0 w-full h-full bg-gray-200 opacity-50` }),
       elem("div").setProps({ class: "absolute z-2 left-1/2 transform -translate-x-1/2 flex flex-col items-center" }).setChild([
         elem("i").setProps({ class: `${this.props.icon} text-xl text-blue-500 animate-spin` }),
         elem("p").setProps({ class: "text-gray-700 mt-2" }).addChild(text(this.props.label))
@@ -5544,7 +5544,21 @@ var FriendListComponent = class extends component_default {
   }
 };
 
-// src/components/content/profile-page-content/GamesTableRowComponent.ts
+// src/components/content/profile-page-content/game-list/GamesEmptyMessageComponet.ts
+var GamesEmptyMessageComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "games-empty-message-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "flex flex-col items-center justify-center w-full text-gray-400 h-24" }).setChild([
+      elem("i").setProps({ class: "ti ti-brand-apple-arcade " }),
+      "No games found"
+    ]);
+  }
+};
+
+// src/components/content/profile-page-content/game-list/GamesTableRowComponent.ts
 var GamesTableRowComponent = class extends component_default {
   constructor(userId, gameStat) {
     super({ userId, gameStat });
@@ -5575,14 +5589,14 @@ var GamesTableRowComponent = class extends component_default {
   }
 };
 
-// src/components/content/profile-page-content/GamesTableComponent.ts
+// src/components/content/profile-page-content/game-list/GamesTableComponent.ts
 var GamesTableComponent = class extends component_default {
   constructor(userId, games2) {
     super({ games: games2, userId });
     this.componentName = "games-table-component";
   }
   template() {
-    return elem("div").setProps({ class: "max-h-[320px] overflow-y-auto" }).addChild(
+    return elem("div").setProps({ class: "max-h-[320px] w-full overflow-y-auto" }).addChild(
       elem("table").setProps({ class: "min-w-full table-auto" }).setChild([
         elem("thead").setProps({ class: "sticky top-0 z-10" }).setChild([
           elem("tr").setChild([
@@ -5600,7 +5614,7 @@ var GamesTableComponent = class extends component_default {
   }
 };
 
-// src/components/content/profile-page-content/GamesContentComponent.ts
+// src/components/content/profile-page-content/game-list/GamesContentComponent.ts
 var GamesContentComponent = class extends component_default {
   constructor() {
     super(...arguments);
@@ -5626,22 +5640,20 @@ var GamesContentComponent = class extends component_default {
     });
   }
   template() {
-    let content;
     const isLoading = this.state.games === void 0;
-    if (isLoading) {
-      content = elem("div").setProps({ class: "flex flex-col items-center justify-center h-full w-full" }).setChild([
-        elem("i").setProps({ class: "ti ti-loader loading text-blue-500" }),
-        "Loading games..."
-      ]);
-    } else if (this.state.games.length === 0) {
-      content = elem("div").setProps({ class: "flex flex-col items-center justify-center h-full w-full text-gray-400" }).setChild([
-        elem("i").setProps({ class: "ti ti-brand-apple-arcade " }),
-        "No games found"
-      ]);
-    } else {
-      content = new GamesTableComponent(this.state.userId, this.state.games);
-    }
-    return elem("div").addChild(content);
+    console.log({ isLoading });
+    const views = [
+      { cond: isLoading, action: () => new LoadingLayout({
+        icon: "ti ti-loader",
+        label: "Loading games...",
+        withoutShadow: true
+      }).setShow(isLoading) },
+      { cond: !isLoading && this.state.games.length === 0, action: () => new GamesEmptyMessageComponent() },
+      { cond: !isLoading && this.state.games.length > 0, action: () => new GamesTableComponent(this.state.userId, this.state.games) }
+    ];
+    return elem("div").setProps({ class: "relative w-full h-full min-h-24" }).setChild([
+      views.find((v) => v.cond)?.action()
+    ]);
   }
 };
 
