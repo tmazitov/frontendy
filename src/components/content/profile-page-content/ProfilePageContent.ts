@@ -16,10 +16,10 @@ export default class ProfilePageContent extends FrontendyComponent {
         return elem('div')
             .setChild([
 
-                new TabsLayout([
-                    {title: "Info", content: new InfoContentComponent()},
-                    {title: "Games", content: new GamesContentComponent()},
-                    {title: "Friends", content: new FriendListComponent()},
+                new TabsLayout("profile", [
+                    {title: "Info", content: InfoContentComponent},
+                    {title: "Games", content: GamesContentComponent},
+                    {title: "Friends", content: FriendListComponent},
                 ])
             ])
     }

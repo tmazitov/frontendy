@@ -14,7 +14,7 @@ class VElem{
         this.tag = tag;
     }
 
-    setProps(props:Record<string, any>) {
+    setProps(props:Record<string, string | number | boolean | null | undefined>) {
         if (!this.props) {
             this.props = props;
             return this;
@@ -31,7 +31,7 @@ class VElem{
         return this.props;
     }
 
-    setChild(child: Array<any>) {
+    setChild(child: Array<VElem | VText | Component | string | number | boolean | null | undefined>) {
         const filtered:Array<VElem | VText | Component> = child
             .filter(c => c != null)
             .map(c => {

@@ -4253,7 +4253,7 @@ var ButtonComponent = class extends component_default {
     }
     if (this.props.label) {
       button.addChild(
-        elem("span").setProps({ class: this.props.icon ? "ml-2" : void 0 }).addChild(text(this.props.label))
+        elem("span").setProps({ class: this.props.icon ? "ml-2" : "" }).addChild(text(this.props.label))
       );
     }
     if (this.state.clickHandler && !this.props.isDisabled) {
@@ -4756,8 +4756,8 @@ var GamePage = class extends component_default {
 
 // src/components/inputs/InfoParagraphComponent.ts
 var InfoParagraphComponent = class extends component_default {
-  constructor(text15) {
-    super({ text: text15 });
+  constructor(text16) {
+    super({ text: text16 });
     this.componentName = "info-paragraph-component";
   }
   template() {
@@ -5331,21 +5331,29 @@ var TabItemComponent = class extends component_default {
 };
 
 // src/layouts/tabs/TabsLayout.ts
+function getItem(name, tabsAmount) {
+  const rawValue = parseInt(localStorage.getItem(`${name}-current-tab`) || "0");
+  return Math.min(Math.max(rawValue, 0), tabsAmount - 1);
+}
+function setItem(name, index) {
+  localStorage.setItem(`${name}-current-tab`, index.toString());
+  return index;
+}
 var TabsLayout = class extends component_default {
-  constructor(tabs) {
-    super({ tabs });
+  constructor(name, tabs) {
+    super({ name, tabs });
     this.componentName = "tabs-layout";
   }
   data() {
     return {
-      currentTab: 0
+      currentTab: getItem(this.props.name, this.props.tabs.length)
     };
   }
   changeCurrentTab(index) {
     if (this.state.currentTab == index) {
       return this;
     }
-    this.state.currentTab = index;
+    this.state.currentTab = setItem(this.props.name, index);
     return this;
   }
   template() {
@@ -5356,8 +5364,68 @@ var TabsLayout = class extends component_default {
         return new TabItemComponent(tab.title, this.state.currentTab == index).onClick(() => this.changeCurrentTab(index));
       })),
       // Tab content
-      elem("div").setProps({ class: "p-4" }).addChild(currentTabContent)
+      elem("div").setProps({ class: "p-4" }).addChild(new currentTabContent())
     ]);
+  }
+};
+
+// src/components/modals/DeleteFriendModal.ts
+var DeleteFriendModal = class extends component_default {
+  constructor(friend) {
+    super({ friend });
+    this.componentName = "delete-friend-modal";
+  }
+  data() {
+    return {
+      show: false,
+      isLoading: false,
+      onSubmitCallback: void 0
+    };
+  }
+  onSubmit(fn) {
+    this.state.onSubmitCallback = fn;
+    return this;
+  }
+  setShow(value) {
+    this.state.show = value;
+    return this;
+  }
+  onSubmitHandler() {
+    this.state.isLoading = true;
+    setTimeout(() => {
+      this.state.isLoading = false;
+      this.state.onSubmitCallback?.();
+      this.setShow(false);
+    }, 1e3);
+  }
+  template() {
+    const friendsNickname = this.props.friend?.nickname || "Friend";
+    const header = elem("h2").setProps({ class: "text-lg font-semibold text-gray-800" }).addChild(`Delete friend ${friendsNickname}?`);
+    const body = elem("div").setProps({ class: "flex flex-col gap-4" }).setChild([
+      new LoadingLayout({
+        label: "Please wait...",
+        icon: "ti ti-loader"
+      }).setShow(this.state.isLoading),
+      new InfoParagraphComponent(`Are you sure you want to delete user with nickname "${friendsNickname}" from your friend list?`),
+      elem("div").setProps({ class: "flex gap-2 justify-between" }).setChild([
+        new ButtonComponent({
+          label: "Cancel",
+          color: "blue",
+          type: "default"
+        }).onClick(() => this.setShow(false)),
+        new ButtonComponent({
+          label: "Delete",
+          color: "red",
+          type: "outline"
+        }).onClick(() => this.onSubmitHandler())
+      ])
+    ]);
+    return elem("span").addChild(
+      new ModalLayout("game-launch-modal", {
+        customClasses: "min-h-20 min-w-[300px] max-w-[400px] rounded-lg shadow-lg bg-white",
+        closeOnClickOutside: true
+      }).setShow(this.state.show).setSlot("body", body).setSlot("header", header)
+    );
   }
 };
 
@@ -5384,6 +5452,18 @@ var FriendListItemComponent = class extends component_default {
   constructor(user) {
     super({ user });
     this.componentName = "frient-list-item-componet";
+  }
+  data() {
+    return {
+      onDeleteCallback: void 0
+    };
+  }
+  onDelete(fn) {
+    this.state.onDeleteCallback = fn;
+    return this;
+  }
+  onDeleteHandler() {
+    this.state.onDeleteCallback?.();
   }
   template() {
     return elem("div").setProps({ class: "friend-item flex gap-4 items-center border-1 border-gray-200 py-2 px-4 cursor-default rounded-md select-none" }).setChild([
@@ -5412,8 +5492,7 @@ var FriendListItemComponent = class extends component_default {
           icon: "ti ti-minus",
           color: "red",
           type: "outline"
-        }).onClick(() => {
-        })
+        }).onClick(() => this.onDeleteHandler())
       ])
     ]);
   }
@@ -5428,28 +5507,40 @@ var FriendListComponent = class extends component_default {
   data() {
     return {
       friends: [
-        new User({ id: 1, rating: 1510, nickname: "tmazitov", avatar: "avatars/a8eb4228-57e5-472f-a839-e9199ff9bbb8-1-shifu.jpg", status: 0 }),
+        new User({ id: 1, rating: 1510, nickname: "sabdulki", avatar: "avatars/a8eb4228-57e5-472f-a839-e9199ff9bbb8-1-shifu.jpg", status: 0 }),
         new User({ id: 2, rating: 1140, nickname: "tmazitov", avatar: "avatars/a8eb4228-57e5-472f-a839-e9199ff9bbb8-1-shifu.jpg", status: 1 }),
-        new User({ id: 3, rating: 890, nickname: "tmazitov", avatar: "avatars/a8eb4228-57e5-472f-a839-e9199ff9bbb8-1-shifu.jpg", status: 0 })
-      ]
+        new User({ id: 3, rating: 890, nickname: "rnartdin", avatar: "avatars/a8eb4228-57e5-472f-a839-e9199ff9bbb8-1-shifu.jpg", status: 0 })
+      ],
+      friendToDelete: void 0
     };
   }
   template() {
-    return elem("div").setProps({ class: "flex flex-col gap-2" }).setChild(this.state.friends.map((user) => {
-      let imagePath = null;
-      if (!user) {
-        imagePath = null;
-      } else if (user.avatarUrl && user.avatarUrl.startsWith("http")) {
-        imagePath = user.avatarUrl;
-      } else if (user.avatarUrl) {
-        imagePath = `http://localhost:5000/auth/public/${user.avatarUrl}`;
-      } else {
-        imagePath = "http://localhost:5000/auth/public/avatars/default.png";
-      }
-      user.avatarUrl = imagePath;
-      console.log("imagePath", imagePath);
-      return new FriendListItemComponent(user);
-    }));
+    return elem("div").setChild([
+      // Friend list
+      elem("div").setProps({ class: "flex flex-col gap-2" }).setChild(this.state.friends.map((user) => {
+        let imagePath = null;
+        if (!user) {
+          imagePath = null;
+        } else if (user.avatarUrl && user.avatarUrl.startsWith("http")) {
+          imagePath = user.avatarUrl;
+        } else if (user.avatarUrl) {
+          imagePath = `http://localhost:5000/auth/public/${user.avatarUrl}`;
+        } else {
+          imagePath = "http://localhost:5000/auth/public/avatars/default.png";
+        }
+        user.avatarUrl = imagePath;
+        console.log("imagePath", imagePath);
+        return new FriendListItemComponent(user).onDelete(() => this.state.friendToDelete = user);
+      })),
+      // Delete friend modal
+      new DeleteFriendModal(this.state.friendToDelete).setShow(this.state.friendToDelete !== void 0).onSubmit(() => {
+        this.state.friends = this.state.friends.filter((user) => user.id !== this.state.friendToDelete?.id);
+        console.log({
+          friends: this.state.friends
+        });
+        this.state.friendToDelete = void 0;
+      })
+    ]);
   }
 };
 
@@ -5809,10 +5900,10 @@ var ProfilePageContent = class extends component_default {
   }
   template() {
     return elem("div").setChild([
-      new TabsLayout([
-        { title: "Info", content: new InfoContentComponent() },
-        { title: "Games", content: new GamesContentComponent() },
-        { title: "Friends", content: new FriendListComponent() }
+      new TabsLayout("profile", [
+        { title: "Info", content: InfoContentComponent },
+        { title: "Games", content: GamesContentComponent },
+        { title: "Friends", content: FriendListComponent }
       ])
     ]);
   }

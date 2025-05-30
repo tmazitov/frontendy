@@ -4,19 +4,29 @@ import TabItemComponent from "./TabItemComponent";
 
 type TabItem = {
     title: string;
-    content: FrontendyComponent;
+    content: typeof FrontendyComponent;
+}
+
+function getItem(name: string, tabsAmount: number) {
+    const rawValue = parseInt(localStorage.getItem(`${name}-current-tab`) || '0')
+    return Math.min(Math.max(rawValue, 0), tabsAmount - 1);
+}
+
+function setItem(name: string, index: number) {
+    localStorage.setItem(`${name}-current-tab`, index.toString());
+    return index;
 }
 
 export default class TabsLayout extends FrontendyComponent {
     componentName: string = 'tabs-layout';
 
-    constructor(tabs: TabItem[]) {
-        super({tabs});
+    constructor(name:string, tabs: TabItem[]) {
+        super({name, tabs});
     }
 
     data() {
         return {
-            currentTab: 0,
+            currentTab: getItem(this.props.name, this.props.tabs.length),
         }
     }
 
@@ -25,9 +35,9 @@ export default class TabsLayout extends FrontendyComponent {
             return this;
         }
 
-        this.state.currentTab = index;
+        this.state.currentTab = setItem(this.props.name, index);
 
-        return this;
+        return this;    
     }
 
     template() {
@@ -48,7 +58,7 @@ export default class TabsLayout extends FrontendyComponent {
                 // Tab content
                 elem("div")
                 .setProps({ class : "p-4" })
-                .addChild(currentTabContent)
+                .addChild(new currentTabContent())
             ])
     }
 }
