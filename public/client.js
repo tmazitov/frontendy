@@ -4433,20 +4433,29 @@ var WebSocketClient = class {
 
 // src/pkg/game/play/ws.ts
 var GameWebSocket = class _GameWebSocket {
-  static connect() {
+  static connect(params) {
     if (_GameWebSocket.conn !== void 0) {
       console.warn("WebSocket connection already exists.");
       return;
     }
-    _GameWebSocket.conn = new WebSocketClient("ws://localhost:5002/", {
+    _GameWebSocket.conn = new WebSocketClient("ws://localhost:5002/game/api/ws", {
       onOpenCallback: () => {
         console.log("GameWebSocket connection opened.");
+        if (params.onOpenCallback) {
+          params.onOpenCallback();
+        }
       },
       onCloseCallback: () => {
         console.log("GameWebSocket connection closed.");
+        if (params.onCloseCallback) {
+          params.onCloseCallback();
+        }
         _GameWebSocket.conn = void 0;
       },
       onErrorCallback: (error) => {
+        if (params.onErrorCallback) {
+          params.onErrorCallback(error);
+        }
         console.error("GameWebSocket error:", error);
       }
     });
@@ -4473,7 +4482,7 @@ var GameWebSocket = class _GameWebSocket {
       console.warn("WebSocket connection does not exist. Cannot send action.");
       return;
     }
-    _GameWebSocket.conn.send(action, payload);
+    _GameWebSocket.conn.send(action, { payload });
   }
   static playerMoveDown() {
     _GameWebSocket.send("move_down" /* MoveDown */);
@@ -4483,6 +4492,10 @@ var GameWebSocket = class _GameWebSocket {
   }
   static playerStop() {
     _GameWebSocket.send("stop" /* Stop */);
+  }
+  static join(accessToken) {
+    console.log({ accessToken });
+    _GameWebSocket.send("join" /* Join */, { accessToken });
   }
 };
 
@@ -4528,24 +4541,36 @@ var MoveController = class {
 };
 
 // src/pkg/game/play/server.ts
-var ServerAction = /* @__PURE__ */ ((ServerAction2) => {
-  ServerAction2["SYNC"] = "sync";
-  return ServerAction2;
-})(ServerAction || {});
-var server_default = ServerAction;
+var SERVER_ACTION = /* @__PURE__ */ ((SERVER_ACTION2) => {
+  SERVER_ACTION2["Sync"] = "sync";
+  SERVER_ACTION2["Authorized"] = "authorized";
+  SERVER_ACTION2["Unauthorized"] = "unauthorized";
+  return SERVER_ACTION2;
+})(SERVER_ACTION || {});
+var server_default = SERVER_ACTION;
 
 // src/pkg/game/play/player.ts
-var Player = class {
+var Player = class _Player {
   static {
     this.moveController = new MoveController();
   }
-  static setup() {
-    GameWebSocket.connect();
+  static setup(accessToken, onUnauthorizedCallback) {
+    GameWebSocket.on(server_default.Authorized, () => _Player.onAuthorizedHandler());
+    GameWebSocket.on(server_default.Unauthorized, () => _Player.onUnauthorizedHandler(onUnauthorizedCallback));
+    GameWebSocket.connect({
+      onOpenCallback: () => GameWebSocket.join(accessToken)
+    });
+  }
+  static onAuthorizedHandler() {
     console.log("Player setup complete. Listening for key events...");
     this.moveHandler = (event) => this.moveController.move(event);
     this.stopHandler = (event) => this.moveController.stop(event);
     window.addEventListener("keydown", this.moveHandler);
     window.addEventListener("keyup", this.stopHandler);
+  }
+  static onUnauthorizedHandler(onUnauthorizedCallback) {
+    GameWebSocket.close();
+    onUnauthorizedCallback();
   }
   static cleanup() {
     GameWebSocket.close();
@@ -4560,7 +4585,7 @@ var Player = class {
     this.stopHandler = void 0;
   }
   static onUpdatePosition(fn) {
-    GameWebSocket.on(server_default.SYNC, fn);
+    GameWebSocket.on(server_default.Sync, fn);
   }
 };
 
@@ -4687,7 +4712,21 @@ var GamePage = class extends component_default {
     return {};
   }
   onMounted() {
-    Player.setup();
+    const tokens = getTokens();
+    if (!tokens) {
+      router_default.push("home");
+      return;
+    }
+    let isCallbackActivated = false;
+    const onUnauthorizedCallback = () => {
+      if (isCallbackActivated) {
+        router_default.push("home");
+        return;
+      }
+      isCallbackActivated = true;
+      API.ums.refresh().then(() => Player.setup(tokens.accessToken, onUnauthorizedCallback));
+    };
+    Player.setup(tokens.accessToken, onUnauthorizedCallback);
   }
   onUnmounted() {
     console.log("GameComponent unmounted");

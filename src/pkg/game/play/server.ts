@@ -1,5 +1,7 @@
-enum ServerAction {
-    SYNC = 'sync',
+enum SERVER_ACTION {
+    Sync = 'sync',
+    Authorized = 'authorized',
+    Unauthorized = 'unauthorized',
 }
 
-export default ServerAction;
+export default SERVER_ACTION;

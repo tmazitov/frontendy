@@ -1,9 +1,10 @@
 import MoveController from "./moveController";
-import ServerAction from "./server";
+import SERVER_ACTION from "./server";
 import GameState from "./state";
 import GameWebSocket from "./ws";
 
-enum PlayerAction {
+enum PLAYER_ACTION {
+    Join = 'join',
     Stop = 'stop',
     MoveUp = 'move_up',
     MoveDown = 'move_down',
@@ -14,9 +15,16 @@ export default class Player {
     private static moveHandler: ((event: KeyboardEvent) => void) | undefined;
     private static stopHandler: ((event: KeyboardEvent) => void) | undefined;
 
-    public static setup() {
-        GameWebSocket.connect()
+    public static setup(accessToken:string, onUnauthorizedCallback:Function) {
+        GameWebSocket.on(SERVER_ACTION.Authorized, () => Player.onAuthorizedHandler())
+        GameWebSocket.on(SERVER_ACTION.Unauthorized, () => Player.onUnauthorizedHandler(onUnauthorizedCallback))
+        
+        GameWebSocket.connect({
+            onOpenCallback: () => GameWebSocket.join(accessToken)
+        })
+    }
 
+    private static onAuthorizedHandler() {
         console.log("Player setup complete. Listening for key events...");
 
         this.moveHandler = (event:KeyboardEvent) => this.moveController.move(event);
@@ -24,6 +32,11 @@ export default class Player {
 
         window.addEventListener("keydown", this.moveHandler);
         window.addEventListener("keyup", this.stopHandler);
+    }
+
+    private static onUnauthorizedHandler(onUnauthorizedCallback:Function) {
+        GameWebSocket.close()
+        onUnauthorizedCallback()
     }
 
     public static cleanup() {
@@ -43,11 +56,11 @@ export default class Player {
     }
 
     public static onUpdatePosition(fn:(state:GameState) => void): void {
-        GameWebSocket.on(ServerAction.SYNC, fn)
+        GameWebSocket.on(SERVER_ACTION.Sync, fn)
     }
 
 }
 
 export {
-    PlayerAction,
+    PLAYER_ACTION,
 }
