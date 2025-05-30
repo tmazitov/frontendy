@@ -39,3 +39,7 @@
 .accordion-item-header.closed > div > i {
     transform: rotate(0deg);
 }
+
+.friend-item:hover > .friend-item-buttons {
+    opacity: 1;
+}

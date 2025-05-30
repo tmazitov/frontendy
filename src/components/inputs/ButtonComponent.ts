@@ -63,15 +63,28 @@ export default class ButtonComponent extends FrontendyComponent {
         const type = this.props.type || 'default'
         const color = this.props.color || 'gray'
 
+        if (this.props.isDisabled) {
+            switch (type) {
+                case 'default':
+                    return `bg-${color}-500 text-white cursor-not-allowed`
+                case 'outline':
+                    return `border border-${color}-300  text-${color}-500  cursor-not-allowed`
+                case 'blank':
+                    return `bg-${color}-100 text-gray-800 cursor-not-allowed`
+                default:
+                    return `bg-${color}-200 text-gray-800 cursor-not-allowed`
+            }
+        }
+
         switch (type) {
             case 'default':
-                return `bg-${color}-500 hover:bg-${color}-600 active:bg-${color}-700 text-white`
+                return `bg-${color}-500 hover:bg-${color}-600 active:bg-${color}-700 text-white cursor-pointer`
             case 'outline':
-                return `border border-${color}-300 hover:bg-${color}-100 active:bg-${color}-200 text-${color}-500`
+                return `border border-${color}-300 hover:bg-${color}-100 active:bg-${color}-200 text-${color}-500 cursor-pointer`
             case 'blank':
-                return `bg-${color}-100 hover:bg-${color}-200 active:bg-${color}-300 text-gray-800`
+                return `bg-${color}-100 hover:bg-${color}-200 active:bg-${color}-300 text-gray-800 cursor-pointer`
             default:
-                return `bg-${color}-200 hover:bg-${color}-300 active:bg-${color}-400 text-gray-800`
+                return `bg-${color}-200 hover:bg-${color}-300 active:bg-${color}-400 text-gray-800 cursor-pointer`
         }
     }
 
@@ -116,7 +129,7 @@ export default class ButtonComponent extends FrontendyComponent {
         const iconOnly = !this.props.label && this.props.icon
         const buttonSize = `${this.getButtonSize(iconOnly)} rounded-lg`
         const buttonColor = this.getButtonColor()
-        const buttonAnime = "transition duration-200 ease-in-out cursor-pointer"
+        const buttonAnime = "transition duration-200 ease-in-out "
         const buttonDisabledStyle = this.props.isDisabled ? "opacity-50 cursor-not-allowed" : ""
 
         const button = elem('button')

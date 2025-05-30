@@ -3973,12 +3973,14 @@ var GameStat_default = GameStat;
 
 // src/types/User.ts
 var User = class {
+  // 0 - Offline, 1 - Online
   constructor(data) {
     this.avatarUrl = null;
     this.id = data.id;
     this.nickname = data.nickname;
     this.rating = data.rating;
     this.avatarUrl = data.avatar || null;
+    this.status = data.status || 0;
   }
 };
 
@@ -4181,15 +4183,27 @@ var ButtonComponent = class extends component_default {
   getButtonColor() {
     const type = this.props.type || "default";
     const color = this.props.color || "gray";
+    if (this.props.isDisabled) {
+      switch (type) {
+        case "default":
+          return `bg-${color}-500 text-white cursor-not-allowed`;
+        case "outline":
+          return `border border-${color}-300  text-${color}-500  cursor-not-allowed`;
+        case "blank":
+          return `bg-${color}-100 text-gray-800 cursor-not-allowed`;
+        default:
+          return `bg-${color}-200 text-gray-800 cursor-not-allowed`;
+      }
+    }
     switch (type) {
       case "default":
-        return `bg-${color}-500 hover:bg-${color}-600 active:bg-${color}-700 text-white`;
+        return `bg-${color}-500 hover:bg-${color}-600 active:bg-${color}-700 text-white cursor-pointer`;
       case "outline":
-        return `border border-${color}-300 hover:bg-${color}-100 active:bg-${color}-200 text-${color}-500`;
+        return `border border-${color}-300 hover:bg-${color}-100 active:bg-${color}-200 text-${color}-500 cursor-pointer`;
       case "blank":
-        return `bg-${color}-100 hover:bg-${color}-200 active:bg-${color}-300 text-gray-800`;
+        return `bg-${color}-100 hover:bg-${color}-200 active:bg-${color}-300 text-gray-800 cursor-pointer`;
       default:
-        return `bg-${color}-200 hover:bg-${color}-300 active:bg-${color}-400 text-gray-800`;
+        return `bg-${color}-200 hover:bg-${color}-300 active:bg-${color}-400 text-gray-800 cursor-pointer`;
     }
   }
   getButtonSize(iconOnly) {
@@ -4227,7 +4241,7 @@ var ButtonComponent = class extends component_default {
     const iconOnly = !this.props.label && this.props.icon;
     const buttonSize2 = `${this.getButtonSize(iconOnly)} rounded-lg`;
     const buttonColor2 = this.getButtonColor();
-    const buttonAnime = "transition duration-200 ease-in-out cursor-pointer";
+    const buttonAnime = "transition duration-200 ease-in-out ";
     const buttonDisabledStyle = this.props.isDisabled ? "opacity-50 cursor-not-allowed" : "";
     const button = elem("button").setProps({
       class: `${buttonColor2} ${buttonSize2} ${buttonAnime} ${buttonDisabledStyle} flex justify-center items-center`
@@ -5347,6 +5361,98 @@ var TabsLayout = class extends component_default {
   }
 };
 
+// src/components/inputs/SmallAvatarComponent.ts
+var SmallAvatarComponent = class extends component_default {
+  constructor(props) {
+    super(props);
+    this.componentName = "small-avatar-component";
+  }
+  template() {
+    return elem("div").setProps({ class: "w-8 h-8 rounded-full border-1 border-gray-400 overflow-hidden relative" }).setChild([
+      elem("span").setProps({ class: "image" }).addChild(elem("img").setProps({
+        class: "w-full object-cover",
+        referrerpolicy: "no-referrer",
+        src: this.props.imagePath
+      })),
+      elem("div").$vif(this.state.onClickHandler).setProps({ class: "text absolute text-sm text-white bottom-4 right-0 select-none left-0 text-center opacity-0 transition-all duration-200" }).addChild("Change photo")
+    ]);
+  }
+};
+
+// src/components/content/profile-page-content/friend-list/FriendListItemComponent.ts
+var FriendListItemComponent = class extends component_default {
+  constructor(user) {
+    super({ user });
+    this.componentName = "frient-list-item-componet";
+  }
+  template() {
+    return elem("div").setProps({ class: "friend-item flex gap-4 items-center border-1 border-gray-200 py-2 px-4 cursor-default rounded-md select-none" }).setChild([
+      // Main info
+      elem("div").setProps({ class: "flex gap-4 items-center" }).setChild([
+        new SmallAvatarComponent({
+          imagePath: this.props.user.avatarUrl
+        }),
+        new TagComponent({
+          label: this.props.user.status == 0 ? "Offline" : "Online",
+          color: this.props.user.status == 0 ? "gray" : "green"
+        }),
+        elem("h4").setProps({ class: "font-semibold text-lg" }).addChild(this.props.user.nickname),
+        elem("p").setProps({ class: "text-gray-500 text-sm" }).addChild(`MMR: ${this.props.user.rating}`)
+      ]),
+      // Buttons
+      elem("div").setProps({ class: "friend-item-buttons flex gap-2 items-center ml-auto opacity-0 transition-all duration-200" }).setChild([
+        new ButtonComponent({
+          icon: "ti ti-device-gamepad",
+          color: "green",
+          type: "outline",
+          isDisabled: true
+        }).onClick(() => {
+        }),
+        new ButtonComponent({
+          icon: "ti ti-minus",
+          color: "red",
+          type: "outline"
+        }).onClick(() => {
+        })
+      ])
+    ]);
+  }
+};
+
+// src/components/content/profile-page-content/friend-list/FrienListComponent.ts
+var FriendListComponent = class extends component_default {
+  constructor() {
+    super(...arguments);
+    this.componentName = "friend-list-componet";
+  }
+  data() {
+    return {
+      friends: [
+        new User({ id: 1, rating: 1510, nickname: "tmazitov", avatar: "avatars/a8eb4228-57e5-472f-a839-e9199ff9bbb8-1-shifu.jpg", status: 0 }),
+        new User({ id: 2, rating: 1140, nickname: "tmazitov", avatar: "avatars/a8eb4228-57e5-472f-a839-e9199ff9bbb8-1-shifu.jpg", status: 1 }),
+        new User({ id: 3, rating: 890, nickname: "tmazitov", avatar: "avatars/a8eb4228-57e5-472f-a839-e9199ff9bbb8-1-shifu.jpg", status: 0 })
+      ]
+    };
+  }
+  template() {
+    return elem("div").setProps({ class: "flex flex-col gap-2" }).setChild(this.state.friends.map((user) => {
+      let imagePath = null;
+      if (!user) {
+        imagePath = null;
+      } else if (user.avatarUrl && user.avatarUrl.startsWith("http")) {
+        imagePath = user.avatarUrl;
+      } else if (user.avatarUrl) {
+        imagePath = `http://localhost:5000/auth/public/${user.avatarUrl}`;
+      } else {
+        imagePath = "http://localhost:5000/auth/public/avatars/default.png";
+      }
+      user.avatarUrl = imagePath;
+      console.log("imagePath", imagePath);
+      return new FriendListItemComponent(user);
+    }));
+  }
+};
+
 // src/components/content/profile-page-content/GamesTableRowComponent.ts
 var GamesTableRowComponent = class extends component_default {
   constructor(userId, gameStat) {
@@ -5705,7 +5811,8 @@ var ProfilePageContent = class extends component_default {
     return elem("div").setChild([
       new TabsLayout([
         { title: "Info", content: new InfoContentComponent() },
-        { title: "Games", content: new GamesContentComponent() }
+        { title: "Games", content: new GamesContentComponent() },
+        { title: "Friends", content: new FriendListComponent() }
       ])
     ]);
   }
