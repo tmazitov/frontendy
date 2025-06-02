@@ -1,13 +1,16 @@
 import API from "../../../api/api";
+import LoadingLayout from "../../../layouts/loading/LoadingLayout";
 import router from "../../../pages/router";
 import EventBroker from "../../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
+import RatingChangeItem from "../../../pkg/rating";
 import Store from "../../../store/store";
 import User from "../../../types/User";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import TagComponent, { TagColor } from "../../inputs/TagComponent";
 import ProfileAvatarComponent from "./ProfileAvatarComponent";
+import RatingUpdateChartComponent from "./RatingUpdateChartComponent";
 
 const statuses:Array<{icon:string, label:string, color: TagColor}> = [
     {icon: "ti ti-user-cancel", label : "Offline", color: "gray"},
@@ -22,6 +25,7 @@ export default class InfoContentComponent extends FrontendyComponent {
         return {
             isDeleteAccountModalOpen: false,
             user: undefined,
+            ratingChange: undefined,
         }
     }
 
@@ -31,6 +35,14 @@ export default class InfoContentComponent extends FrontendyComponent {
                 return 
             }
             this.state.user = user
+        })
+        Store.setters.setupRatingChanges()
+        Store.getters.userRatingChanges((rates:Array<RatingChangeItem>|undefined) => {
+            console.log("rates", rates)
+            if (rates === undefined) {
+                return
+            }
+            this.state.ratingChange = rates
         })
     }
 
@@ -69,10 +81,20 @@ export default class InfoContentComponent extends FrontendyComponent {
         } else {
             imagePath = "http://localhost:5000/auth/public/avatars/default.png"
         }
-    
+        
+
+        console.log("ratingChange : ", this.state.ratingChange)
+
+        const ratingChart = this.state.ratingChange === undefined ? 
+            new LoadingLayout({
+                label: "Loading rating updates...",
+                icon: "ti ti-loader",
+            }).setShow(true) : 
+            new RatingUpdateChartComponent({ rates: this.state.ratingChange})
+
 
         return elem('div')
-        .setProps({class: "grid grid-cols-[8rem_1fr] gap-4 w-full"})
+        .setProps({class: "grid grid-cols-[8rem_1fr_18rem] gap-4 w-full"})
         .setChild([
 
             // Image container
@@ -86,36 +108,40 @@ export default class InfoContentComponent extends FrontendyComponent {
             elem('div')
             .setProps({class: "h-32"})
             .setChild([
-            elem('div')
-            .setProps({class: "flex flex-col gap-2 justify-between h-full "})
-            .setChild([
                 elem('div')
-                .setProps({class: "flex gap-2 flex-col"})
+                .setProps({class: "flex flex-col gap-2 justify-between h-full "})
                 .setChild([
-                elem('h2')
-                    .setProps({class: "text-xl font-bold"})
-                    .addChild(text(this.state.user?.nickname)),
-            
-                    elem('p')
-                    .setProps({class: "text-gray-600 text-sm"})
-                    .addChild(text("Played games: 0")),
-                    
-                    elem('p')
-                    .setProps({class: "text-gray-600 text-sm"})
-                    .addChild(text(`Rating: ${this.state.user?.rating}`)),
-                ]),
+                    elem('div')
+                    .setProps({class: "flex gap-2 flex-col"})
+                    .setChild([
+                    elem('h2')
+                        .setProps({class: "text-xl font-bold"})
+                        .addChild(text(this.state.user?.nickname)),
+                
+                        elem('p')
+                        .setProps({class: "text-gray-600 text-sm"})
+                        .addChild(text("Played games: 0")),
+                        
+                        elem('p')
+                        .setProps({class: "text-gray-600 text-sm"})
+                        .addChild(text(`Rating: ${this.state.user?.rating}`)),
+                    ]),
 
-                elem('div')
-                .setProps({class: "flex gap-2"})
-                .setChild([
-                    new ButtonComponent({icon: "ti ti-settings", color: "blue", type: "outline"})
-                    .onClick(() => router.push("profile-settings")),
+                    elem('div')
+                    .setProps({class: "flex gap-2"})
+                    .setChild([
+                        new ButtonComponent({icon: "ti ti-settings", color: "blue", type: "outline"})
+                        .onClick(() => router.push("profile-settings")),
 
-                    new ButtonComponent({icon: "ti ti-logout", color: "red", type: "outline"})
-                    .onClick(() => this.signoutHandler())
-                ]),
-            ])
+                        new ButtonComponent({icon: "ti ti-logout", color: "red", type: "outline"})
+                        .onClick(() => this.signoutHandler())
+                    ]),
+                ])
             ]),
+
+            elem('div')
+            .setProps({class: "relative h-32"})
+            .addChild(ratingChart)
         ])
     }
 }
