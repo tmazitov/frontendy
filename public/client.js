@@ -4657,6 +4657,10 @@ var PaddleComponent = class extends component_default {
   constructor(props) {
     super(props);
     this.componentName = "paddle-component";
+    setInterval(() => {
+      const el = this.el;
+      el.style.top = `${Math.max(this.props.top + 16, 16)}px`;
+    }, 10);
   }
   template() {
     const position = `top-[${this.props.top + 16}px] ${this.props.side == "left" ? "left" : "right"}-[16px]`;
@@ -4665,6 +4669,8 @@ var PaddleComponent = class extends component_default {
 };
 
 // src/components/content/game-page-content/SceneComponent.ts
+var player1direction = 0;
+var player2direction = 0;
 var SceneComponent = class extends component_default {
   constructor() {
     super(...arguments);
@@ -4683,14 +4689,29 @@ var SceneComponent = class extends component_default {
       if (!state) {
         return;
       }
-      console.log("new state!", state, "is change 1", this.state.player1Config.top, state.player1Pos, "is change 2", this.state.player2Config.top, state.player2Pos);
-      if (this.state.player1Config.top !== state.player1Pos) {
-        this.state.player1Config = { top: state.player1Pos, side: "left" };
+      if (this.state.player1Config.top > state.player1Pos) {
+        player1direction = -1;
+      } else if (this.state.player1Config.top < state.player1Pos) {
+        player1direction = 1;
+      } else {
+        player1direction = 0;
       }
-      if (this.state.player2Config.top !== state.player2Pos) {
-        this.state.player2Config = { top: state.player2Pos, side: "right" };
+      if (this.state.player2Config.top > state.player2Pos) {
+        player2direction = -1;
+      } else if (this.state.player2Config.top < state.player2Pos) {
+        player2direction = 1;
+      } else {
+        player2direction = 0;
       }
     });
+    setInterval(() => {
+      if (player1direction !== 0) {
+        this.state.player1Config.top += 1.5 * player1direction;
+      }
+      if (player2direction !== 0) {
+        this.state.player2Config.top += 1.5 * player2direction;
+      }
+    }, 10);
   }
   template() {
     return elem("div").setProps({ class: "p-[16px] w-[512px] h-[320px] relative bg-gray-100 rounded-lg shadow-md" }).setChild([

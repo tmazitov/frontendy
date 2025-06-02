@@ -5,6 +5,9 @@ import GameState from "../../../pkg/game/play/state";
 import DelimeterComponent from "./DelimeterComponet";
 import PaddleComponent from "./PaddleComponent";
 
+let player1direction = 0;
+let player2direction = 0;
+
 export default class SceneComponent extends FrontendyComponent {
     componentName: string = 'scene-component';
 
@@ -24,19 +27,40 @@ export default class SceneComponent extends FrontendyComponent {
                 return ;
             }
 
-            console.log("new state!", state, 'is change 1', this.state.player1Config.top , state.player1Pos, 'is change 2', this.state.player2Config.top , state.player2Pos);
+            
+            if (this.state.player1Config.top > state.player1Pos) {
+                player1direction = -1;
+            } else if (this.state.player1Config.top < state.player1Pos) {
+                player1direction = 1;
+            } else {
+                player1direction = 0;
+            }
+            
+            // this.state.player1Config.top = state.player1Pos;
 
-            if (this.state.player1Config.top !== state.player1Pos) {
-                this.state.player1Config = {top : state.player1Pos, side: 'left'};
+            if (this.state.player2Config.top > state.player2Pos) {
+                player2direction = -1;
+            } else if (this.state.player2Config.top < state.player2Pos) {
+                player2direction = 1;
+            } else {
+                player2direction = 0;
             }
 
-            if (this.state.player2Config.top !== state.player2Pos) {
-                this.state.player2Config = {top : state.player2Pos, side: 'right'};
-            }
+            // this.state.player2Config.top = state.player2Pos;
+
 
             // this.state.ballConfig.top = state.ball.top;
             // this.state.ballConfig.left = state.ball.left;
         })
+
+        setInterval(() => {
+            if (player1direction !== 0) {
+                this.state.player1Config.top += 1.5 * player1direction;
+            }
+            if (player2direction !== 0) {
+                this.state.player2Config.top += 1.5 * player2direction;
+            }
+        }, 10)
     }
 
     template() {

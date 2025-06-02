@@ -13,8 +13,11 @@ export default class PaddleComponent extends FrontendyComponent {
 
     constructor(props: PaddleComponentProps) {
         super(props);
+        setInterval(() => {
+            const el = this.el as HTMLElement;
+            el.style.top = `${Math.max(this.props.top + 16, 16)}px`;
+        }, 10)
     }
-
 
     template() {
         
