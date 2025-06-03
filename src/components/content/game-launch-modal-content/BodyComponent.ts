@@ -24,6 +24,7 @@ export default class GameLauchBodyComponent extends FrontendyComponent {
         return {
             rating: undefined,
             selectedOption: PreferModeStorage.get() ?? 1,
+            onlineMode: false,
         }
     }
 
@@ -64,7 +65,8 @@ export default class GameLauchBodyComponent extends FrontendyComponent {
                 elem("hr").setProps({ class: "my-4 border-gray-300" }),
 
                 new GameDescriptionComponent(games[this.state.selectedOption]),
-                new GameCurrentRatingComponent(this.state.rating),
+                new GameCurrentRatingComponent(this.state.rating, this.state.onlineMode)
+                    .onChangeGameMode((value: boolean) => this.state.onlineMode = value),
 
                 new ButtonComponent({
                     label: "Find Game",
