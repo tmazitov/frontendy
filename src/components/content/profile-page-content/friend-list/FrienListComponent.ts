@@ -3,6 +3,7 @@ import { elem } from "../../../../pkg/frontendy/vdom/constructor";
 import Store from "../../../../store/store";
 import User from "../../../../types/User";
 import ButtonComponent from "../../../inputs/ButtonComponent";
+import AddFriendModal from "../../../modals/AddFriendModal";
 import DeleteFriendModal from "../../../modals/DeleteFriendModal";
 import FriendListItemComponent from "./FriendListItemComponent";
 
@@ -17,6 +18,7 @@ export default class FriendListComponent extends FrontendyComponent {
                 new User({id: 3, rating: 890, nickname: "rnartdin", avatar: "avatars/a8eb4228-57e5-472f-a839-e9199ff9bbb8-1-shifu.jpg", status: 0}),
             ],
             friendToDelete: undefined,
+            isAddFriendModalOpen: false,
         }
     }
 
@@ -55,8 +57,7 @@ export default class FriendListComponent extends FrontendyComponent {
                 icon: "ti ti-plus",
                 color: "blue",
                 type: "outline",
-            })),
-
+            }).onClick(() => this.state.isAddFriendModalOpen = true)),
 
             // Delete friend modal
             new DeleteFriendModal(this.state.friendToDelete,)
@@ -68,6 +69,12 @@ export default class FriendListComponent extends FrontendyComponent {
                 })
                 this.state.friendToDelete = undefined;
             }),
+
+            new AddFriendModal()
+            .setShow(this.state.isAddFriendModalOpen)
+            .onSubmit((nickname: string) => {
+                console.log("add friend", nickname);
+            })
         ])
     }
 }
