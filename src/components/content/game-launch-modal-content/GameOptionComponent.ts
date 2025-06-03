@@ -5,6 +5,7 @@ import Game from "../../../types/Game";
 type GameOptionProps = {
     game: Game
     isSelected: boolean;
+    isDisabled: boolean;
     onClick: (id: number) => void;
 }
 
@@ -22,17 +23,24 @@ export default class GameOptionComponent extends FrontendyComponent {
         const hoverStyles = this.props.isSelected ? "hover:border-blue-400" : "hover:border-blue-300";
         const backgroundStyles = this.props.isSelected ? "bg-blue-100" : "bg-white";
 
-        return elem('div')
-            .setProps({
-                class: `${sizeStyles} border-2 ${borderStyles} ${hoverStyles} ${backgroundStyles} select-none cursor-pointer  shadow-md transition duration-300`,
+        const disabledStyles = this.props.isDisabled ? "opacity-50 cursor-not-allowed" : "";
+
+        const optionElem = elem('div')
+        .setProps({
+            class: `${sizeStyles} border-2 ${borderStyles} ${disabledStyles} ${hoverStyles} ${backgroundStyles} select-none cursor-pointer  shadow-md transition duration-300`,
+        })
+        .setChild([
+            elem("i").setProps({ class: this.props.game.icon }),
+            elem("p").setProps({ class: "text-sm mt-2"})
+                .addChild(text(this.props.game.name)),
+        ])
+
+        if (!this.props.isDisabled) {
+            optionElem.addEventListener('click', () => {
+                this.props.onClick(this.props.game.id);
             })
-            .setChild([
-                elem("i").setProps({ class: this.props.game.icon }),
-                elem("p").setProps({ class: "text-sm mt-2"})
-                    .addChild(text(this.props.game.name)),
-            ])
-            .addEventListener('click', () => {
-                this.props.onClick(this.props.game.id)
-            })
+        }
+
+        return optionElem;
     }
 }

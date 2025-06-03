@@ -23,7 +23,7 @@ export default class GameLauchBodyComponent extends FrontendyComponent {
     data() {
         return {
             rating: undefined,
-            selectedOption: PreferModeStorage.get() ?? 0,
+            selectedOption: PreferModeStorage.get() ?? 1,
         }
     }
 
@@ -56,6 +56,7 @@ export default class GameLauchBodyComponent extends FrontendyComponent {
                             game: option,
                             isSelected: this.state.selectedOption === index,
                             onClick: this.updateSelectedOption.bind(this),
+                            isDisabled: index == 0,
                         })
                     }),
                 ]),
