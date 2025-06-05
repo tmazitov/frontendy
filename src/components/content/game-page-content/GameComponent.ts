@@ -1,28 +1,56 @@
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
 import Player from "../../../pkg/game/play/player";
+import SERVER_ACTION from "../../../pkg/game/play/server";
 import GameProc from "../../../pkg/game/play/ws";
+import Store from "../../../store/store";
+import GameDisconectedModal from "../../modals/GameDisconectedModal";
 import InfoBarComponent from "./InfoBarComponent";
 import SceneComponent from "./SceneComponent";
 
 export default class GameComponent extends FrontendyComponent {
     componentName: string = 'game-component';
 
-    data() {
-        return {}
+    data() {    
+        return {
+            opponentDisconected: false,
+        }
+    }
+
+    protected onMounted(): void {
+        GameProc.on(SERVER_ACTION.MatchOpponentDisconnected, () => {
+            this.state.opponentDisconected = true;
+        })
+        GameProc.on(SERVER_ACTION.MatchOpponentReconected, () => {
+            this.state.opponentDisconected = false;
+        })
+
+        GameProc.on(SERVER_ACTION.MatchStart, (data: any) => {
+            if (!data) { 
+                console.warn("MatchStart warning: data is undefined");
+                return ;
+            }
+
+            const state = data as Array<number>;
+            if (!state.length || state.length < 2) {
+                console.warn("MatchStart warning: player IDs are missing");
+                return ;
+            }
+
+            Store.setters.setupGamePlayersInfo(state)
+        })
     }
 
     template() {
         return elem('div')
             .setProps({class : "flex items-center flex-col"})
             .setChild([
-                new InfoBarComponent({
-                    player1Nickname: "Player 1",
-                    player2Nickname: "Player 2",
-                    player1Score: 0,
-                    player2Score: 0,
+                new InfoBarComponent(),
+                new SceneComponent({
+                    isOpponentDisconected: this.state.opponentDisconected,
                 }),
-                new SceneComponent(),
+
+                new GameDisconectedModal("opponent nickname").setShow(this.state.opponentDisconected)
             ])
     }
 }

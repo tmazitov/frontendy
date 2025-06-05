@@ -1,5 +1,6 @@
 import RatingChangeItem from "../pkg/rating";
 import GameStat from "../types/GameStat";
+import PlayersInfo from "../types/PlayersInfo";
 import User from "../types/User";
 import StoreState from "./state";
 
@@ -56,5 +57,9 @@ export default class StoreGetters {
     public async userRatingChanges(onUpdate?:(value:Array<RatingChangeItem>|undefined) => void): Promise<Array<RatingChangeItem> | undefined> {
      
         return this.state.ratingChanges.getValue(onUpdate);
+    }
+
+    public async gamePlayersInfo(onUpdate?:(value:PlayersInfo|undefined) => void): Promise<PlayersInfo | undefined> {
+        return this.state.gamePlayersInfo.getValue(onUpdate);
     }
 }

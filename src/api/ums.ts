@@ -11,7 +11,9 @@ import EventBroker from "../pkg/event-broker/eventBroker";
 export default class UMS {
 	private client: AxiosClient
     private instance: AxiosInstance
+    private baseUrl: string;
 	constructor(baseUrl: string) {
+        this.baseUrl = baseUrl;
 		this.client = new AxiosClient(baseUrl)
         this.instance = axios.create({
 			baseURL: baseUrl,
@@ -130,7 +132,15 @@ export default class UMS {
         })
     }
 
-    public async userGetInfo() {
+    public async userGetInfo(id?:number) {
+        
+        if (id !== undefined) {
+            return await this.client.request({
+                method: "GET",
+                url: `/user/${id}`,
+            })
+        }
+
         return await this.client.request({
             method: "GET",
             url: "/user",
@@ -167,5 +177,12 @@ export default class UMS {
                 nickname,
             }
         })
+    }
+
+    public defaultAvatarUrl(): string {
+
+        const baseURL = `${this.baseUrl}`.replace("api/rest", "public")
+
+        return `${baseURL}/avatars/default.png`
     }
 }

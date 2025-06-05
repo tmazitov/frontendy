@@ -8,8 +8,16 @@ import PaddleComponent from "./PaddleComponent";
 let player1direction = 0;
 let player2direction = 0;
 
+type SceneComponentProps = {
+    isOpponentDisconected?: boolean;
+}
+
 export default class SceneComponent extends FrontendyComponent {
     componentName: string = 'scene-component';
+
+    constructor(props?: SceneComponentProps) {
+        super(props);
+    }
 
     data() {
         return {
@@ -22,10 +30,17 @@ export default class SceneComponent extends FrontendyComponent {
     protected onCreated(): void {
         Player.onUpdatePosition((data:Record<string,any>) => {
 
+            if (this.props.isOpponentDisconected) {
+                console.log("sync canceled : opponent disconnected, waiting for reconnection...");
+                return ;
+            }
+
             const state = data.payload as GameState;
             if (!state) {
                 return ;
             }
+
+            
 
             
             if (this.state.player1Config.top > state.player1Pos) {
