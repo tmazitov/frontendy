@@ -133,15 +133,15 @@ export default class StoreSetters {
         }
     }
 
-    async setupGamePlayersInfo(playersIds:number[]) {
-        if (playersIds.length != 2) {
+    async setupGamePlayersInfo(player1State: {id:number, score:number}, player2State: {id:number, score:number}) {
+        if (!player1State || !player2State) {
             console.error("StoreSetters: setupGamePlayersInfo: playersIds length is not 2");
             return ;
         }
         
         let player1: User | undefined = undefined;
         try {
-            const response = await API.ums.userGetInfo(playersIds[0])
+            const response = await API.ums.userGetInfo(player1State.id)
             const data = response.data;
             if (!data) {
                 throw new Error("no user data in response");
@@ -153,7 +153,7 @@ export default class StoreSetters {
 
         let player2: User | undefined = undefined;
         try {
-            const response = await API.ums.userGetInfo(playersIds[1])
+            const response = await API.ums.userGetInfo(player2State.id)
             const data = response.data;
             if (!data) {
                 throw new Error("no user data in response");
@@ -167,8 +167,10 @@ export default class StoreSetters {
             console.error("StoreSetters: setupGamePlayersInfo: one of players is undefined");
             return ;
         }
+
+        const info = new PlayersInfo(player1, player2, player1State.score, player2State.score)
         
-        this.state.gamePlayersInfo.setValue(new PlayersInfo(player1, player2))
+        this.state.gamePlayersInfo.setValue(info);
     }
 }
 

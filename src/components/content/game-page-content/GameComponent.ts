@@ -31,13 +31,22 @@ export default class GameComponent extends FrontendyComponent {
                 return ;
             }
 
-            const state = data as Array<number>;
-            if (!state.length || state.length < 2) {
+            const state = data as {
+                player1: {
+                    id: number,
+                    score: number,
+                },
+                player2: {
+                    id: number,
+                    score: number,
+                }
+            };
+            if (!state.player1 || !state.player2) {
                 console.warn("MatchStart warning: player IDs are missing");
                 return ;
             }
 
-            Store.setters.setupGamePlayersInfo(state)
+            Store.setters.setupGamePlayersInfo(state.player1, state.player2);
         })
     }
 

@@ -18,9 +18,11 @@ export default class PlayersInfo {
     private player1?: PlayerInfo;
     private player2?: PlayerInfo;
 
-    constructor(player1Data: User, player2Data: User) {
+    constructor(player1Data: User, player2Data: User, player1Score: number = 0, player2Score: number = 0) {
         this.player1 = new PlayerInfo(player1Data.id, player1Data.avatarUrl, player1Data.nickname);
         this.player2 = new PlayerInfo(player2Data.id, player2Data.avatarUrl, player2Data.nickname);
+        this.player1.score = player1Score;
+        this.player2.score = player2Score;
     }
 
     // public isLoaded() {
