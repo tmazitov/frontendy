@@ -1,40 +1,44 @@
-import Fastify from 'fastify'
-import { readFile } from "fs/promises";
+import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
+import { readFile } from 'fs/promises';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const app = Fastify()
-const port = process.env.PORT || 3000; 
+const app = Fastify();
 
+const port = parseInt(process.env.PORT || '3000', 10);
 
-async function main() {
-  // First register static file serving
-  app.register(fastifyStatic, {
-    root: path.join(__dirname, '../public'),
-    prefix: '/public/',
-  });
+// 1. Регистрируем отдачу статики
+app.register(fastifyStatic, {
+	root: path.join(__dirname, '../public'),
+	prefix: '/public/',
+});
 
-  // Then the catch-all for client-side routing
-  app.get("/*", async (request, reply) => {
-    const requestURL = request.raw.url ? request.raw.url : ""
-    const url = new URL(requestURL, `http://${request.headers.host}`);
-    if (path.extname(url.pathname)) {
-      return reply.callNotFound();
-    }
-    const html = await readFile('index.html', 'utf-8');
-    return reply.type('text/html').send(html)
-  });
+// 2. Роут SPA
+app.get('/*', async (request, reply) => {
+	const url = new URL(request.url, `http://localhost`);
 
-  app.listen({ port: 3000 }, (err, address) => {
-    if (err) {
-      app.log.error(err)
-      process.exit(1)
-    }
-    console.log("Server listening at " + address)
-  })
-}
+	if (path.extname(url.pathname)) {
+		// Нет такого файла => 404
+		return reply.code(404).send();
+	}
 
-main()
+	try {
+		const html = await readFile(path.join(__dirname, '../public/index.html'), 'utf-8');
+		return reply.type('text/html').send(html);
+	} catch (err) {
+		console.error(err)
+		return reply.code(500).send('Internal Server Error');
+	}
+});
+
+// 3. Запуск сервера
+app.listen({ port }, (err, address) => {
+	if (err) {
+		app.log.error(err);
+		process.exit(1);
+	}
+	console.log(`🚀 Server listening at ${address}`);
+});
