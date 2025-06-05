@@ -10,6 +10,7 @@ type GameWebSocketParams = {
 
 export default class GameWebSocket {
     private static conn: WebSocketClient<ServerAction> | undefined;
+    private static listenerQueue: Map<ServerAction, (data: any) => void> = new Map();
 
     public static connect(params:GameWebSocketParams):void {
         if (GameWebSocket.conn !== undefined) {
@@ -20,6 +21,10 @@ export default class GameWebSocket {
         GameWebSocket.conn = new WebSocketClient<ServerAction>("ws://localhost:5002/game/api/ws", {
             onOpenCallback: () => {
                 console.log("GameWebSocket connection opened.");
+                this.listenerQueue.forEach((callback, action) => {
+                    GameWebSocket.conn?.on(action, callback);
+                });
+
                 if (params.onOpenCallback) {
                     params.onOpenCallback()
                 }
@@ -41,9 +46,11 @@ export default class GameWebSocket {
     }
 
     public static on(action: ServerAction, callback: (data: any) => void): void {
+
+        console.log("trying to add ", action)
         if (GameWebSocket.conn === undefined) {
-            console.warn("WebSocket connection does not exist. Cannot register action listener.");
-            setTimeout(() => this.on(action, callback), 100);
+            // console.warn("WebSocket connection does not exist. Cannot register action listener.");
+            this.listenerQueue.set(action, callback)
             return;
         }
 

@@ -28,7 +28,7 @@ export default class WebSocketClient<T> {
 
     public on(type: T, callback: (data: string | undefined) => void): WebSocketClient<T> {
         if (this.listeners.has(type)) {
-            throw new Error(`WebSocketClient error : Listener for ${type} already exists`);
+            console.warn(`WebSocketClient warning : Listener for ${type} already exists, overwriting...`);
         }
         this.listeners.set(type, callback);
         return this;

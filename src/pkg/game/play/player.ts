@@ -1,3 +1,4 @@
+import { MatchInfo } from "../../../types/MatchInfo";
 import MoveController from "./moveController";
 import SERVER_ACTION from "./server";
 import GameState from "./state";
@@ -10,22 +11,31 @@ enum PLAYER_ACTION {
     MoveDown = 'move_down',
 }
 
+type PlayerConnectionCallbacks = {
+    onAuthozided?: (state: MatchInfo) => void;
+    onUnauthorized?: () => void;
+}
+
 export default class Player {
     private static moveController: MoveController = new MoveController();
     private static moveHandler: ((event: KeyboardEvent) => void) | undefined;
     private static stopHandler: ((event: KeyboardEvent) => void) | undefined;
 
-    public static setup(accessToken:string, onUnauthorizedCallback:Function) {
-        GameWebSocket.on(SERVER_ACTION.Authorized, () => Player.onAuthorizedHandler())
-        GameWebSocket.on(SERVER_ACTION.Unauthorized, () => Player.onUnauthorizedHandler(onUnauthorizedCallback))
+    public static setup(accessToken:string, callbacks?:PlayerConnectionCallbacks) {
+
+        GameWebSocket.on(SERVER_ACTION.Authorized, (data) => Player.onAuthorizedHandler(data, callbacks?.onAuthozided ?? undefined));
+        GameWebSocket.on(SERVER_ACTION.Unauthorized, () => Player.onUnauthorizedHandler(callbacks?.onUnauthorized))
         
         GameWebSocket.connect({
             onOpenCallback: () => GameWebSocket.join(accessToken)
         })
     }
 
-    private static onAuthorizedHandler() {
+    private static onAuthorizedHandler(data:any, onAuthorizedCallback?:(state: MatchInfo) => void) {
         console.log("Player setup complete. Listening for key events...");
+
+        const payload = data.payload as MatchInfo;
+        onAuthorizedCallback?.(payload);
 
         this.moveHandler = (event:KeyboardEvent) => this.moveController.move(event);
         this.stopHandler = (event:KeyboardEvent) => this.moveController.stop(event);
@@ -34,9 +44,9 @@ export default class Player {
         window.addEventListener("keyup", this.stopHandler);
     }
 
-    private static onUnauthorizedHandler(onUnauthorizedCallback:Function) {
+    private static onUnauthorizedHandler(onUnauthorizedCallback?:Function) {
         GameWebSocket.close()
-        onUnauthorizedCallback()
+        onUnauthorizedCallback?.()
     }
 
     public static cleanup() {

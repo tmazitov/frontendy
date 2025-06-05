@@ -5,13 +5,17 @@ import DashboardComponent from "../layouts/dashboard/DashboardLayout";
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
 import Player from "../pkg/game/play/player";
+import Store from "../store/store";
+import { MatchInfo } from "../types/MatchInfo";
 import router from "./router";
 
 export default class GamePage extends FrontendyComponent {
     componentName: string = 'game-page';
 
     data() {
-        return {}
+        return {
+            matchStartWaitingConf: undefined,
+        }
     }
 
     protected onMounted(): void {
@@ -22,6 +26,25 @@ export default class GamePage extends FrontendyComponent {
         }
 
         let isCallbackActivated = false
+
+        const onAuthozedCallback = (data:MatchInfo) => {
+            if (!data) { 
+                console.warn("Authorized warning: data is undefined");
+                return ;
+            }
+
+            if (!data.player1 || !data.player2) {
+                console.warn("MatchStart warning: player IDs are missing : ", data);
+                return ;
+            }
+
+            const timeLeft = data.timeLeft;
+            const matchIsReady = data.isMatchReady;
+
+            this.state.matchStartWaitingConf = {timeLeft, matchIsReady}
+
+            Store.setters.setupGamePlayersInfo(data.player1, data.player2);
+        }
         const onUnauthorizedCallback = () => {
             if (isCallbackActivated) {
                 router.push('home');
@@ -29,10 +52,16 @@ export default class GamePage extends FrontendyComponent {
             }
             isCallbackActivated = true;
             API.ums.refresh()
-            .then(() => Player.setup(tokens.accessToken, onUnauthorizedCallback))
+            .then(() => Player.setup(tokens.accessToken, {
+                onAuthozided: onAuthozedCallback,
+                onUnauthorized: onUnauthorizedCallback
+            }))
         }
 
-        Player.setup(tokens.accessToken, onUnauthorizedCallback);
+        Player.setup(tokens.accessToken, {
+            onAuthozided: onAuthozedCallback,
+            onUnauthorized: onUnauthorizedCallback
+        });
     }
 
     protected onUnmounted(): void {
@@ -42,7 +71,7 @@ export default class GamePage extends FrontendyComponent {
 
     template() {
         const dashboard = new DashboardComponent()
-            .setSlot("content", new GameComponent())
+            .setSlot("content", new GameComponent(this.state.matchStartWaitingConf))
         
         return elem("div")
             .setProps({ id: "game-page"})

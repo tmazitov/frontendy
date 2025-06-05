@@ -11,6 +11,10 @@ import SceneComponent from "./SceneComponent";
 export default class GameComponent extends FrontendyComponent {
     componentName: string = 'game-component';
 
+    constructor(matchStartWaitingConf: {timeLeft: number, matchIsReady: boolean}) {
+        super({matchStartWaitingConf});
+    }
+
     data() {    
         return {
             opponentDisconected: false,
@@ -26,31 +30,14 @@ export default class GameComponent extends FrontendyComponent {
         })
 
         GameProc.on(SERVER_ACTION.MatchStart, (data: any) => {
-            if (!data) { 
-                console.warn("MatchStart warning: data is undefined");
-                return ;
-            }
 
-            const state = data as {
-                player1: {
-                    id: number,
-                    score: number,
-                },
-                player2: {
-                    id: number,
-                    score: number,
-                }
-            };
-            if (!state.player1 || !state.player2) {
-                console.warn("MatchStart warning: player IDs are missing");
-                return ;
-            }
-
-            Store.setters.setupGamePlayersInfo(state.player1, state.player2);
         })
     }
 
     template() {
+
+        console.log("wait config", this.props.matchStartWaitingConf);
+
         return elem('div')
             .setProps({class : "flex items-center flex-col"})
             .setChild([

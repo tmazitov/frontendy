@@ -27,18 +27,21 @@ export default class GameDisconectedModal extends FrontendyComponent {
 
     public setShow(value: boolean) {
         this.state.show = value;
+        if (this.state.show) {
+            TimerStorage.addTimer("game-disconected-modal", (counter: number) => {
+                if (this.state.timer == 0) {
+                    this.setShow(false);
+                    TimerStorage.removeTimer("game-disconected-modal");
+                    return;
+                }
+                this.state.timer = 30 - counter;
+            })
+        }
         return this 
     }
 
     public onMounted(): void {
-        TimerStorage.addTimer("game-disconected-modal", (counter: number) => {
-            if (this.state.timer == 0) {
-                this.setShow(false);
-                TimerStorage.removeTimer("game-disconected-modal");
-                return;
-            }
-            this.state.timer = 30 - counter;
-        })
+
     }
 
     template() {
