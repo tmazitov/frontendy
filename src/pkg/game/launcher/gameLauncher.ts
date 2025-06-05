@@ -1,3 +1,4 @@
+import router from "../../../pages/router";
 import Store from "../../../store/store";
 import Game from "../../../types/Game";
 import EventBroker from "../../event-broker/eventBroker";
@@ -22,6 +23,7 @@ export default class GameLauncher {
         try {
             const opts = {
                 onOpenCallback: () => this.onEstablishConnection(accessToken, game, options.onConnectedCallback),
+                onCloseCallback: () => this.onCloseConnection(),
             }
 
             const user = await Store.getters.user()
@@ -35,6 +37,7 @@ export default class GameLauncher {
                 .on(MMRS_Server_Messages.MATCH_FOUND, (data: any) => this.matchFoundHandler(data))
                 .on(MMRS_Server_Messages.MATCH_TIMEOUT, (data: any) => this.matchTimeoutHandler(data))
                 .on(MMRS_Server_Messages.UNAUTHORIZED, (data:any) => this.unatuhorizedHandler(data, options.onUnauthorizedCallback))
+                .on(MMRS_Server_Messages.MATCH_READY, (data:any) => this.matchReadyHandler())
                 // .on(MMRS_Messages.MATCH_WAIT, (data: any) => {}); 
                 // .on(MMRS_Messages.MATCH_CONFIRM, (data: any) => {})
                 // .on(MMRS_Messages.MATCH_REJECT, (data: any) => {})
@@ -50,12 +53,18 @@ export default class GameLauncher {
         this.client?.send(MMRS_Client_Messages.JOIN, {token: accessToken})
     }
 
-    static stopGameSearching() {
+    private static onCloseConnection() {
+        console.log("GameLauncher : WebSocket connection closed");
         this.searchGameType = null;
-        this.userId = undefined;
-        this.confirmation = undefined
-        this.client?.close();
+        this.isConfirmed = false;
+        this.confirmation = undefined;
+        this.client = undefined;
         EventBroker.getInstance().emit("deactivate-search-game-bar");
+        EventBroker.getInstance().emit("deactivate-confirmation-modal");
+    }
+
+    static stopGameSearching() {
+        this.client?.close();
     }
 
     private static unatuhorizedHandler(data: any, onUnauthorizedCallback?:Function) {
@@ -86,12 +95,19 @@ export default class GameLauncher {
     private static matchTimeoutHandler(data: any) {
         this.confirmation = undefined
         if (this.isConfirmed) {
-            EventBroker.getInstance().emit("activate-search-game-bar");
+            EventBroker.getInstance().emit("deactivate-confirmation-modal");
+            EventBroker.getInstance().emit("deactivate-search-game-bar");
+            EventBroker.getInstance().emit("activate-search-game-bar", this.searchGameType);
+            this.isConfirmed = false
         } else  {
-            this.client?.close();
+            this.stopGameSearching()
         }
-        EventBroker.getInstance().emit("deactivate-confirmation-modal", this.searchGameType);
-    }   
+    }
+
+    private static matchReadyHandler() {
+        this.stopGameSearching();
+        router.push('game')
+    }
 
     public static async confirmGame(callback: Function | null = null) {
         if (this.isConfirmed || !this.confirmation) {

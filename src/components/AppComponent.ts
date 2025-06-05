@@ -41,24 +41,30 @@ export default class AppComponent extends Component {
     onMounted(): void {
         EventBroker.getInstance().on("activate-search-game-bar", (game: Game) => {
             if (this.state.searchGameType) {
+                console.warn("unable to activate search game bar, because it is already active");
                 return;
             }
             this.state.searchGameType = game;
+            console.log("APP : search bar activated")
         })  
         EventBroker.getInstance().on("deactivate-search-game-bar", () => {
             if (!this.state.searchGameType) {
+                console.warn("unable to deactivate search game bar, because it is not active");
                 return;
             }
             TimerStorage.removeTimer("game-search-bar");
             this.state.searchGameType = null;
+            console.log("APP : search bar deactivated")
         })
         EventBroker.getInstance().on("activate-confirmation-modal", (data:{confirmTime: number}) => {
             this.state.showGameConfirmationModal = true;
             this.state.confirmTime = data.confirmTime;
+            console.log("APP : confirmation modal activated", data.confirmTime);
         })
         EventBroker.getInstance().on("deactivate-confirmation-modal", () => {
             TimerStorage.removeTimer("game-confirmation-modal");
             this.state.showGameConfirmationModal = false;
+            console.log("APP : confirmation modal deactivated");
         })
 
         EventBroker.getInstance().on("update-auth", () => {

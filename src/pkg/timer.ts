@@ -39,7 +39,7 @@ class TimerStorage {
 
     static addTimer(name: string, onChange: (counter: number) => void) {
         if (this.timers.has(name)) {
-            throw new Error(`Timer with name ${name} already exists`);
+            return;
         }
         
         const timer = new Timer();
