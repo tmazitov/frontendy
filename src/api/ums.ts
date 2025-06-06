@@ -68,7 +68,6 @@ export default class UMS {
 
     public async refresh() {
         const tokens = getTokens()
-		console.log('old tokens :>> ', tokens);
 
 		try {
 			const response = await this.instance.request({
@@ -85,13 +84,10 @@ export default class UMS {
 			if (response && response.data) {
 				cacheTokens(response.data)
 			}
-			console.log('new tokens :>> ', response.data);
 			return response
 		} catch (error: any) {
-			console.log('refresh error :>> ', error);
 			if (error.response && error.response.status == 401) {
 				setTimeout(async () => {
-					// await API.ums.signOut()
 					removeTokens()
 
 					router.push("home")

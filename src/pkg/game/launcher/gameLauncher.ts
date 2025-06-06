@@ -22,7 +22,7 @@ export default class GameLauncher {
     static async startGameSearching(accessToken:string, game:Game, options: GameLauncherOptions = {}) {
         try {
             const opts = {
-                onOpenCallback: () => this.onEstablishConnection(accessToken, game, options.onConnectedCallback),
+                onOpenCallback: () => this.onEstablishConnection(accessToken, game),
                 onCloseCallback: () => this.onCloseConnection(),
             }
 
@@ -31,7 +31,9 @@ export default class GameLauncher {
                 return ;
             }
 
-            const addr = `ws://localhost:5001/matchmaking`;
+            const addr = game.id == 1 ?     
+                `ws://localhost:5001/matchmaking` : `ws://localhost:5001/tournament`;
+            
             this.client = new WebSocketClient<MMRS_Server_Messages>(addr, opts)
                 .on(MMRS_Server_Messages.MATCH_SEARCH, (data: any) => this.matchSearchStartHandler(game, options.onConnectedCallback))
                 .on(MMRS_Server_Messages.MATCH_FOUND, (data: any) => this.matchFoundHandler(data))
@@ -48,7 +50,7 @@ export default class GameLauncher {
         }
     }
 
-    private static onEstablishConnection(accessToken:string, game: Game, onConnectedCallback?: Function) {
+    private static onEstablishConnection(accessToken:string, game: Game) {
         console.log("GameLauncher : WebSocket connection opened");
         this.client?.send(MMRS_Client_Messages.JOIN, {token: accessToken})
     }
