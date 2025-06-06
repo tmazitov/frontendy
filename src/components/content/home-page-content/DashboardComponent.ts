@@ -1,8 +1,10 @@
+import API from "../../../api/api";
 import { isAuthorized } from "../../../api/client";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 import InfoParagraphComponent from "../../inputs/InfoParagraphComponent";
 import PlayButtonComponent from "./PlayButtonComponent";
+import RatingLeaderboardComponent from "./RatingLeaderboardComponent";
 
 export default class DashboardComponent extends FrontendyComponent {
     componentName: string = 'home-dashboard-component';
@@ -19,7 +21,9 @@ export default class DashboardComponent extends FrontendyComponent {
                 .addChild(text(`Home`)),
                 
                 new InfoParagraphComponent("Welcome to the ft_transcendence!"),
-                new InfoParagraphComponent("There will be some tools and players statistics soon."),
+                new InfoParagraphComponent("There you can explore a rating leaderboard."),
+
+                new RatingLeaderboardComponent(),
                 
                 isAuthorized() ?
                     new PlayButtonComponent()

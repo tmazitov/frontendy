@@ -175,6 +175,13 @@ export default class UMS {
         })
     }
 
+    public async leaderboard() {
+        return await this.instance.request({
+            method: "GET",
+            url: "/rating/leader",
+        })
+    }
+
     public defaultAvatarUrl(): string {
 
         const baseURL = `${this.baseUrl}`.replace("api/rest", "public")
