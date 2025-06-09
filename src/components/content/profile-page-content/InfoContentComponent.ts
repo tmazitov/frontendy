@@ -4,8 +4,8 @@ import router from "../../../pages/router";
 import EventBroker from "../../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
-import RatingChangeItem from "../../../pkg/rating";
 import Store from "../../../store/store";
+import RatingChangeInfo from "../../../types/RatingChangeInfo";
 import User from "../../../types/User";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import TagComponent, { TagColor } from "../../inputs/TagComponent";
@@ -25,24 +25,24 @@ export default class InfoContentComponent extends FrontendyComponent {
         return {
             isDeleteAccountModalOpen: false,
             user: undefined,
-            ratingChange: undefined,
+            ratingChangeInfo: undefined,
         }
     }
 
     protected onCreated(): void {
         Store.getters.user((user:User|undefined) => {
             if (!user) {
-                return 
+                return ;
             }
-            this.state.user = user
+            this.state.user = user;
         })
         Store.setters.setupRatingChanges()
-        Store.getters.userRatingChanges((rates:Array<RatingChangeItem>|undefined) => {
-            console.log("rates", rates)
-            if (rates === undefined) {
-                return
+        Store.getters.userRatingChanges((info: RatingChangeInfo|undefined) => {
+            if (!info) {
+                return ;
             }
-            this.state.ratingChange = rates
+
+            this.state.ratingChangeInfo = info;
         })
     }
 
@@ -83,14 +83,13 @@ export default class InfoContentComponent extends FrontendyComponent {
         }
         
 
-        console.log("ratingChange : ", this.state.ratingChange)
 
-        const ratingChart = this.state.ratingChange === undefined ? 
+        const ratingChart = this.state.ratingChangeInfo === undefined ? 
             new LoadingLayout({
                 label: "Loading rating updates...",
                 icon: "ti ti-loader",
             }).setShow(true) : 
-            new RatingUpdateChartComponent({ rates: this.state.ratingChange})
+            new RatingUpdateChartComponent({ rates: this.state.ratingChangeInfo.updates})
 
 
         return elem('div')
@@ -120,7 +119,7 @@ export default class InfoContentComponent extends FrontendyComponent {
                 
                         elem('p')
                         .setProps({class: "text-gray-600 text-sm"})
-                        .addChild(text("Played games: 0")),
+                        .addChild(text(`Played games: ${this.state.ratingChangeInfo?.playedMatches ?? 0}`)),
                         
                         elem('p')
                         .setProps({class: "text-gray-600 text-sm"})

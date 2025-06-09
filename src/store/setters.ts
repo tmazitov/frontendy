@@ -2,6 +2,7 @@ import API from "../api/api";
 import { isAuthorized } from "../api/client";
 import GameStat from "../types/GameStat";
 import PlayersInfo from "../types/PlayersInfo";
+import RatingChangeItem from "../types/RatingChangeItem";
 import User from "../types/User";
 import StoreState from "./state";
 
@@ -79,54 +80,48 @@ export default class StoreSetters {
             return ;
         }
         try {
-            // const response = await API.mmrs.userMatchStats()
-            // if (!response) {
-            //     throw new Error("no response");
-            // }
-            // if (response.status == 204) {
-            //     this.state.gameStats.setValue([]);
-            // } else if (response.status == 200) {
-
-            //     if (!response.data || response.data instanceof Array === false) {
-            //         throw new Error("no game stats data in response");
-            //     }
-
-            //     console.log("StoreSetters: setupGameStats response:", response.data);
-            //     const gameStats = response.data.map((stat: any) => new GameStat(stat));
-            //     this.state.gameStats.setValue(gameStats);
-            // } else {
-            //     throw new Error("unexpected response status: " + response.status);
-            // }
-
-            this.state.user.getValue((value: User | undefined) => {
-                if (!value) {
+            this.state.user.getValue(async(user: User | undefined) => {
+                if (!user) {
                     console.error("no user!")
                     return ;
                 }
-                const currentDate = new Date()
-                let currentRating = value.rating
+               
+                try{
+                    const response = await API.mmrs.userRatingUpdates(user.id)
+                    if (!response || !response.data) {
+                        throw new Error("no response or data in response");
+                    }
+                    const data = response.data as {playedMatches: number, updates: Array<{date: string, rate: number}>};
+                    if (!data || !data.updates || !Array.isArray(data.updates)) {
+                        throw new Error("no updates in response data");
+                    }
 
-                const testValues = [25, 25, 25, -25, -25, 25, -25, 25, 25, -25].map((value) => {
-                    const ratingChangeDate = new Date()
-                    ratingChangeDate.setDate(currentDate.getDate() - Math.floor(Math.random() * 10))
-    
-                    return {
-                        date: ratingChangeDate,
-                        rate: value
+                    let currentRating = user.rating;
+                    const values = data.updates
+                    .map((update: {date: string, rate: number}) => {
+                        return {date: new Date(update.date), rate: update.rate};
+                    })
+                    .sort((a, b) => a.date.getTime() - b.date.getTime())
+        
+                    for (let i = values.length - 1; i >= 0; i--) {
+                        if (i == values.length - 1) {
+                            values[i].rate = currentRating;
+                        } else {
+                            values[i].rate += currentRating;
+                        }
+                        currentRating = values[i].rate;
                     }
-                })
-                .sort((a, b) => a.date.getTime() - b.date.getTime())
-                
-                for (let i = testValues.length - 1; i >= 0; i--) {
-                    if (i == testValues.length - 1) {
-                        testValues[i].rate = currentRating;
-                    } else {
-                        testValues[i].rate += currentRating;
-                    }
-                    currentRating = testValues[i].rate;
+
+                    
+
+                    this.state.ratingChanges.setValue({
+                        playedMatches: data.playedMatches,
+                        updates: values,
+                    });
+                } catch (e) {
+                    console.error("StoreSetters: setupRatingChanges: error getting rating updates :", e);
+                    return ;
                 }
-
-                this.state.ratingChanges.setValue(testValues);
             });
         } catch (e) {
             console.error("Store error: can't get game stats :", e);

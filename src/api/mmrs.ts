@@ -14,4 +14,13 @@ export default class MMRS {
 
         return response;
     }
+
+    public async userRatingUpdates(userId: number) {
+        const response = await this.client.request({
+            method: "GET",
+            url: `/rating/updates/${userId}`,
+        });
+
+        return response;
+    }
 }
