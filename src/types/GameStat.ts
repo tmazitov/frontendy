@@ -7,7 +7,7 @@ class GameStat {
 
     constructor(data:any) {
         this.uid = data.uid || data.id;
-        this.date = new Date(data.staredAt || data.started_at);
+        this.date = new Date(data.startedAt || data.started_at);
         this.typeId = data.typeId || data.mode;
         this.statusId = data.statusId || data.status;
         this.winnerId = data.winnerId || data.winner_id;
