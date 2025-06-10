@@ -1,15 +1,19 @@
+import { info } from "console";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
 import Player from "../../../pkg/game/play/player";
 import GameState from "../../../pkg/game/play/state";
+import { MatchBallInfo, MatchPaddleInfo, MatchSceneInfo } from "../../../types/MatchSceneInfo";
 import DelimeterComponent from "./DelimeterComponet";
 import PaddleComponent from "./PaddleComponent";
+import BallComponent from "./BallComponent";
 
 let player1direction = 0;
 let player2direction = 0;
 
 type SceneComponentProps = {
     isOpponentDisconected?: boolean;
+    matchSceneConf?: MatchSceneInfo;
 }
 
 export default class SceneComponent extends FrontendyComponent {
@@ -21,9 +25,20 @@ export default class SceneComponent extends FrontendyComponent {
 
     data() {
         return {
-            player1Config: {top: 0, side: 'left'},
-            player2Config: {top: 0, side: 'right'},
-            // ballConfig: {top: 0, left: 0},
+            player1Config: {
+                info: this.props.matchSceneConf?.paddle1 || undefined,
+                isHidden: this.props.matchSceneConf === undefined,
+                side: 'left'
+            },
+            player2Config: {
+                info: this.props.matchSceneConf?.paddle2 || undefined,
+                isHidden: this.props.matchSceneConf === undefined,
+                side: 'right'
+            },
+            ballConfig: {
+                info: this.props.matchSceneConf?.ball || undefined,
+                isHidden: this.props.matchSceneConf === undefined,
+            },
         }
     }
 
@@ -39,43 +54,27 @@ export default class SceneComponent extends FrontendyComponent {
             if (!state) {
                 return ;
             }
-
             
-
-            
-            if (this.state.player1Config.top > state.player1Pos) {
-                player1direction = -1;
-            } else if (this.state.player1Config.top < state.player1Pos) {
-                player1direction = 1;
-            } else {
-                player1direction = 0;
+            const paddle1Info = this.state.player1Config.info as MatchPaddleInfo;
+            const paddle2Info = this.state.player2Config.info as MatchPaddleInfo;
+            const ballInfo = this.state.ballConfig.info as MatchBallInfo;
+            if (!paddle1Info || !paddle2Info || !ballInfo) {
+                console.warn("Sync warning: paddle or ball info is undefined");
+                return ;
             }
             
-            // this.state.player1Config.top = state.player1Pos;
+            // Update paddles info
+            paddle1Info.topLeftCornerPosY = state.paddle1.topLeftCornerPosY;
+            paddle1Info.topLeftCornerPosX = state.paddle2.topLeftCornerPosX;
+            paddle2Info.topLeftCornerPosY = state.paddle2.topLeftCornerPosY;
+            paddle2Info.topLeftCornerPosX = state.paddle2.topLeftCornerPosX;
 
-            if (this.state.player2Config.top > state.player2Pos) {
-                player2direction = -1;
-            } else if (this.state.player2Config.top < state.player2Pos) {
-                player2direction = 1;
-            } else {
-                player2direction = 0;
-            }
-
-            // this.state.player2Config.top = state.player2Pos;
-
-
-            // this.state.ballConfig.top = state.ball.top;
-            // this.state.ballConfig.left = state.ball.left;
+            // Update ball info
+            ballInfo.topLeftCornerPosY = state.ball.topLeftCornerPosY;
+            ballInfo.topLeftCornerPosX = state.ball.topLeftCornerPosX;
+            ballInfo.speedX = state.ball.speedX;
+            ballInfo.speedY = state.ball.speedY;
         })
-
-        setInterval(() => {
-            if (player1direction !== 0) {
-                this.state.player1Config.top += 1.5 * player1direction;
-            }
-            if (player2direction !== 0) {
-                this.state.player2Config.top += 1.5 * player2direction;
-            }
-        }, 10)
     }
 
     template() {
@@ -85,6 +84,7 @@ export default class SceneComponent extends FrontendyComponent {
                 new DelimeterComponent(),
                 new PaddleComponent(this.state.player1Config),
                 new PaddleComponent(this.state.player2Config),
+                new BallComponent(this.state.ballConfig),
             ])
     }
 }

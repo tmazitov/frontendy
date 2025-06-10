@@ -15,6 +15,7 @@ export default class GamePage extends FrontendyComponent {
     data() {
         return {
             matchStartWaitingConf: undefined,
+            matchSceneConf: undefined,
         }
     }
 
@@ -38,9 +39,10 @@ export default class GamePage extends FrontendyComponent {
                 return ;
             }
 
-            const timeLeft = data.timeLeft;
-            const matchIsReady = data.isMatchReady;
+            const timeLeft = Math.floor((data.timeoutTimestamp - Date.now()) / 1000);
+            const matchIsReady = data.player1.isOnline && data.player2.isOnline
 
+            this.state.matchObjInfo = data.scene;
             this.state.matchStartWaitingConf = {timeLeft, matchIsReady}
 
             Store.setters.setupGamePlayersInfo(data.player1, data.player2);
@@ -71,7 +73,10 @@ export default class GamePage extends FrontendyComponent {
 
     template() {
         const dashboard = new DashboardComponent()
-            .setSlot("content", new GameComponent(this.state.matchStartWaitingConf))
+            .setSlot("content", new GameComponent({
+                matchStartWaitingConf: this.state.matchStartWaitingConf,
+                matchSceneConf: this.state.matchObjInfo
+            }))
         
         return elem("div")
             .setProps({ id: "game-page"})

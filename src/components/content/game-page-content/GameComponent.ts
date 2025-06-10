@@ -4,15 +4,21 @@ import Player from "../../../pkg/game/play/player";
 import SERVER_ACTION from "../../../pkg/game/play/server";
 import GameProc from "../../../pkg/game/play/ws";
 import Store from "../../../store/store";
+import { MatchSceneInfo } from "../../../types/MatchSceneInfo";
 import GameDisconectedModal from "../../modals/GameDisconectedModal";
 import InfoBarComponent from "./InfoBarComponent";
 import SceneComponent from "./SceneComponent";
 
+type GameComponentProps = {
+    matchStartWaitingConf: {timeLeft: number, matchIsReady: boolean};
+    matchSceneConf?: MatchSceneInfo;
+}
+
 export default class GameComponent extends FrontendyComponent {
     componentName: string = 'game-component';
 
-    constructor(matchStartWaitingConf: {timeLeft: number, matchIsReady: boolean}) {
-        super({matchStartWaitingConf});
+    constructor(props: GameComponentProps) {
+        super(props);
     }
 
     data() {    
@@ -43,9 +49,10 @@ export default class GameComponent extends FrontendyComponent {
             .setChild([
                 new InfoBarComponent(),
                 new SceneComponent({
+                    matchSceneConf: this.props.matchSceneConf,
                     isOpponentDisconected: this.state.opponentDisconected,
                 }),
-
+                
                 new GameDisconectedModal("opponent nickname").setShow(this.state.opponentDisconected)
             ])
     }

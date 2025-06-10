@@ -1,40 +1,42 @@
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
-import { MatchPaddleInfo } from "../../../types/MatchSceneInfo";
+import { MatchBallInfo } from "../../../types/MatchSceneInfo";
 
-
-type PaddleComponentProps = {
+type BallComponentProps = {
     isHidden: boolean,
-    info: MatchPaddleInfo
+    info: MatchBallInfo,
 }
 
-export default class PaddleComponent extends FrontendyComponent {
-    componentName: string = 'paddle-component';
+let speedX = 0;
+let speedY = 0;
 
-    constructor(props: PaddleComponentProps) {
+export default class BallComponent extends FrontendyComponent {
+    componentName: string = 'ball-component';
+    constructor(props: BallComponentProps) {
         super(props);
         setInterval(() => {
             const el = this.el as HTMLElement;
-            if (el.style.display === 'none') {
+            if (this.props.isHidden) {
+                if (el.style.display !== 'none') {
+                    el.style.display = 'none';
+                }
                 return ;
             }
-            if (this.props.isHidden && el.style.display !== 'none') {
-                el.style.display = 'none';
-                return ;
-            }
-            const info = this.props.info as MatchPaddleInfo;
             if (el.style.display !== 'block') {
                 el.style.display = 'block';
             }
+            const info = this.props.info as MatchBallInfo;
             el.style.height = `${info.length}px`;
             el.style.width = `${info.width}px`;
             el.style.top = `${info.topLeftCornerPosY}px`;
             el.style.left = `${info.topLeftCornerPosX}px`;
+            speedX = info.speedX;
+            speedY = info.speedY;
         }, 10)
     }
 
     template() {
         return elem('div')
-            .setProps({ class: `bg-blue-500 rounded-lg absolute none`})
+            .setChild([])
     }
 }
