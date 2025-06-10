@@ -32,7 +32,8 @@ export default class GameLauncher {
             }
 
             const addr = game.id == 1 ?     
-                `ws://localhost:5001/matchmaking` : `ws://localhost:5001/tournament`;
+                `ws://localhost:5001/mmrs/api/ws/matchmaking` : 
+                `ws://localhost:5001/mmrs/api/ws/tournament`;
             
             this.client = new WebSocketClient<MMRS_Server_Messages>(addr, opts)
                 .on(MMRS_Server_Messages.MATCH_SEARCH, (data: any) => this.matchSearchStartHandler(game, options.onConnectedCallback))

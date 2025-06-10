@@ -26,8 +26,8 @@ export default class PaddleComponent extends FrontendyComponent {
             if (el.style.display !== 'block') {
                 el.style.display = 'block';
             }
-            el.style.height = `${info.length}px`;
-            el.style.width = `${info.width}px`;
+            el.style.height = `${info.width}px`;
+            el.style.width = `${info.length}px`;
             el.style.top = `${info.topLeftCornerPosY}px`;
             el.style.left = `${info.topLeftCornerPosX}px`;
         }, 10)
