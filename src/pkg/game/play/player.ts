@@ -12,7 +12,7 @@ enum PLAYER_ACTION {
 }
 
 type PlayerConnectionCallbacks = {
-    onAuthozided?: (state: MatchInfo) => void;
+    onAuthorized?: (state: MatchInfo) => void;
     onUnauthorized?: () => void;
 }
 
@@ -23,7 +23,7 @@ export default class Player {
 
     public static setup(accessToken:string, callbacks?:PlayerConnectionCallbacks) {
 
-        GameWebSocket.on(SERVER_ACTION.Authorized, (data) => Player.onAuthorizedHandler(data, callbacks?.onAuthozided ?? undefined));
+        GameWebSocket.on(SERVER_ACTION.Authorized, (data) => Player.onAuthorizedHandler(data, callbacks?.onAuthorized ?? undefined));
         GameWebSocket.on(SERVER_ACTION.Unauthorized, () => Player.onUnauthorizedHandler(callbacks?.onUnauthorized))
         
         GameWebSocket.connect({

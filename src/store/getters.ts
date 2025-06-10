@@ -1,4 +1,5 @@
 import GameStat from "../types/GameStat";
+import { MatchSceneInfo } from "../types/MatchSceneInfo";
 import PlayersInfo from "../types/PlayersInfo";
 import RatingChangeInfo from "../types/RatingChangeInfo";
 import User from "../types/User";
@@ -60,5 +61,15 @@ export default class StoreGetters {
 
     public async gamePlayersInfo(onUpdate?:(value:PlayersInfo|undefined) => void): Promise<PlayersInfo | undefined> {
         return this.state.gamePlayersInfo.getValue(onUpdate);
+    }
+
+    public async gameIsReady(onUpdateCallback?:(value:boolean|undefined) => void): Promise<boolean | undefined> {
+        const callback = (value: MatchSceneInfo | undefined) => onUpdateCallback?.(value?.isReady)
+        const gameSceneInfo = await this.state.gameSceneInfo.getValue(callback);
+        if (!gameSceneInfo) {
+            return undefined;
+        }
+
+        return gameSceneInfo.isReady;
     }
 }

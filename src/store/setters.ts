@@ -1,6 +1,7 @@
 import API from "../api/api";
 import { isAuthorized } from "../api/client";
 import GameStat from "../types/GameStat";
+import { MatchSceneInfo } from "../types/MatchSceneInfo";
 import PlayersInfo from "../types/PlayersInfo";
 import RatingChangeItem from "../types/RatingChangeItem";
 import User from "../types/User";
@@ -129,43 +130,70 @@ export default class StoreSetters {
     }
 
     async setupGamePlayersInfo(player1State: {id:number, score:number}, player2State: {id:number, score:number}) {
-        if (!player1State || !player2State) {
-            console.error("StoreSetters: setupGamePlayersInfo: playersIds length is not 2");
+        // if (!player1State || !player2State) {
+        //     console.error("StoreSetters: setupGamePlayersInfo: playersIds length is not 2");
+        //     return ;
+        // }
+        
+        // let player1: User | undefined = undefined;
+        // try {
+        //     const response = await API.ums.userGetInfo(player1State.id)
+        //     const data = response.data;
+        //     if (!data) {
+        //         throw new Error("no user data in response");
+        //     }
+        //     player1 = new User(data);
+        // } catch (e) {
+        //     console.error("StoreSetters: setupGamePlayersInfo: error getting player 1 info : ", e);
+        // }
+
+        // let player2: User | undefined = undefined;
+        // try {
+        //     const response = await API.ums.userGetInfo(player2State.id)
+        //     const data = response.data;
+        //     if (!data) {
+        //         throw new Error("no user data in response");
+        //     }
+        //     player2 = new User(data);
+        // } catch (e) {
+        //     console.error("StoreSetters: setupGamePlayersInfo: error getting player 2 info : ", e);
+        // }
+
+        // if (!player1 || !player2) {
+        //     console.error("StoreSetters: setupGamePlayersInfo: one of players is undefined");
+        //     return ;
+        // }
+
+        // const info = new PlayersInfo(player1, player2, player1State.score, player2State.score)
+        
+        // this.state.gamePlayersInfo.setValue(info);
+    }
+
+    async setupMatchSceneInfo(info: MatchSceneInfo) {
+        this.state.gameSceneInfo.setValue(info);
+    }
+
+    async updateMatchOpponentDisconnected(timeLeft: number) {
+
+        const currentInfo = await this.state.gameSceneInfo.getValue();
+        if (!currentInfo) {
+            console.error("StoreSetters: updateMatchOpponentDisconnected: currentInfo is undefined");
             return ;
         }
-        
-        let player1: User | undefined = undefined;
-        try {
-            const response = await API.ums.userGetInfo(player1State.id)
-            const data = response.data;
-            if (!data) {
-                throw new Error("no user data in response");
-            }
-            player1 = new User(data);
-        } catch (e) {
-            console.error("StoreSetters: setupGamePlayersInfo: error getting player 1 info : ", e);
-        }
+        currentInfo.isReady = false;
+        currentInfo.timeLeft = timeLeft;
+        this.state.gameSceneInfo.setValue(currentInfo);
+    }
 
-        let player2: User | undefined = undefined;
-        try {
-            const response = await API.ums.userGetInfo(player2State.id)
-            const data = response.data;
-            if (!data) {
-                throw new Error("no user data in response");
-            }
-            player2 = new User(data);
-        } catch (e) {
-            console.error("StoreSetters: setupGamePlayersInfo: error getting player 2 info : ", e);
-        }
-
-        if (!player1 || !player2) {
-            console.error("StoreSetters: setupGamePlayersInfo: one of players is undefined");
+    async updateMatchOpponentConnected() {
+        const currentInfo = await this.state.gameSceneInfo.getValue();
+        if (!currentInfo) {
+            console.error("StoreSetters: updateMatchOpponentConnected: currentInfo is undefined");
             return ;
         }
-
-        const info = new PlayersInfo(player1, player2, player1State.score, player2State.score)
-        
-        this.state.gamePlayersInfo.setValue(info);
+        currentInfo.isReady = true;
+        currentInfo.timeLeft = 0;
+        this.state.gameSceneInfo.setValue(currentInfo);
     }
 }
 

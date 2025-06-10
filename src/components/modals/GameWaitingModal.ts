@@ -2,44 +2,31 @@ import LoadingLayout from "../../layouts/loading/LoadingLayout";
 import ModalLayout from "../../layouts/modal/ModalLayout";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem } from "../../pkg/frontendy/vdom/constructor";
-import TimerStorage from "../../pkg/timer";
+import Store from "../../store/store";
+import ButtonComponent from "../inputs/ButtonComponent";
 import InfoParagraphComponent from "../inputs/InfoParagraphComponent";
-
-function pair(num: number): string {
-    return num < 10 ? `0${num}` : `${num}`;
-}
-
 
 export default class GameWaitingModal extends FrontendyComponent {
     componentName: string = 'game-waiting-modal';
 
-    constructor(initialTimer: number | undefined = 30) {
-        super({initialTimer});
-    }
-
     data() {
         return {
-            show: false,
-            timer: this.props.initialTimer,
+            show: true,
         }
     }
 
-    setShow(show: boolean) {
-        this.state.show = show;
-        if (this.state.timer && this.state.show && !TimerStorage.checkTimer('game-waiting-modal')) {
-            TimerStorage.addTimer('game-waiting-modal', (counter: number) => {
-                if (this.state.timer <= 0) {
-                    this.setShow(false);
-                    TimerStorage.removeTimer('game-waiting-modal');
-                    return;
-                }
-                this.state.timer = this.props.initialTimer - counter;
-            })
-        }
-        return this;
+    protected onCreated(): void {
+        Store.getters.gameIsReady((gameIsReady: boolean | undefined) => {
+            if (gameIsReady === undefined || !gameIsReady === this.state.show) {
+                return ;
+            }
+            this.state.show = !gameIsReady;
+            this.update();
+        })
     }
-
     template() {
+
+        setTimeout(() => console.log("this.el", this.el))
 
         // Header
         const header = elem("h2")
@@ -50,13 +37,6 @@ export default class GameWaitingModal extends FrontendyComponent {
         const body = elem("div")
             .setProps({ class: "flex flex-col gap-4" })
             .setChild([
-                new LoadingLayout({
-                    label: "Please wait...", 
-                    icon: "ti ti-loader",
-                    withoutShadow: true,
-                }).setShow(this.state.isLoading),
-                
-                new InfoParagraphComponent(`0:${pair(this.state.timer)}.`),
                 new InfoParagraphComponent(`Waiting for your opponent connection.`),
             ])
 

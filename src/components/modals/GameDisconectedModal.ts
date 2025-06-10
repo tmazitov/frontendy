@@ -10,8 +10,8 @@ function pair(num: number): string {
     return num < 10 ? `0${num}` : `${num}`;
 }
 
-export default class GameDisconectedModal extends FrontendyComponent {
-    componentName: string = 'game-disconected-modal';
+export default class GameDisconnectedModal extends FrontendyComponent {
+    componentName: string = 'game-disconnected-modal';
     
     constructor(nickname: string | undefined) {
         super({ nickname })

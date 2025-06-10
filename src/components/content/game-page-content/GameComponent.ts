@@ -1,63 +1,101 @@
+import API from "../../../api/api";
+import { getTokens } from "../../../api/client";
+import router from "../../../pages/router";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
+import Player from "../../../pkg/game/play/player";
 import SERVER_ACTION from "../../../pkg/game/play/server";
-import GameProc from "../../../pkg/game/play/ws";
-import { MatchSceneInfo } from "../../../types/MatchSceneInfo";
-import GameDisconectedModal from "../../modals/GameDisconectedModal";
+import GameWebSocket from "../../../pkg/game/play/ws";
+import Store from "../../../store/store";
+import { MatchInfo } from "../../../types/MatchInfo";
 import GameWaitingModal from "../../modals/GameWaitingModal";
 import InfoBarComponent from "./InfoBarComponent";
 import SceneComponent from "./SceneComponent";
 
-type GameComponentProps = {
-    matchStartWaitingConf?: {timeLeft: number, matchIsReady: boolean};
-    matchSceneConf?: MatchSceneInfo;
-}
-
 export default class GameComponent extends FrontendyComponent {
     componentName: string = 'game-component';
 
-    constructor(props: GameComponentProps) {
-        super(props);
-    }
-
-    data() {    
-        return {
-            opponentDisconected: false,
-        }
-    }
-
     protected onMounted(): void {
-        GameProc.on(SERVER_ACTION.MatchOpponentDisconnected, () => {
-            this.state.opponentDisconected = true;
-        })
-        GameProc.on(SERVER_ACTION.MatchOpponentReconected, () => {
-            this.state.opponentDisconected = false;
-        })
+        const tokens = getTokens();
+        if (!tokens) {
+            router.push('home');
+            return;
+        }
 
-        GameProc.on(SERVER_ACTION.MatchStart, (data: any) => {
+        let isCallbackActivated = false
 
+        const onAuthorizedCallback = (data:MatchInfo) => {
+            if (!data) { 
+                console.warn("Authorized warning: data is undefined");
+                return ;
+            }
+
+            if (!data.player1 || !data.player2) {
+                console.warn("MatchStart warning: player IDs are missing : ", data);
+                return ;
+            }
+
+            const matchIsReady = data.player1.isOnline && data.player2.isOnline
+            const timeLeft = matchIsReady ? 
+                0 : Math.floor((data.timeoutStamp - Date.now()) / 1000);
+
+            try{
+                data.scene.timeLeft = timeLeft;
+                data.scene.isReady = matchIsReady;
+                Store.setters.setupMatchSceneInfo(data.scene);
+                Store.setters.setupGamePlayersInfo(data.player1, data.player2);
+            } catch (e) {
+                console.error("Error setting up game players info: ", e);
+            }
+        }
+        const onUnauthorizedCallback = () => {
+            if (isCallbackActivated) {
+                router.push('home');
+                return ;
+            }
+            isCallbackActivated = true;
+            API.ums.refresh()
+            .then(() => Player.setup(tokens.accessToken, {
+                onAuthorized: onAuthorizedCallback,
+                onUnauthorized: onUnauthorizedCallback
+            }))
+        }
+        
+        Player.setup(tokens.accessToken, {
+            onAuthorized: onAuthorizedCallback,
+            onUnauthorized: onUnauthorizedCallback
+        });
+        // setTimeout(() => {
+        // }, Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000)
+        
+
+        GameWebSocket.on(SERVER_ACTION.MatchOpponentDisconnected, (data:any) => {
+            
+            const timeLeft = Math.floor((data.payload.timeoutStamp - Date.now()) / 1000);
+
+            Store.setters.updateMatchOpponentDisconnected(timeLeft);
+        })
+        GameWebSocket.on(SERVER_ACTION.MatchOpponentConnected, () => {
+            Store.setters.updateMatchOpponentConnected()
         })
     }
+
+    protected onUnmounted(): void {
+        console.log("GameComponent unmounted");
+        Player.cleanup();
+    }
+
 
     template() {
 
-        const waitingConf = this.props.matchStartWaitingConf as {timeLeft: number, matchIsReady: boolean} | undefined;
-        const waitingModalIsActive = waitingConf ? !waitingConf.matchIsReady : true;
-        const timeLeft = waitingConf ? waitingConf.timeLeft : undefined;
 
         return elem('div')
             .setProps({class : "flex items-center flex-col"})
             .setChild([
                 new InfoBarComponent(),
-                new SceneComponent({
-                    matchSceneConf: this.props.matchSceneConf,
-                    isOpponentDisconected: this.state.opponentDisconected,
-                }),
-                
-                new GameDisconectedModal("opponent nickname")
-                    .setShow(this.state.opponentDisconected),
-                new GameWaitingModal(timeLeft)
-                    .setShow(waitingModalIsActive),
+                new SceneComponent(),
+
+                new GameWaitingModal(),
             ])
     }
 }

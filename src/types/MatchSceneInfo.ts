@@ -21,6 +21,8 @@ type MatchTableInfo = {
 }
 
 type MatchSceneInfo = {
+    isReady: boolean,
+    timeLeft: number,
     table: MatchTableInfo,
     paddle1: MatchPaddleInfo,
     paddle2: MatchPaddleInfo,

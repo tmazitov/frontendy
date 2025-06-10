@@ -39,7 +39,7 @@ class FrontendyComponent extends FrontendyLifecicle{
         this.state = new Proxy(initialState, {
             set: (target, prop, value) => {
                 target[prop as keyof T] = value;
-                console.log(`🔄 State обновлен: ${String(prop)} → ${value}`);
+                console.log(`🔄 State ${this.componentName} обновлен: ${String(prop)} → ${value}`);
                 this.update(); // ⬅️ Автоматическое обновление VDOM
                 return true;
             }

@@ -12,7 +12,7 @@ let player1direction = 0;
 let player2direction = 0;
 
 type SceneComponentProps = {
-    isOpponentDisconected?: boolean;
+    isOpponentDisconnected?: boolean;
     matchSceneConf?: MatchSceneInfo;
 }
 
@@ -45,7 +45,7 @@ export default class SceneComponent extends FrontendyComponent {
     protected onCreated(): void {
         Player.onUpdatePosition((data:Record<string,any>) => {
 
-            if (this.props.isOpponentDisconected) {
+            if (this.props.isOpponentDisconnected) {
                 console.log("sync canceled : opponent disconnected, waiting for reconnection...");
                 return ;
             }
