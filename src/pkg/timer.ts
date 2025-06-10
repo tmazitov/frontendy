@@ -37,6 +37,10 @@ class Timer {
 class TimerStorage {
     private static timers: Map<string, Timer> = new Map();
 
+    static checkTimer(name: string): Timer | undefined {
+        return this.timers.get(name);
+    }
+
     static addTimer(name: string, onChange: (counter: number) => void) {
         if (this.timers.has(name)) {
             return;

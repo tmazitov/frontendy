@@ -1,16 +1,15 @@
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
-import Player from "../../../pkg/game/play/player";
 import SERVER_ACTION from "../../../pkg/game/play/server";
 import GameProc from "../../../pkg/game/play/ws";
-import Store from "../../../store/store";
 import { MatchSceneInfo } from "../../../types/MatchSceneInfo";
 import GameDisconectedModal from "../../modals/GameDisconectedModal";
+import GameWaitingModal from "../../modals/GameWaitingModal";
 import InfoBarComponent from "./InfoBarComponent";
 import SceneComponent from "./SceneComponent";
 
 type GameComponentProps = {
-    matchStartWaitingConf: {timeLeft: number, matchIsReady: boolean};
+    matchStartWaitingConf?: {timeLeft: number, matchIsReady: boolean};
     matchSceneConf?: MatchSceneInfo;
 }
 
@@ -42,7 +41,9 @@ export default class GameComponent extends FrontendyComponent {
 
     template() {
 
-        console.log("wait config", this.props.matchStartWaitingConf);
+        const waitingConf = this.props.matchStartWaitingConf as {timeLeft: number, matchIsReady: boolean} | undefined;
+        const waitingModalIsActive = waitingConf ? !waitingConf.matchIsReady : true;
+        const timeLeft = waitingConf ? waitingConf.timeLeft : undefined;
 
         return elem('div')
             .setProps({class : "flex items-center flex-col"})
@@ -53,7 +54,10 @@ export default class GameComponent extends FrontendyComponent {
                     isOpponentDisconected: this.state.opponentDisconected,
                 }),
                 
-                new GameDisconectedModal("opponent nickname").setShow(this.state.opponentDisconected)
+                new GameDisconectedModal("opponent nickname")
+                    .setShow(this.state.opponentDisconected),
+                new GameWaitingModal(timeLeft)
+                    .setShow(waitingModalIsActive),
             ])
     }
 }
