@@ -1,3 +1,4 @@
+import { time } from "console";
 import API from "../../../api/api";
 import { getTokens } from "../../../api/client";
 import router from "../../../pages/router";
@@ -9,10 +10,10 @@ import GameWebSocket from "../../../pkg/game/play/ws";
 import Store from "../../../store/store";
 import { MatchInfo } from "../../../types/MatchInfo";
 import { MatchResultInfo } from "../../../types/MatchResultInfo";
-import GameWaitingModal from "../../modals/GameWaitingModal";
 import GameOverComponent from "./GameOverComponent";
 import InfoBarComponent from "./InfoBarComponent";
 import SceneComponent from "./SceneComponent";
+import GameWaitingComponent from "./GameWaitingComponent";
 
 export default class GameComponent extends FrontendyComponent {
     componentName: string = 'game-component';
@@ -20,6 +21,7 @@ export default class GameComponent extends FrontendyComponent {
     protected data(): {} {
         return {
             gameResults: false,
+            gameWaitingConf: undefined,
         }
     }
 
@@ -51,6 +53,7 @@ export default class GameComponent extends FrontendyComponent {
                 data.scene.timeLeft = timeLeft;
                 data.scene.isReady = matchIsReady;
                 data.scene.result = undefined;
+                this.state.gameWaitingConf = {timeLeft, isReady: matchIsReady};
                 Store.setters.setupMatchSceneInfo(data.scene);
                 Store.setters.setupGamePlayersInfo(data.player1, data.player2);
             } catch (e) {
@@ -82,10 +85,12 @@ export default class GameComponent extends FrontendyComponent {
             
             const timeLeft = Math.floor((data.payload.timeoutStamp - Date.now()) / 1000);
 
-            Store.setters.updateMatchOpponentDisconnected(timeLeft);
+            // Store.setters.updateMatchOpponentDisconnected(timeLeft);
+            this.state.gameWaitingConf = {timeLeft, isReady: false};
         })
         GameWebSocket.on(SERVER_ACTION.MatchOpponentConnected, () => {
-            Store.setters.updateMatchOpponentConnected()
+            // Store.setters.updateMatchOpponentConnected()
+            this.state.gameWaitingConf = {timeLeft: 0, isReady: true};
         })
 
         GameWebSocket.on(SERVER_ACTION.MatchOver, (data: any) => {
@@ -111,10 +116,11 @@ export default class GameComponent extends FrontendyComponent {
 
     template() {
 
-
         let content
         if (this.state.gameResults) {
             content = new GameOverComponent(this.state.gameResults)
+        } else if (this.state.gameWaitingConf && !this.state.gameWaitingConf.isReady && this.state.gameWaitingConf.timeLeft){
+            content = new GameWaitingComponent(this.state.gameWaitingConf.timeLeft)
         } else {
             content = new SceneComponent()
         }
@@ -124,9 +130,6 @@ export default class GameComponent extends FrontendyComponent {
             .setChild([
                 new InfoBarComponent(),
                 content,
-                
-                new GameWaitingModal(),
-                // new GameOverModal(),
             ])
     }
 }
