@@ -45,11 +45,13 @@ export default class PlayersInfo {
     public getPlayersPublicInfo() {
         return {
             player1 : {
+                id: this.player1?.id,
                 avatar: this.player1?.avatar,
                 nickname: this.player1?.nickname,
                 score: this.player1?.score || 0
             },
             player2 : {
+                id: this.player2?.id,
                 avatar: this.player2?.avatar,
                 nickname: this.player2?.nickname,
                 score: this.player2?.score || 0

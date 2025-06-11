@@ -1,6 +1,7 @@
 import API from "../api/api";
 import { isAuthorized } from "../api/client";
 import GameStat from "../types/GameStat";
+import { MatchResultInfo } from "../types/MatchResultInfo";
 import { MatchSceneInfo } from "../types/MatchSceneInfo";
 import PlayersInfo from "../types/PlayersInfo";
 import RatingChangeItem from "../types/RatingChangeItem";
@@ -26,6 +27,16 @@ export default class StoreSetters {
 
     deleteUser() {
         this.state.user.clearValue()
+    }
+
+    async updateMatchResult(result: MatchResultInfo) {
+        const sceneInfo = await this.state.gameSceneInfo.getValue()
+        if (!sceneInfo) {
+            return ;
+        }  
+        sceneInfo.result = result;
+        this.state.gameSceneInfo.setValue(sceneInfo);
+        console.log("match updated result")
     }
 
     async setupUser() {

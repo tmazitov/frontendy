@@ -1,4 +1,5 @@
 import GameStat from "../types/GameStat";
+import { MatchResultInfo } from "../types/MatchResultInfo";
 import { MatchSceneInfo } from "../types/MatchSceneInfo";
 import PlayersInfo from "../types/PlayersInfo";
 import RatingChangeInfo from "../types/RatingChangeInfo";
@@ -71,5 +72,15 @@ export default class StoreGetters {
         }
 
         return gameSceneInfo.isReady;
+    }
+ 
+    public async gameResults(onUpdateCallback?:(value:MatchResultInfo|undefined) => void): Promise<MatchResultInfo | undefined> {
+        const callback = (value: MatchSceneInfo | undefined) => onUpdateCallback?.(value?.result);
+        const gameSceneInfo = await this.state.gameSceneInfo.getValue(callback);
+        if (!gameSceneInfo) {
+            return undefined;
+        }
+
+        return gameSceneInfo.result;
     }
 }

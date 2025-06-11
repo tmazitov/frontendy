@@ -1,3 +1,5 @@
+import { MatchResultInfo } from "./MatchResultInfo"
+
 type MatchBallInfo = {
     length: number,
     width: number,
@@ -23,6 +25,7 @@ type MatchTableInfo = {
 type MatchSceneInfo = {
     isReady: boolean,
     timeLeft: number,
+    result: MatchResultInfo | undefined,
     table: MatchTableInfo,
     paddle1: MatchPaddleInfo,
     paddle2: MatchPaddleInfo,

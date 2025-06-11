@@ -8,12 +8,20 @@ import SERVER_ACTION from "../../../pkg/game/play/server";
 import GameWebSocket from "../../../pkg/game/play/ws";
 import Store from "../../../store/store";
 import { MatchInfo } from "../../../types/MatchInfo";
+import { MatchResultInfo } from "../../../types/MatchResultInfo";
 import GameWaitingModal from "../../modals/GameWaitingModal";
+import GameOverComponent from "./GameOverComponent";
 import InfoBarComponent from "./InfoBarComponent";
 import SceneComponent from "./SceneComponent";
 
 export default class GameComponent extends FrontendyComponent {
     componentName: string = 'game-component';
+
+    protected data(): {} {
+        return {
+            gameResults: false,
+        }
+    }
 
     protected onMounted(): void {
         const tokens = getTokens();
@@ -42,6 +50,7 @@ export default class GameComponent extends FrontendyComponent {
             try{
                 data.scene.timeLeft = timeLeft;
                 data.scene.isReady = matchIsReady;
+                data.scene.result = undefined;
                 Store.setters.setupMatchSceneInfo(data.scene);
                 Store.setters.setupGamePlayersInfo(data.player1, data.player2);
             } catch (e) {
@@ -78,6 +87,20 @@ export default class GameComponent extends FrontendyComponent {
         GameWebSocket.on(SERVER_ACTION.MatchOpponentConnected, () => {
             Store.setters.updateMatchOpponentConnected()
         })
+
+        GameWebSocket.on(SERVER_ACTION.MatchOver, (data: any) => {
+            console.log("Match over cough!")
+            const results = data.payload as MatchResultInfo
+            Store.setters.updateMatchResult(results)
+        })
+
+
+        Store.getters.gameResults((value: MatchResultInfo | undefined) => {
+            if (!value) {
+                return ;
+            }
+            this.state.gameResults = value;
+        } )
     }
 
     protected onUnmounted(): void {
@@ -89,13 +112,21 @@ export default class GameComponent extends FrontendyComponent {
     template() {
 
 
+        let content
+        if (this.state.gameResults) {
+            content = new GameOverComponent(this.state.gameResults)
+        } else {
+            content = new SceneComponent()
+        }
+
         return elem('div')
             .setProps({class : "flex items-center flex-col"})
             .setChild([
                 new InfoBarComponent(),
-                new SceneComponent(),
-
+                content,
+                
                 new GameWaitingModal(),
+                // new GameOverModal(),
             ])
     }
 }

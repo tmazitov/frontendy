@@ -26,8 +26,6 @@ export default class GameWaitingModal extends FrontendyComponent {
     }
     template() {
 
-        setTimeout(() => console.log("this.el", this.el))
-
         // Header
         const header = elem("h2")
         .setProps({ class: "text-lg font-semibold text-gray-800" })
