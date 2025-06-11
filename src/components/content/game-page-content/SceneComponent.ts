@@ -7,6 +7,7 @@ import { MatchBallInfo, MatchPaddleInfo, MatchSceneInfo } from "../../../types/M
 import DelimeterComponent from "./DelimeterComponet";
 import PaddleComponent from "./PaddleComponent";
 import BallComponent from "./BallComponent";
+import Store from "../../../store/store";
 
 let player1direction = 0;
 let player2direction = 0;
@@ -25,19 +26,23 @@ export default class SceneComponent extends FrontendyComponent {
 
     data() {
         return {
+            fieldSize: {
+                length: 512,
+                width: 320,
+            },
             player1Config: {
-                info: this.props.matchSceneConf?.paddle1 || undefined,
-                isHidden: this.props.matchSceneConf === undefined,
+                info: undefined,
+                isHidden: true,
                 side: 'left'
             },
             player2Config: {
-                info: this.props.matchSceneConf?.paddle2 || undefined,
-                isHidden: this.props.matchSceneConf === undefined,
+                info: undefined,
+                isHidden: true,
                 side: 'right'
             },
             ballConfig: {
-                info: this.props.matchSceneConf?.ball || undefined,
-                isHidden: this.props.matchSceneConf === undefined,
+                info: undefined,
+                isHidden: true,
             },
         }
     }
@@ -65,7 +70,7 @@ export default class SceneComponent extends FrontendyComponent {
             
             // Update paddles info
             paddle1Info.topLeftCornerPosY = state.paddle1.topLeftCornerPosY;
-            paddle1Info.topLeftCornerPosX = state.paddle2.topLeftCornerPosX;
+            paddle1Info.topLeftCornerPosX = state.paddle1.topLeftCornerPosX;
             paddle2Info.topLeftCornerPosY = state.paddle2.topLeftCornerPosY;
             paddle2Info.topLeftCornerPosX = state.paddle2.topLeftCornerPosX;
 
@@ -75,11 +80,37 @@ export default class SceneComponent extends FrontendyComponent {
             ballInfo.speedX = state.ball.speedX;
             ballInfo.speedY = state.ball.speedY;
         })
+
+        Store.getters.gameSceneInfo((sceneInfo: MatchSceneInfo | undefined) => {
+            if (!sceneInfo) {
+                return ;
+            }
+
+            this.state.fieldSize = {
+                length: sceneInfo.table.length,
+                width: sceneInfo.table.width,
+            }
+
+            const paddle1Info = sceneInfo.paddle1;
+            const paddle2Info = sceneInfo.paddle2;
+            const ballInfo = sceneInfo.ball;
+
+            this.state.player1Config.info = paddle1Info;
+            this.state.player1Config.isHidden = false;
+            this.state.player2Config.info = paddle2Info;
+            this.state.player2Config.isHidden = false;
+            this.state.ballConfig.info = ballInfo;
+            this.state.ballConfig.isHidden = false;
+            // this.update();
+        })
     }
 
     template() {
+
+        const filedSize = this.state.fieldSize;
+
         return elem('div')
-            .setProps({ class: "p-[16px] w-[512px] h-[320px] relative bg-gray-100 rounded-lg shadow-md" })
+            .setProps({ class: `p-[16px] w-[${filedSize.length}px] h-[${filedSize.width}px] relative bg-gray-100 rounded-lg shadow-md` })
             .setChild([
                 new DelimeterComponent(),
                 new PaddleComponent(this.state.player1Config),

@@ -14,7 +14,11 @@ export default class PaddleComponent extends FrontendyComponent {
     constructor(props: PaddleComponentProps) {
         super(props);
         setInterval(() => {
+            console.log("PaddleComponent: update called with props:", this.props);
             const el = this.el as HTMLElement;
+            if (!el) {
+                return ;
+            }
             if (el.style.display === 'none') {
                 return ;
             }
@@ -30,11 +34,11 @@ export default class PaddleComponent extends FrontendyComponent {
             el.style.width = `${info.length}px`;
             el.style.top = `${info.topLeftCornerPosY}px`;
             el.style.left = `${info.topLeftCornerPosX}px`;
-        }, 10)
+        }, 1000)
     }
 
     template() {
         return elem('div')
-            .setProps({ class: `bg-blue-500 rounded-lg absolute none`})
+            .setProps({ class: `bg-blue-500 rounded-lg absolute`})
     }
 }

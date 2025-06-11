@@ -1,25 +1,14 @@
-import API from "../api/api";
-import { getTokens } from "../api/client";
 import GameComponent from "../components/content/game-page-content/GameComponent";
-import GameWaitingModal from "../components/modals/GameWaitingModal";
-import DashboardComponent from "../layouts/dashboard/DashboardLayout";
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
-import Player from "../pkg/game/play/player";
-import SERVER_ACTION from "../pkg/game/play/server";
-import GameWebSocket from "../pkg/game/play/ws";
-import Store from "../store/store";
-import { MatchInfo } from "../types/MatchInfo";
-import router from "./router";
 
 export default class GamePage extends FrontendyComponent {
     componentName: string = 'game-page';
 
-
-
     template() {
-        const dashboard = new DashboardComponent()
-            .setSlot("content", new GameComponent())
+        const dashboard = elem("div")
+        .setProps({class: "w-[calc(1000px+3rem)] rounded-lg overflow-hidden shadow-md bg-white p-6"})
+        .addChild(new GameComponent())
 
         return elem("div")
             .setProps({ id: "game-page"})

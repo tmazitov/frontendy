@@ -15,7 +15,11 @@ export default class BallComponent extends FrontendyComponent {
     constructor(props: BallComponentProps) {
         super(props);
         setInterval(() => {
+            console.log("BallComponent: update called with props:", this.props);
             const el = this.el as HTMLElement;
+            if (!el) {
+                return;
+            }
             if (this.props.isHidden) {
                 if (el.style.display !== 'none') {
                     el.style.display = 'none';
@@ -32,11 +36,10 @@ export default class BallComponent extends FrontendyComponent {
             el.style.left = `${info.topLeftCornerPosX}px`;
             speedX = info.speedX;
             speedY = info.speedY;
-        }, 10)
+        }, 1000)
     }
 
     template() {
-        return elem('div')
-            .setChild([])
+        return elem('div').setProps({class: "bg-red-500 absolute z-10"})
     }
 }

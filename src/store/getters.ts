@@ -83,4 +83,9 @@ export default class StoreGetters {
 
         return gameSceneInfo.result;
     }
+
+    public async gameSceneInfo(onUpdateCallback?:(value:MatchSceneInfo|undefined) => void): Promise<MatchSceneInfo | undefined> {
+        const callback = (value: MatchSceneInfo | undefined) => onUpdateCallback?.(value);
+        return this.state.gameSceneInfo.getValue(callback);
+    }
 }
