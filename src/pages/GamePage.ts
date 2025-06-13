@@ -7,7 +7,7 @@ export default class GamePage extends FrontendyComponent {
 
     template() {
         const dashboard = elem("div")
-        .setProps({class: "w-[calc(1000px+3rem)] rounded-lg overflow-hidden shadow-md bg-white p-6"})
+        .setProps({class: "rounded-lg overflow-hidden shadow-md bg-white p-6 w-fit h-fit transition-all duration-300 ease-in-out"})
         .addChild(new GameComponent())
 
         return elem("div")

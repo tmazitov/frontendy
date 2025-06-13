@@ -6,6 +6,8 @@ import { MatchResultInfo, MatchResultStatus } from "../../../types/MatchResultIn
 import PlayersInfo from "../../../types/PlayersInfo";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import InfoParagraphComponent from "../../inputs/InfoParagraphComponent";
+import GameOverIconComponent from "./GameOverIconComponent";
+import GameOverTitleComponent from "./GameOverTitleComponent";
 
 export default class GameOverComponent extends FrontendyComponent {
     componentName: string = 'game-over-component';
@@ -124,15 +126,11 @@ export default class GameOverComponent extends FrontendyComponent {
 
     template() {
         return elem('div')
-            .setProps({class: 'p-[16px] w-[512px] h-[320px] relative flex flex-col items-center gap-4 align-center'})
+            .setProps({class: 'p-[16px] w-[512px] relative flex flex-col items-center gap-4 align-center'})
             .setChild([
-                elem("i").setProps({class: `ti ti-${this.state.shownInfo.icon} text-4xl`}),
+                new GameOverIconComponent(this.state.shownInfo.icon),
 
-                elem('h1')
-                .setProps({class: "text-2xl font-bold"})
-                .addChild('Game Over'),
-
-                new InfoParagraphComponent(this.state.shownInfo.title),
+                new GameOverTitleComponent(this.state.shownInfo.title),
 
                 new ButtonComponent({
                     label: "Home",

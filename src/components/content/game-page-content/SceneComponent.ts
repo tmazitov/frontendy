@@ -87,7 +87,7 @@ export default class SceneComponent extends FrontendyComponent {
             }
 
             this.state.fieldSize = {
-                length: sceneInfo.table.length,
+                length: sceneInfo.table.length, 
                 width: sceneInfo.table.width,
             }
 
