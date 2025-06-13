@@ -42,6 +42,15 @@ export default class PlayersInfo {
     //     this.player2.nickname = playerInfo.nickname;
     // }
 
+    public updateScore(player1Score: number, player2Score: number) {
+        if (this.player1) {
+            this.player1.score = player1Score;
+        }
+        if (this.player2) {
+            this.player2.score = player2Score;
+        }
+    }
+
     public getPlayersPublicInfo() {
         return {
             player1 : {

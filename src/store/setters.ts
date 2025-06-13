@@ -206,5 +206,15 @@ export default class StoreSetters {
         currentInfo.timeLeft = 0;
         this.state.gameSceneInfo.setValue(currentInfo);
     }
+
+    async updateMatchScore(player1Score: number, player2Score: number) {
+        const currentInfo = await this.state.gamePlayersInfo.getValue();
+        if (!currentInfo) {
+            console.error("StoreSetters: updateMatchScore: currentInfo is undefined");
+            return ;
+        }
+        currentInfo.updateScore(player1Score, player2Score);
+        this.state.gamePlayersInfo.setValue(currentInfo);
+    }
 }
 

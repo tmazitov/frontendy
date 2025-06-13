@@ -100,6 +100,16 @@ export default class GameComponent extends FrontendyComponent {
         })
 
 
+        GameWebSocket.on(SERVER_ACTION.MatchScoreUpdate, (data:any) => {
+            console.log("Match score update!", data.payload)
+            const result = data.payload as {player1Score:number, player2Score:number};
+            if (!result || result.player1Score === undefined || result.player2Score === undefined) {
+                console.warn("Match score update error: result is undefined or has no scores");
+                return ;
+            }
+            Store.setters.updateMatchScore(result.player1Score, result.player2Score);
+        })
+
         Store.getters.gameResults((value: MatchResultInfo | undefined) => {
             if (!value) {
                 return ;
