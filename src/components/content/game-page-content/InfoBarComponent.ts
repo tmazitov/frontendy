@@ -28,25 +28,28 @@ export default class InfoBarComponent extends FrontendyComponent {
     }
 
     protected onMounted(): void {
-        Store.getters.gamePlayersInfo((info:PlayersInfo | undefined) => {
-            if (!info) {
-                console.warn("InfoBarComponent: gamePlayersInfo is undefined");
-                return;
+        Store.getters.gamePlayersInfo((info:PlayersInfo | undefined) => this.updatePlayersInfo(info))
+            .then((info: PlayersInfo | undefined) => this.updatePlayersInfo(info))
+    }
+
+    private updatePlayersInfo(info: PlayersInfo | undefined) {
+        if (!info) {
+            console.warn("InfoBarComponent: gamePlayersInfo is undefined");
+            return;
+        }
+        const playersInfo = info.getPlayersPublicInfo();
+        this.state.players = {
+            player1: {
+                nickname: playersInfo.player1.nickname,
+                avatar: playersInfo.player1.avatar, 
+                score: playersInfo.player1.score,
+            },
+            player2: {
+                nickname: playersInfo.player2.nickname,
+                avatar: playersInfo.player2.avatar,
+                score: playersInfo.player2.score,
             }
-            const playersInfo = info.getPlayersPublicInfo();
-            this.state.players = {
-                player1: {
-                    nickname: playersInfo.player1.nickname,
-                    avatar: playersInfo.player1.avatar, 
-                    score: playersInfo.player1.score,
-                },
-                player2: {
-                    nickname: playersInfo.player2.nickname,
-                    avatar: playersInfo.player2.avatar,
-                    score: playersInfo.player2.score,
-                }
-            }
-        })
+        }
     }
 
     template() {
