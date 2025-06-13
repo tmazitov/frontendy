@@ -9,7 +9,7 @@ import {
     Tooltip,
     Legend
   } from 'chart.js';
-import RatingChangeItem from './rating';
+import RatingChangeItem from '../types/RatingChangeItem';
   
   Chart.register(
     LineController,

@@ -36,7 +36,7 @@ export default class BallComponent extends FrontendyComponent {
             el.style.left = `${info.topLeftCornerPosX}px`;
             speedX = info.speedX;
             speedY = info.speedY;
-        }, 1000)
+        }, 50)
     }
 
     template() {

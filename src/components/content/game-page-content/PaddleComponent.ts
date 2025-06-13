@@ -34,7 +34,7 @@ export default class PaddleComponent extends FrontendyComponent {
             el.style.width = `${info.length}px`;
             el.style.top = `${info.topLeftCornerPosY}px`;
             el.style.left = `${info.topLeftCornerPosX}px`;
-        }, 1000)
+        }, 50)
     }
 
     template() {
