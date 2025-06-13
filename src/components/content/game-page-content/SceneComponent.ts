@@ -110,12 +110,12 @@ export default class SceneComponent extends FrontendyComponent {
         const filedSize = this.state.fieldSize;
 
         return elem('div')
-            .setProps({ class: `p-[16px] w-[${filedSize.length}px] h-[${filedSize.width}px] relative bg-gray-100 rounded-lg shadow-md` })
+            .setProps({ class: `p-[16px] w-[${filedSize.length}px] h-[${filedSize.width}px] relative bg-gray-50 rounded-lg border-1 border-gray-200` })
             .setChild([
-                new DelimeterComponent(),
-                new PaddleComponent(this.state.player1Config),
-                new PaddleComponent(this.state.player2Config),
-                new BallComponent(this.state.ballConfig),
+            new DelimeterComponent(),
+            new PaddleComponent(this.state.player1Config),
+            new PaddleComponent(this.state.player2Config),
+            new BallComponent(this.state.ballConfig),
             ])
     }
 }
