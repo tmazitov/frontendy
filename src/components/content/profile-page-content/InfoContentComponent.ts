@@ -1,4 +1,5 @@
 import API from "../../../api/api";
+import Config from "../../../config";
 import LoadingLayout from "../../../layouts/loading/LoadingLayout";
 import router from "../../../pages/router";
 import EventBroker from "../../../pkg/event-broker/eventBroker";
@@ -77,9 +78,9 @@ export default class InfoContentComponent extends FrontendyComponent {
         } else if (this.state.user.avatarUrl && this.state.user.avatarUrl.startsWith("http")) {
             imagePath = this.state.user.avatarUrl
         } else if (this.state.user.avatarUrl) {
-            imagePath = `http://localhost:5000/auth/public/${this.state.user.avatarUrl}`
+            imagePath = `http://${Config.umsAddr}/public/${this.state.user.avatarUrl}`
         } else {
-            imagePath = "http://localhost:5000/auth/public/avatars/default.png"
+            imagePath = `http://${Config.umsAddr}/public/avatars/default.png`
         }
         
 

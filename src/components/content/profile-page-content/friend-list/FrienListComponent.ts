@@ -1,3 +1,4 @@
+import Config from "../../../../config";
 import FrontendyComponent from "../../../../pkg/frontendy/component/component";
 import { elem } from "../../../../pkg/frontendy/vdom/constructor";
 import Store from "../../../../store/store";
@@ -37,14 +38,12 @@ export default class FriendListComponent extends FrontendyComponent {
                 } else if (user.avatarUrl && user.avatarUrl.startsWith("http")) {
                     imagePath = user.avatarUrl
                 } else if (user.avatarUrl) {
-                    imagePath = `http://localhost:5000/auth/public/${user.avatarUrl}`
+                    imagePath = `http://${Config.umsAddr}/public/${user.avatarUrl}`
                 } else {
-                    imagePath = "http://localhost:5000/auth/public/avatars/default.png"
+                    imagePath = `http://${Config.umsAddr}/public/avatars/default.png`
                 }
 
                 user.avatarUrl = imagePath;
-
-                console.log("imagePath", imagePath)
 
                 return new FriendListItemComponent(user)
                     .onDelete(() => this.state.friendToDelete = user)

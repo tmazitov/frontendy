@@ -1,3 +1,4 @@
+import Config from "../../../config";
 import router from "../../../pages/router";
 import Store from "../../../store/store";
 import Game from "../../../types/Game";
@@ -7,6 +8,7 @@ import PlayersConfirmation from "./confirmation";
 import { MMRS_Client_Messages, MMRS_Server_Messages } from "./messages";
 
 type GameLauncherOptions = {
+    serverAddr: string;
     onConnectedCallback?: Function;
     onUnauthorizedCallback?: Function;
 }
@@ -19,7 +21,7 @@ export default class GameLauncher {
     private static confirmation?: PlayersConfirmation;
     private static userId?: number;
 
-    static async startGameSearching(accessToken:string, game:Game, options: GameLauncherOptions = {}) {
+    static async startGameSearching(accessToken:string, game:Game, options: GameLauncherOptions) {
         try {
             const opts = {
                 onOpenCallback: () => this.onEstablishConnection(accessToken, game),
@@ -32,8 +34,8 @@ export default class GameLauncher {
             }
 
             const addr = game.id == 1 ?     
-                `ws://localhost:5001/mmrs/api/ws/matchmaking` : 
-                `ws://localhost:5001/mmrs/api/ws/tournament`;
+                `ws://${options.serverAddr}/api/ws/matchmaking` : 
+                `ws://${options.serverAddr}/api/ws/tournament`;
             
             this.client = new WebSocketClient<MMRS_Server_Messages>(addr, opts)
                 .on(MMRS_Server_Messages.MATCH_SEARCH, (data: any) => this.matchSearchStartHandler(game, options.onConnectedCallback))

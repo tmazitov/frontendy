@@ -3,6 +3,7 @@ import { PLAYER_ACTION } from "./player";
 import ServerAction from "./server";
 
 type GameWebSocketParams = {
+    serverAddr: string
     onOpenCallback?: Function
     onCloseCallback?: Function
     onErrorCallback?: Function
@@ -18,7 +19,7 @@ export default class GameWebSocket {
             return;
         }
 
-        GameWebSocket.conn = new WebSocketClient<ServerAction>("ws://localhost:5002/game/api/ws", {
+        GameWebSocket.conn = new WebSocketClient<ServerAction>(`ws://${params.serverAddr}/api/ws`, {
             onOpenCallback: () => {
                 console.log("GameWebSocket connection opened.");
                 this.listenerQueue.forEach((callback, action) => {

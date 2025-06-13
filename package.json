@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "bash ./dev-run.sh"
+    "dev": "bash ./dev-run.sh",
+    "build": "npx tsc src/server.ts --outDir dist --esModuleInterop --module commonjs"
   },
   "keywords": [],
   "author": "Timur Mazitov",

@@ -1,3 +1,4 @@
+import Config from "../../../config";
 import { MatchInfo } from "../../../types/MatchInfo";
 import MoveController from "./moveController";
 import SERVER_ACTION from "./server";
@@ -27,6 +28,7 @@ export default class Player {
         GameWebSocket.on(SERVER_ACTION.Unauthorized, () => Player.onUnauthorizedHandler(callbacks?.onUnauthorized))
         
         GameWebSocket.connect({
+            serverAddr: Config.gameServerAddr,
             onOpenCallback: () => GameWebSocket.join(accessToken)
         })
     }

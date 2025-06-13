@@ -1,5 +1,6 @@
 import API from "../../api/api";
 import { getTokens } from "../../api/client";
+import Config from "../../config";
 import LoadingLayout from "../../layouts/loading/LoadingLayout";
 import ModalLayout from "../../layouts/modal/ModalLayout";
 import EventBroker from "../../pkg/event-broker/eventBroker";
@@ -47,6 +48,7 @@ export default class GameLauncherModal extends FrontendyComponent {
         }
 
         GameLauncher.startGameSearching(accessToken, game, {
+            serverAddr: Config.gameServerAddr,
             onConnectedCallback: () => {
                 this.state.show = false;
                 this.state.isLoading = false;

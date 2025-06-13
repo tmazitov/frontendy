@@ -8,20 +8,19 @@ dotenv.config();
 
 const app = Fastify();
 
+const mode = process.env.MODE || 'development';
+const host = mode === 'development' ? 'localhost' : '0.0.0.0'
 const port = parseInt(process.env.PORT || '3000', 10);
 
-// 1. Регистрируем отдачу статики
 app.register(fastifyStatic, {
 	root: path.join(__dirname, '../public'),
 	prefix: '/public/',
 });
 
-// 2. Роут SPA
 app.get('/*', async (request, reply) => {
 	const url = new URL(request.url, `http://localhost`);
 
 	if (path.extname(url.pathname)) {
-		// Нет такого файла => 404
 		return reply.code(404).send();
 	}
 
@@ -34,8 +33,7 @@ app.get('/*', async (request, reply) => {
 	}
 });
 
-// 3. Запуск сервера
-app.listen({ port }, (err, address) => {
+app.listen({ host, port }, (err, address) => {
 	if (err) {
 		app.log.error(err);
 		process.exit(1);

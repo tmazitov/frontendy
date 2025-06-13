@@ -5,6 +5,7 @@ import type {TokenPair} from "./tokenPair";
 import router from "../pages/router";
 import EventBroker from "../pkg/event-broker/eventBroker";
 import API from "./api";
+import Config from "../config";
 
 function cacheTokens(tokenPair:TokenPair){
 	localStorage.setItem('access-token', tokenPair.accessToken)
@@ -145,7 +146,7 @@ class AxiosClient {
 		try {
 			const response = await axios.request({
 				method: "POST",
-				url: "http://localhost:5000/auth/api/rest/refresh",
+				url: `http://${Config.umsAddr}/api/rest/refresh`,
 				headers: {
 					'Content-Type': 'application/json',
 					'Access-Control-Allow-Origin': '*',
