@@ -141,43 +141,43 @@ export default class StoreSetters {
     }
 
     async setupGamePlayersInfo(player1State: {id:number, score:number}, player2State: {id:number, score:number}) {
-        // if (!player1State || !player2State) {
-        //     console.error("StoreSetters: setupGamePlayersInfo: playersIds length is not 2");
-        //     return ;
-        // }
+        if (!player1State || !player2State) {
+            console.error("StoreSetters: setupGamePlayersInfo: playersIds length is not 2");
+            return ;
+        }
         
-        // let player1: User | undefined = undefined;
-        // try {
-        //     const response = await API.ums.userGetInfo(player1State.id)
-        //     const data = response.data;
-        //     if (!data) {
-        //         throw new Error("no user data in response");
-        //     }
-        //     player1 = new User(data);
-        // } catch (e) {
-        //     console.error("StoreSetters: setupGamePlayersInfo: error getting player 1 info : ", e);
-        // }
+        let player1: User | undefined = undefined;
+        try {
+            const response = await API.ums.userGetInfo(player1State.id)
+            const data = response.data;
+            if (!data) {
+                throw new Error("no user data in response");
+            }
+            player1 = new User(data);
+        } catch (e) {
+            console.error("StoreSetters: setupGamePlayersInfo: error getting player 1 info : ", e);
+        }
 
-        // let player2: User | undefined = undefined;
-        // try {
-        //     const response = await API.ums.userGetInfo(player2State.id)
-        //     const data = response.data;
-        //     if (!data) {
-        //         throw new Error("no user data in response");
-        //     }
-        //     player2 = new User(data);
-        // } catch (e) {
-        //     console.error("StoreSetters: setupGamePlayersInfo: error getting player 2 info : ", e);
-        // }
+        let player2: User | undefined = undefined;
+        try {
+            const response = await API.ums.userGetInfo(player2State.id)
+            const data = response.data;
+            if (!data) {
+                throw new Error("no user data in response");
+            }
+            player2 = new User(data);
+        } catch (e) {
+            console.error("StoreSetters: setupGamePlayersInfo: error getting player 2 info : ", e);
+        }
 
-        // if (!player1 || !player2) {
-        //     console.error("StoreSetters: setupGamePlayersInfo: one of players is undefined");
-        //     return ;
-        // }
+        if (!player1 || !player2) {
+            console.error("StoreSetters: setupGamePlayersInfo: one of players is undefined");
+            return ;
+        }
 
-        // const info = new PlayersInfo(player1, player2, player1State.score, player2State.score)
+        const info = new PlayersInfo(player1, player2, player1State.score, player2State.score)
         
-        // this.state.gamePlayersInfo.setValue(info);
+        this.state.gamePlayersInfo.setValue(info);
     }
 
     async setupMatchSceneInfo(info: MatchSceneInfo) {

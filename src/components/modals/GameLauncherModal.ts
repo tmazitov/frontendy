@@ -48,7 +48,7 @@ export default class GameLauncherModal extends FrontendyComponent {
         }
 
         GameLauncher.startGameSearching(accessToken, game, {
-            serverAddr: Config.gameServerAddr,
+            serverAddr: Config.mmrsAddr,
             onConnectedCallback: () => {
                 this.state.show = false;
                 this.state.isLoading = false;

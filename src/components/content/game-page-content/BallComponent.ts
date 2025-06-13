@@ -15,7 +15,7 @@ export default class BallComponent extends FrontendyComponent {
     constructor(props: BallComponentProps) {
         super(props);
         setInterval(() => {
-            console.log("BallComponent: update called with props:", this.props);
+            // console.log("BallComponent: update called with props:", this.props);
             const el = this.el as HTMLElement;
             if (!el) {
                 return;

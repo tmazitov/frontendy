@@ -3,6 +3,8 @@ import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
 import Store from "../../../store/store";
 import PlayersInfo from "../../../types/PlayersInfo";
+import InfoParagraphComponent from "../../inputs/InfoParagraphComponent";
+import MessageComponent from "../../inputs/MessageComponent";
 import SmallAvatarComponent from "../../inputs/SmallAvatarComponent";
 
 export default class InfoBarComponent extends FrontendyComponent {
@@ -10,12 +12,18 @@ export default class InfoBarComponent extends FrontendyComponent {
 
     data() {
         return {
-            player1Nickname: "nickname 1",
-            player2Nickname: "nickname 2",
-            player1Avatar: null,
-            player2Avatar: null,
-            player1Score: 0,
-            player2Score: 0,
+            players: {
+                player1: {
+                    nickname: undefined,
+                    avatar: undefined,
+                    score: 0,
+                },
+                player2: {
+                    nickname: undefined,
+                    avatar: undefined,
+                    score: 0,
+                },
+            }
         }
     }
 
@@ -26,41 +34,55 @@ export default class InfoBarComponent extends FrontendyComponent {
                 return;
             }
             const playersInfo = info.getPlayersPublicInfo();
-            this.state.player1Nickname = playersInfo.player1.nickname;
-            this.state.player2Nickname = playersInfo.player2.nickname;
-            this.state.player1Score = playersInfo.player1.score;
-            this.state.player2Score = playersInfo.player2.score;
+            this.state.players = {
+                player1: {
+                    nickname: playersInfo.player1.nickname,
+                    avatar: playersInfo.player1.avatar, 
+                    score: playersInfo.player1.score,
+                },
+                player2: {
+                    nickname: playersInfo.player2.nickname,
+                    avatar: playersInfo.player2.avatar,
+                    score: playersInfo.player2.score,
+                }
+            }
         })
     }
 
     template() {
 
-        const player1Avatar = this.state.player1Avatar ?
-            this.state.player1Avatar : API.ums.defaultAvatarUrl()
+        const player1Avatar = this.state.players.player1.avatar ?
+            this.state.players.player1.avatar : API.ums.defaultAvatarUrl()
 
-        const player2Avatar = this.state.player2Avatar ?
-            this.state.player2Avatar : API.ums.defaultAvatarUrl()
+        const player1Nickname = this.state.players.player1.nickname ?
+            this.state.players.player1.nickname : "Player 1";
+
+        const player2Avatar = this.state.players.player2.avatar ?
+            this.state.players.player2.avatar : API.ums.defaultAvatarUrl()
+
+        const player2Nickname = this.state.players.player2.nickname ?
+            this.state.players.player2.nickname : "Player 2";
 
         return elem('div')
             .setProps({ class: "flex justify-between items-center p-4 w-[512px] "})
             .setChild([
-                elem('div')
-                .setProps({ class: "text-bold text-md flex gap-2 items-center"})
-                .setChild([
-                    new SmallAvatarComponent({imagePath: player1Avatar}),
-                    this.state.player1Nickname
-                ]),
+            elem('div')
+            .setProps({ class: "text-bold text-md flex gap-2 items-center flex-1 justify-start"})
+            .setChild([
+                new SmallAvatarComponent({imagePath: player1Avatar}),
+                new MessageComponent(player1Nickname, {color: "black"}),
+            ]),
 
-                elem('div')
-                .setProps({ class: "text-bold text-lg"})
-                .addChild(`${this.state.player1Score} : ${this.state.player2Score}`),
-                
-                elem('div')
-                .setProps({ class: "text-bold text-md flex gap-2 items-center"})
-                .setChild([
-                    new SmallAvatarComponent({imagePath: player2Avatar}),
-                    this.state.player2Nickname,
-                ]),
+            elem('div')
+            .setProps({ class: "text-bold text-lg"})
+            .addChild(`${this.state.players.player1.score} : ${this.state.players.player2.score}`),
+            
+            elem('div')
+            .setProps({ class: "text-bold text-md flex gap-2 items-center flex-1 justify-end"})
+            .setChild([
+                new MessageComponent(player2Nickname, {color: "black"}),
+                new SmallAvatarComponent({imagePath: player2Avatar}),
+            ]),
             ])
     }
 }

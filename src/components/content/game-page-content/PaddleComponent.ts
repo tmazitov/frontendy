@@ -14,7 +14,7 @@ export default class PaddleComponent extends FrontendyComponent {
     constructor(props: PaddleComponentProps) {
         super(props);
         setInterval(() => {
-            console.log("PaddleComponent: update called with props:", this.props);
+            // console.log("PaddleComponent: update called with props:", this.props);
             const el = this.el as HTMLElement;
             if (!el) {
                 return ;
