@@ -3,7 +3,13 @@ class Timer {
     private counter: number = 0
     
     private isCounting: boolean = false;
+    private intervalTime: number;
     
+    constructor(intervalTime: number = 1000) {
+        this.isCounting = false;
+        this.intervalTime = intervalTime;
+    }
+
     start(omChange: (counter: number) => void) {
         if (this.isCounting) {
             return;
@@ -14,7 +20,7 @@ class Timer {
         this.interval = setInterval(() => {
             this.counter++;
             omChange(this.counter);
-        }, 1000);
+        }, this.intervalTime);
     }
 
     stop() {
@@ -41,12 +47,12 @@ class TimerStorage {
         return this.timers.get(name);
     }
 
-    static addTimer(name: string, onChange: (counter: number) => void) {
+    static addTimer(name: string, onChange: (counter: number) => void, interval: number = 1000) {
         if (this.timers.has(name)) {
             return;
         }
         
-        const timer = new Timer();
+        const timer = new Timer(interval);
         this.timers.set(name, timer);
         timer.start(onChange);
         return timer;

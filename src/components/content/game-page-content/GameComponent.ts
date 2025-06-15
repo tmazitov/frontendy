@@ -14,6 +14,7 @@ import GameOverComponent from "./GameOverComponent";
 import InfoBarComponent from "./InfoBarComponent";
 import SceneComponent from "./SceneComponent";
 import GameWaitingComponent from "./GameWaitingComponent";
+import TimerStorage from "../../../pkg/timer";
 
 export default class GameComponent extends FrontendyComponent {
     componentName: string = 'game-component';
@@ -77,9 +78,6 @@ export default class GameComponent extends FrontendyComponent {
             onAuthorized: onAuthorizedCallback,
             onUnauthorized: onUnauthorizedCallback
         });
-        // setTimeout(() => {
-        // }, Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000)
-        
 
         GameWebSocket.on(SERVER_ACTION.MatchOpponentDisconnected, (data:any) => {
             
@@ -97,6 +95,10 @@ export default class GameComponent extends FrontendyComponent {
             console.log("Match over cough!")
             const results = data.payload as MatchResultInfo
             Store.setters.updateMatchResult(results)
+            TimerStorage.removeTimer('game-ball');
+            TimerStorage.removeTimer('game-paddle-left');
+            TimerStorage.removeTimer('game-paddle-right');
+            Player.cleanup();
         })
 
 
@@ -122,7 +124,6 @@ export default class GameComponent extends FrontendyComponent {
         console.log("GameComponent unmounted");
         Player.cleanup();
     }
-
 
     template() {
 
