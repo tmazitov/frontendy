@@ -72,18 +72,8 @@ export default class InfoContentComponent extends FrontendyComponent {
     
     template() {
 
-        let imagePath
-        if (!this.state.user) {
-            imagePath = null
-        } else if (this.state.user.avatarUrl && this.state.user.avatarUrl.startsWith("http")) {
-            imagePath = this.state.user.avatarUrl
-        } else if (this.state.user.avatarUrl) {
-            imagePath = `http://${Config.umsAddr}/public/${this.state.user.avatarUrl}`
-        } else {
-            imagePath = `http://${Config.umsAddr}/public/avatars/default.png`
-        }
-        
-
+        const avatarUrl = this.state.user?.avatarUrl;
+        const fullAvatarUrl = API.ums.appropriateAvatar(avatarUrl);
 
         const ratingChart = this.state.ratingChangeInfo === undefined ? 
             new LoadingLayout({
@@ -100,7 +90,7 @@ export default class InfoContentComponent extends FrontendyComponent {
             // Image container
             elem('span')
             .setChild([
-                new ProfileAvatarComponent(imagePath)
+                new ProfileAvatarComponent(fullAvatarUrl)
                 .onUpdate(async (file: File) => this.updateImageHandler(file))
             ]),
 

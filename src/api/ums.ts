@@ -182,10 +182,23 @@ export default class UMS {
         })
     }
 
-    public defaultAvatarUrl(): string {
+    private defaultAvatarUrl(): string {
+        const baseURL = `${this.baseUrl}`.replace("api/rest", "")
+        return `${baseURL}public/avatars/default.png`
+    }
+    private avatarWrapper(avatarPath:string):string {
+        const baseURL = `${this.baseUrl}`.replace("api/rest", "")
+        return `${baseURL}public/${avatarPath}`
+    }
 
-        const baseURL = `${this.baseUrl}`.replace("api/rest", "public")
-
-        return `${baseURL}/avatars/default.png`
+    public appropriateAvatar(avatarPath: string | null ) {
+        console.log()
+        if (!avatarPath) {
+            return this.defaultAvatarUrl();
+        }
+        if (avatarPath.startsWith("http")) {
+            return avatarPath;
+        }
+        return this.avatarWrapper(avatarPath);
     }
 }

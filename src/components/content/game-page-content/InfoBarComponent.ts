@@ -54,14 +54,12 @@ export default class InfoBarComponent extends FrontendyComponent {
 
     template() {
 
-        const player1Avatar = this.state.players.player1.avatar ?
-            this.state.players.player1.avatar : API.ums.defaultAvatarUrl()
+        const player1Avatar = API.ums.appropriateAvatar(this.state.players.player1.avatar)
 
         const player1Nickname = this.state.players.player1.nickname ?
             this.state.players.player1.nickname : "Player 1";
 
-        const player2Avatar = this.state.players.player2.avatar ?
-            this.state.players.player2.avatar : API.ums.defaultAvatarUrl()
+        const player2Avatar = API.ums.appropriateAvatar(this.state.players.player2.avatar)
 
         const player2Nickname = this.state.players.player2.nickname ?
             this.state.players.player2.nickname : "Player 2";
