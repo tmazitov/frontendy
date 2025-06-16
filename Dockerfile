@@ -15,8 +15,6 @@ RUN npm install
 
 COPY . .
 
-RUN bash ./generate-env.sh
-
 RUN npx esbuild src/client.ts --bundle --outfile=public/client.js --format=esm
 
 RUN npm run build
