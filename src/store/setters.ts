@@ -1,3 +1,4 @@
+import { Axios, AxiosError } from "axios";
 import API from "../api/api";
 import { isAuthorized } from "../api/client";
 import GameStat from "../types/GameStat";
@@ -7,6 +8,7 @@ import PlayersInfo from "../types/PlayersInfo";
 import RatingChangeItem from "../types/RatingChangeItem";
 import User from "../types/User";
 import StoreState from "./state";
+import FriendInvite from "../types/FriendInvite";
 
 export default class StoreSetters {
 
@@ -232,6 +234,74 @@ export default class StoreSetters {
             this.state.freinds.setValue(freinds);
         } catch (err) {
             console.error("StoreSetters: setupFriends: error getting friends list :", err);
+            return ;
+        }
+    }
+
+    async setupFriendsInvites() {
+        if (!isAuthorized()) {
+            return ;
+        }
+        try {
+            const response = await API.ums.friendInviteList()
+            if (!response) {
+                throw new Error("no response or data in response");
+            }
+
+            const invites = Array.from(response.data).map((inviteData:any) => new FriendInvite(inviteData));
+            this.state.friendsInvites.setValue(invites);
+        } catch {
+            console.error("StoreSetters: setupFriendsInvites: error getting friends invites list");
+            return ;
+        }
+    }
+    
+    async sendFriendInvite(nickname: string) {
+        if (!isAuthorized()) {
+            return ;
+        }
+        try {
+            const response = await API.ums.friendSendInvite(nickname);
+            if (!response || response.status !== 201) {
+                throw new Error("Failed to add friend: " + (response?.statusText || "Unknown error"));
+            }
+
+            this.setupFriendsInvites();
+        } catch (err) {
+
+            let errorMessage
+            if (err instanceof AxiosError) {
+                if (err.status == 400) {
+                    errorMessage = "Invalid nickname."
+                } else if (err.status == 404) {
+                    errorMessage = "User not found."
+                } else if (err.status == 409) {
+                    errorMessage = "User alreadt in friends list or invitation already exists."
+                } else if (err.status == 500) {
+                    errorMessage = "Internal server error."
+                }
+            } else {
+                errorMessage = "An unexpected error occurred while adding a friend.";
+            }
+
+            return errorMessage;
+        }
+    }
+
+    async deleteFriendInvite(inviteId: number) {
+        try {
+            const respose = await API.ums.friendDeleteInvite(inviteId);
+            if (!respose) {
+                throw new Error("no response");
+            }
+            const currentInvites = await this.state.friendsInvites.getValue();
+            if (!currentInvites) {
+                return ;    
+            }
+            const newInvites = currentInvites.filter((invite: FriendInvite) => invite.id !== inviteId);
+            this.state.friendsInvites.setValue(newInvites);
+        } catch (e) {
+            console.error("StoreSetters: deleteFriendInvite: error deleting invite:", e);
             return ;
         }
     }

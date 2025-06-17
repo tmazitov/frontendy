@@ -1,3 +1,4 @@
+import FriendInvite from "../types/FriendInvite";
 import GameStat from "../types/GameStat";
 import { MatchResultInfo } from "../types/MatchResultInfo";
 import { MatchSceneInfo } from "../types/MatchSceneInfo";
@@ -58,6 +59,10 @@ export default class StoreGetters {
 
     public async userFriends(onUpdate?:(value:User[]|undefined) => void): Promise<User[] | undefined> {
         return this.state.freinds.getValue(onUpdate);
+    }
+
+    public async userFriendsInvites(onUpdate?:(value:FriendInvite[]|undefined) => void): Promise<FriendInvite[] | undefined> {
+        return this.state.friendsInvites.getValue(onUpdate);
     }
 
     public async userRatingChanges(onUpdate?:(value:RatingChangeInfo|undefined) => void): Promise<RatingChangeInfo | undefined> {

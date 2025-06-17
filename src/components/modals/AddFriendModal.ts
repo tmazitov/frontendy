@@ -2,6 +2,7 @@ import LoadingLayout from "../../layouts/loading/LoadingLayout";
 import ModalLayout from "../../layouts/modal/ModalLayout";
 import FrontendyComponent from "../../pkg/frontendy/component/component";
 import { elem    } from "../../pkg/frontendy/vdom/constructor";
+import Store from "../../store/store";
 import ButtonComponent from "../inputs/ButtonComponent";
 import InputComponent from "../inputs/InputComponent";
 import MessageComponent from "../inputs/MessageComponent";
@@ -15,16 +16,10 @@ export default class AddFriendModal extends FrontendyComponent {
             isLoading: false,
             errorMessage: undefined,
             successMessage: undefined,
-            onSubmitCallback: undefined,
             form: {
                 nickname: "",
             }
         }
-    }
-
-    public onSubmit(fn:Function) {
-        this.state.onSubmitCallback = fn;
-        return this;
     }
 
     public setShow(value: boolean) {
@@ -32,14 +27,24 @@ export default class AddFriendModal extends FrontendyComponent {
         return this 
     }
 
-    private onSubmitHandler() {
+    private async onSubmitHandler() {
+        const nickname = this.state.form.nickname;
+        if (!nickname || nickname.trim() === "") {
+            this.state.errorMessage = "Nickname cannot be empty";
+            return ;
+        }
+        this.state.errorMessage = undefined;
+        this.state.successMessage = undefined;
+
         this.state.isLoading = true;
-        setTimeout(() => {
-            this.state.isLoading = false;
-            this.state.onSubmitCallback?.(this.state.form.nickname)
-            this.state.form = {nickname: ""}
-            this.setShow(false);
-        }, 1000)
+        const err = await Store.setters.sendFriendInvite(nickname)
+        this.state.isLoading = false;
+        if (err !== undefined) {
+            this.state.errorMessage = err;
+            return ;
+        }
+        this.state.successMessage = "Friend invite sent successfully!";
+        this.state.form = {nickname: ""}
     }
     template() {
 
@@ -60,6 +65,9 @@ export default class AddFriendModal extends FrontendyComponent {
             .addChild(`New friend`);
 
         // Body
+        console.log("messages", this.state.successMessage, this.state.errorMessage);
+        const message: string = this.state.errorMessage ?? this.state.successMessage ;
+        const messageColor: string = this.state.errorMessage ? 'red' : 'green';
         const body = elem("div")
             .setProps({ class: "flex flex-col gap-4" })
             .setChild([
@@ -67,9 +75,13 @@ export default class AddFriendModal extends FrontendyComponent {
                     label: "Please wait...", 
                     icon: "ti ti-loader"
                 }).setShow(this.state.isLoading),
+                
 
-                new MessageComponent(this.state.errorMessage, {color: 'red'}),
-                new MessageComponent(this.state.errorMessage, {color: 'green'}),
+                elem("span")
+                .setProps({style: `${message ? "display: block;" : "display: none;"}`})
+                .setChild([
+                    new MessageComponent(message, {color: messageColor}),
+                ]),
 
                 input,
                 submitButton,

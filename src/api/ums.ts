@@ -198,4 +198,29 @@ export default class UMS {
             url: "/friends",
         });
     }
+
+    public async friendInviteList(){
+        return await this.client.request({
+            method: "GET",
+            url: "/friends/invite",
+        });
+    }
+
+    public async friendSendInvite(nickname: string) {
+        return await this.client.request({
+            method: "POST",
+            url: "/friends/invite",
+            data: {
+                nickname: nickname,
+            }
+        })
+    }
+
+    public async friendDeleteInvite(id: number) {
+        return await this.client.request({
+            method: "DELETE",
+            url: `/friends/invite/${id}`,
+        })  
+    }
+
 }   
