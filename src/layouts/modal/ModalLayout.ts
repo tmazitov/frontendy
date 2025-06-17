@@ -70,7 +70,7 @@ export default class ModalLayout extends FrontendyComponent {
         headerComp.addChild(header)
 
         return elem("div")
-            .setProps({ class : `fixed top-0 left-0 z-10 flex items-center` })
+            .setProps({ class : `fixed top-0 left-0 z-100 flex items-center` })
             .setChild([
 
                 // Backdrop (outside click --> close)
