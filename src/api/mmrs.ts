@@ -6,10 +6,10 @@ export default class MMRS {
 		this.client = new AxiosClient(baseUrl)
     }
 
-    public async userMatchStats() {
+    public async userMatchStats(page:number) {
         const response = await this.client.request({
             method: "GET",
-            url: "/stats",
+            url: `/stats?p=${page}`,
         });
 
         return response;

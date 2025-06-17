@@ -59,12 +59,12 @@ export default class StoreSetters {
         }
     }
 
-    async setupGameStats() {
+    async setupGameStats(page:number) {
         if (!isAuthorized()) {
             return ;
         }
         try {
-            const response = await API.mmrs.userMatchStats()
+            const response = await API.mmrs.userMatchStats(page)
             if (!response) {
                 throw new Error("no response");
             }

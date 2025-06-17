@@ -7,6 +7,14 @@ import GamesEmptyMessageComponent from "./GamesEmptyMessageComponet";
 import GamesTableComponent from "./GamesTableComponent";
 
 
+function getLastPage() {
+    const page = localStorage.getItem("games-page");
+    if (page === null) {
+        return 0;
+    }
+    return parseInt(page);
+}
+
 export default class GamesContentComponent extends FrontendyComponent {
     componentName: string = 'games-content';
 
@@ -14,11 +22,12 @@ export default class GamesContentComponent extends FrontendyComponent {
         return {
             games: undefined,
             userId: 0,
+            settings: {page: getLastPage()},
         }
     }
 
     protected onCreated(): void {
-        Store.setters.setupGameStats().then(() => {
+        Store.setters.setupGameStats(this.state.settings.page).then(() => {
             Store.getters.gameStats((stats:GameStat[] | undefined) => {
                 this.state.games = stats || [];
             } )
@@ -29,6 +38,27 @@ export default class GamesContentComponent extends FrontendyComponent {
             }
             this.state.userId = userId;
         })
+    }
+
+    private onNextPage() {
+        if (this.state.games.length != 10) {
+            return ;
+        }
+
+        this.state.settings.page += 1;
+        localStorage.setItem("games-page", this.state.settings.page.toString());    
+
+        Store.setters.setupGameStats(this.state.settings.page)
+    }
+    private onPrevPage() {
+        if (this.state.settings.page == 0) {
+            return ;
+        }
+
+        this.state.settings.page -= 1;
+        localStorage.setItem("games-page", this.state.settings.page.toString());    
+
+        Store.setters.setupGameStats(this.state.settings.page)
     }
 
     template() {
@@ -43,7 +73,13 @@ export default class GamesContentComponent extends FrontendyComponent {
             }).setShow(isLoading)},
 
             {cond: !isLoading && this.state.games.length === 0, action: () => new GamesEmptyMessageComponent()},
-            {cond: !isLoading && this.state.games.length > 0, action: () => new GamesTableComponent(this.state.userId, this.state.games)},
+            {cond: !isLoading && this.state.games.length > 0, action: () => new GamesTableComponent({
+                userId:this.state.userId as number, 
+                games:this.state.games as GameStat[],
+                page:this.state.settings.page,
+                onNextPage: () => this.onNextPage(),
+                onPrevPage: () => this.onPrevPage(),
+            })},
         ]
 
         return elem('div')
