@@ -56,6 +56,10 @@ export default class StoreGetters {
         return user.id;
     }
 
+    public async userFriends(onUpdate?:(value:User[]|undefined) => void): Promise<User[] | undefined> {
+        return this.state.freinds.getValue(onUpdate);
+    }
+
     public async userRatingChanges(onUpdate?:(value:RatingChangeInfo|undefined) => void): Promise<RatingChangeInfo | undefined> {
         return this.state.ratingChanges.getValue(onUpdate);
     }

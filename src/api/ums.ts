@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 import SignUpForm from "../types/forms/registrationForm";
 import SignInForm from "../types/forms/signInForm";
-import AxiosClient, { cacheTokens, getTokens, IS_REFRESHING, removeTokens } from "./client";
+import AxiosClient, { cacheTokens, getTokens, removeTokens } from "./client";
 import { TokenPair } from "./tokenPair";
 import { GoogleOAuthPayload } from "./oauth/google";
 import PasswordUpdateForm from "../types/forms/updatePasswordForm";
@@ -190,5 +190,12 @@ export default class UMS {
             return avatarPath;
         }
         return this.avatarWrapper(avatarPath);
+    }
+
+    public async friendList() {
+        return await this.client.request({
+            method: "GET",
+            url: "/friends",
+        });
     }
 }   

@@ -216,5 +216,24 @@ export default class StoreSetters {
         currentInfo.updateScore(player1Score, player2Score);
         this.state.gamePlayersInfo.setValue(currentInfo);
     }
+
+    async setupFriends(){
+        if (!isAuthorized()) {
+            return ;
+        }
+        try {
+            const response = await API.ums.friendList()
+            if (!response) {
+                throw new Error("no response or data in response");
+            }
+
+            const freinds = Array.from(response.data).map((friendData:any) => new User(friendData));
+            console.log("StoreSetters: setupFriends response:", freinds);
+            this.state.freinds.setValue(freinds);
+        } catch (err) {
+            console.error("StoreSetters: setupFriends: error getting friends list :", err);
+            return ;
+        }
+    }
 }
 

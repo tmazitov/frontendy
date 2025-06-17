@@ -1,7 +1,7 @@
 import TabsLayout from "../../../layouts/tabs/TabsLayout";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
-import FriendListComponent from "./friend-list/FrienListComponent";
+import FriendListComponent from "./friend-list/FriendListComponent";
 import GamesContentComponent from "./game-list/GamesContentComponent";
 import InfoContentComponent from "./InfoContentComponent";
 
