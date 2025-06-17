@@ -15,6 +15,7 @@ import InfoBarComponent from "./InfoBarComponent";
 import SceneComponent from "./SceneComponent";
 import GameWaitingComponent from "./GameWaitingComponent";
 import TimerStorage from "../../../pkg/timer";
+import GameErrorComponent from "./GameErrorComponent";
 
 export default class GameComponent extends FrontendyComponent {
     componentName: string = 'game-component';
@@ -23,6 +24,7 @@ export default class GameComponent extends FrontendyComponent {
         return {
             gameResults: false,
             gameWaitingConf: undefined,
+            errorMessage: undefined,
         }
     }
 
@@ -63,21 +65,35 @@ export default class GameComponent extends FrontendyComponent {
         }
         const onUnauthorizedCallback = () => {
             if (isCallbackActivated) {
-                router.push('home');
+                this.state.errorMessage = "Unauthorized access. Please log in again.";
                 return ;
             }
             isCallbackActivated = true;
-            API.ums.refresh()
-            .then(() => Player.setup(tokens.accessToken, {
-                onAuthorized: onAuthorizedCallback,
-                onUnauthorized: onUnauthorizedCallback
-            }))
+            
+            API.ums.refresh().then(() => {
+                const newTokens = getTokens();
+                console.log("new tokens for the game: ", newTokens);
+                if (!newTokens || !newTokens.accessToken) {
+                    this.state.errorMessage = "Failed to refresh tokens. Please log in again.";
+                    return ;
+                }
+                
+                Player.setup(newTokens.accessToken, {
+                    onAuthorized: onAuthorizedCallback,
+                    onUnauthorized: onUnauthorizedCallback
+                })
+            })
         }
         
         Player.setup(tokens.accessToken, {
             onAuthorized: onAuthorizedCallback,
             onUnauthorized: onUnauthorizedCallback
         });
+
+        GameWebSocket.on(SERVER_ACTION.Error, (data: any) => {
+            const errorMessage = data.payload.message || "Unknown error";
+            this.state.errorMessage = errorMessage;
+        })
 
         GameWebSocket.on(SERVER_ACTION.MatchOpponentDisconnected, (data:any) => {
             
@@ -128,7 +144,9 @@ export default class GameComponent extends FrontendyComponent {
     template() {
 
         let content
-        if (this.state.gameResults) {
+        if (this.state.errorMessage) {
+            content = new GameErrorComponent(this.state.errorMessage)
+        } else if (this.state.gameResults) {
             content = new GameOverComponent(this.state.gameResults)
         } else if (this.state.gameWaitingConf && !this.state.gameWaitingConf.isReady && this.state.gameWaitingConf.timeLeft){
             content = new GameWaitingComponent(this.state.gameWaitingConf.timeLeft)
@@ -136,10 +154,12 @@ export default class GameComponent extends FrontendyComponent {
             content = new SceneComponent()
         }
 
+        
+
         return elem('div')
             .setProps({class : "flex items-center flex-col"})
             .setChild([
-                new InfoBarComponent(),
+                new InfoBarComponent(this.state.errorMessage !== undefined),
                 content,
             ])
     }

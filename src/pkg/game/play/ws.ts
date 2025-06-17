@@ -23,6 +23,7 @@ export default class GameWebSocket {
             onOpenCallback: () => {
                 console.log("GameWebSocket connection opened.");
                 this.listenerQueue.forEach((callback, action) => {
+                    console.log("Registering action listener from queue for:", action);
                     GameWebSocket.conn?.on(action, callback);
                 });
 
@@ -48,7 +49,6 @@ export default class GameWebSocket {
 
     public static on(action: ServerAction, callback: (data: any) => void): void {
 
-        console.log("trying to add ", action)
         if (GameWebSocket.conn === undefined) {
             // console.warn("WebSocket connection does not exist. Cannot register action listener.");
             this.listenerQueue.set(action, callback)

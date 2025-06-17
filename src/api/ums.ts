@@ -1,12 +1,13 @@
 import axios, { AxiosInstance } from "axios";
 import SignUpForm from "../types/forms/registrationForm";
 import SignInForm from "../types/forms/signInForm";
-import AxiosClient, { cacheTokens, getTokens, removeTokens } from "./client";
+import AxiosClient, { cacheTokens, getTokens, IS_REFRESHING, removeTokens } from "./client";
 import { TokenPair } from "./tokenPair";
 import { GoogleOAuthPayload } from "./oauth/google";
 import PasswordUpdateForm from "../types/forms/updatePasswordForm";
 import router from "../pages/router";
 import EventBroker from "../pkg/event-broker/eventBroker";
+import { resolve } from "path";
 
 export default class UMS {
 	private client: AxiosClient
@@ -67,35 +68,24 @@ export default class UMS {
     }
 
     public async refresh() {
-        const tokens = getTokens()
+        console.log("Trying to refresh manualy...", AxiosClient.isRefreshing)
+        if (AxiosClient.isRefreshing == true) {
+            console.log("Already refreshing, adding to queue...")
+            return new Promise((resolve) => {
+                const addRes = this.client.addRefreshQueueItem(resolve);
+                console.log("Added to queue, waiting for refresh...", addRes);
+            });
+        }
+        
+        console.log("Not refreshing, proceeding with refresh...")
 
-		try {
-			const response = await this.instance.request({
-				method: "POST",
-				url: "/refresh",
-				headers: {
-					'Content-Type': 'application/json',
-					'Access-Control-Allow-Origin': '*',
-				},
-				data: {
-					"refreshToken" : tokens.refreshToken 
-				}
-			})
-			if (response && response.data) {
-				cacheTokens(response.data)
-			}
-			return response
-		} catch (error: any) {
-			if (error.response && error.response.status == 401) {
-				setTimeout(async () => {
-					removeTokens()
+        AxiosClient.isRefreshing = true;
 
-					router.push("home")
-					EventBroker.getInstance().emit("update-auth");
-				})
-			}
-			return error.response
-		}
+        const response = this.client.refresh();
+
+        AxiosClient.isRefreshing = false;
+
+        return response;
     }
  
     public async signOut() {
@@ -201,4 +191,4 @@ export default class UMS {
         }
         return this.avatarWrapper(avatarPath);
     }
-}
+}   

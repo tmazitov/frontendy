@@ -1,9 +1,14 @@
 import GameComponent from "../components/content/game-page-content/GameComponent";
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
+import GameWebSocket from "../pkg/game/play/ws";
 
 export default class GamePage extends FrontendyComponent {
     componentName: string = 'game-page';
+
+    protected onUnmounted(): void {
+        GameWebSocket.close();
+    }
 
     template() {
         const dashboard = elem("div")

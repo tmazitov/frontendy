@@ -47,15 +47,43 @@ export default class GameLauncherModal extends FrontendyComponent {
             return ;
         }
 
-        GameLauncher.startGameSearching(accessToken, game, {
-            serverAddr: Config.mmrsAddr,
-            onConnectedCallback: () => {
+        const onAuthorized = () => {
+            this.state.show = false;
+            this.state.isLoading = false;
+        }
+        
+        let onUnauthorizedIsCalled = false;
+        const onUnauthorized = () => {
+            if (onUnauthorizedIsCalled) {
+                console.warn("GameLauncherModal : onUnauthorized is called multiple times");
                 this.state.show = false;
                 this.state.isLoading = false;
-            },
-            onUnauthorizedCallback: () => {
-                API.ums.refresh().then((response) => this.onSubmit(game))
+                return ;
             }
+            onUnauthorizedIsCalled = true;
+
+            API.ums.refresh().then((response) => {
+                const newTokens = getTokens();
+                if (!newTokens || !newTokens.accessToken) {
+                    console.warn("GameLauncherModal : accessToken is undefined after refresh");
+                    this.state.show = false;
+                    this.state.isLoading = false;
+                    return ;
+                }
+                
+                GameLauncher.startGameSearching(newTokens.accessToken, game, {
+                    serverAddr: Config.mmrsAddr,
+                    onConnectedCallback: onAuthorized,
+                    onUnauthorizedCallback: onUnauthorized,
+                });
+            })
+        }
+
+
+        GameLauncher.startGameSearching(accessToken, game, {
+            serverAddr: Config.mmrsAddr,
+            onConnectedCallback: onAuthorized,
+            onUnauthorizedCallback: onUnauthorized,
         });
     }
 

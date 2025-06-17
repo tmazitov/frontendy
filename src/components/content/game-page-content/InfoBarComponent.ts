@@ -10,6 +10,10 @@ import SmallAvatarComponent from "../../inputs/SmallAvatarComponent";
 export default class InfoBarComponent extends FrontendyComponent {
     componentName: string = 'info-bar-component';
 
+    constructor(isHidden:boolean) {
+        super({isHidden})
+    }
+
     data() {
         return {
             players: {
@@ -65,7 +69,9 @@ export default class InfoBarComponent extends FrontendyComponent {
             this.state.players.player2.nickname : "Player 2";
 
         return elem('div')
-            .setProps({ class: "flex justify-between items-center p-4 w-[512px] "})
+            .setProps({ class: "flex justify-between items-center p-4 w-[512px] ",
+                style: this.props.isHidden ? "display: none;" : "display: flex;"
+            })
             .setChild([
             elem('div')
             .setProps({ class: "text-bold text-md flex gap-2 items-center flex-1 justify-start"})

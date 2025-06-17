@@ -1,5 +1,7 @@
 enum SERVER_ACTION {
     
+    Error = 'error',
+
     // Authorization actions
     Authorized = 'authorized',
     Unauthorized = 'unauthorized',

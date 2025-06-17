@@ -29,14 +29,14 @@ function isAuthorized() {
 	return !!tokens.accessToken && !!tokens.refreshToken
 }
 
-let IS_REFRESHING = false
 
 class AxiosClient {
 	private axiosInstance;
 	
 	
 	static requestQueue: Array<(token: string) => void> = [];
-  
+	static isRefreshing: boolean = false;
+
 	constructor(baseUrl:string) {
 		this.axiosInstance  = axios.create({
 			baseURL: baseUrl,
@@ -80,7 +80,7 @@ class AxiosClient {
 				originalRequest._retry = true;
 
 				// Если процесс обновления токенов уже идет, добавляем запрос в очередь
-				if (IS_REFRESHING) {
+				if (AxiosClient.isRefreshing === true) {
 					return new Promise((resolve, reject) => {
 						AxiosClient.requestQueue.push((token: string) => {
 							originalRequest.headers['Authorization'] = `${token}`;
@@ -90,7 +90,7 @@ class AxiosClient {
 				}
 
 				// Начинаем процесс обновления токенов
-				IS_REFRESHING = true;
+				AxiosClient.isRefreshing = true;
 
 				try {
 					const newTokens = await this.refreshTokens();
@@ -105,13 +105,21 @@ class AxiosClient {
 				} catch (refreshError) {
 					return Promise.reject(refreshError);
 				} finally {
-					IS_REFRESHING = false;
+					AxiosClient.isRefreshing = false;
 				}
 			}
 
 			return Promise.reject(error);
 			}
 		);
+	}
+
+	public addRefreshQueueItem(callback: (token: string) => void): boolean {
+		if (AxiosClient.isRefreshing === false) {
+			return false;
+		}
+		AxiosClient.requestQueue.push(callback);
+		return true;
 	}
   
 	// Функция для обновления токенов
@@ -138,10 +146,13 @@ class AxiosClient {
 		}
 	}
 
-	private async refresh(): Promise<AxiosResponse> {
+
+	public async refresh(): Promise<AxiosResponse> {
 		// const authServicePrefix = import.meta.env["VITE_AUTH_PREFIX"]
 		const tokens = getTokens()
-		console.log('old tokens :>> ', tokens);
+		// console.log('old tokens :>> ', tokens);
+        console.log("AXIOS CLIENT refresh called...")
+
 
 		try {
 			const response = await axios.request({
@@ -184,5 +195,4 @@ export {
 	cacheTokens,
 	getTokens,
 	removeTokens,
-	IS_REFRESHING
 }
