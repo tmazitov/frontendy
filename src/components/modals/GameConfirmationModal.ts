@@ -10,8 +10,9 @@ import GameWaitComponent from "../content/game-confirmation-modal-content/GameWa
 
 export default class GameConfirmationModal extends FrontendyComponent {
     componentName: string = 'game-launch-modal';
-
+    private static interval: NodeJS.Timeout | null = null;
     constructor(game: Game, time?: number) {
+        time = time ?? 20; 
         super({ game, time })
     }
 
@@ -20,25 +21,34 @@ export default class GameConfirmationModal extends FrontendyComponent {
             show: false,
             isLoading: false,
             isConfirmed: false,
-            delay: this.props.time ? this.props.time : 20,
+            timeLeft: this.props.time,
         }
     }
 
     public setShow(value: boolean) {
         this.state.show = value;
-        if (value) {
-            TimerStorage.addTimer("game-confirmation-modal", (counter: number) => {
-                if (this.state.delay == 0) {
-                    TimerStorage.removeTimer("game-confirmation-modal");
-                    this.state.isLoading = false;
-                    this.state.isConfirmed = false;
-                    this.state.show = false;
-                    return;
-                }
-                this.state.delay = (this.props.time || 20) - counter;
-            })
+        if (GameConfirmationModal.interval) {
+            clearInterval(GameConfirmationModal.interval);
+            GameConfirmationModal.interval = null;  
         }
+        if (value) {
+            GameConfirmationModal.interval = setInterval(() => {
+                this.updateTimeLeft();
+            },1000)     
+        } 
         return this 
+    }
+
+    private updateTimeLeft(){
+        if (this.state.timeLeft == 0) {
+            clearInterval(GameConfirmationModal.interval!);
+            GameConfirmationModal.interval = null;
+            this.state.isLoading = false;
+            this.state.isConfirmed = false;
+            this.state.show = false;
+            return;
+        }
+        this.state.timeLeft -= 1;
     }
 
     private onSubmit() {
@@ -72,7 +82,7 @@ export default class GameConfirmationModal extends FrontendyComponent {
         modal.setSlot("header", header);
 
         // Body
-        const remainingTime = this.time(this.state.delay);
+        const remainingTime = this.time(this.state.timeLeft);
         if (this.state.isConfirmed) {
             const body = elem("span")
             .setChild([
