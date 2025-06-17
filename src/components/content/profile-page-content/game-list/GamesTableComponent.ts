@@ -35,7 +35,7 @@ export default class GamesTableComponent extends FrontendyComponent {
         return elem('div')
         .setChild([
             elem('div')
-            .setProps({class : "max-h-[320px] w-full overflow-y-auto"})
+            .setProps({class : "h-[320px] w-full overflow-y-auto"})
             .setChild([
                 elem('table')
                 .setProps({class: 'min-w-full table-auto'})
