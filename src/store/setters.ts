@@ -305,5 +305,69 @@ export default class StoreSetters {
             return ;
         }
     }
+
+    async acceptFriendInvite(inviteId: number) {
+        try {
+            const response = await API.ums.friendAcceptInvite(inviteId);
+            if (!response || response.status !== 201) {
+                throw new Error("Failed to accept friend invite: " + (response?.statusText || "Unknown error"));
+            }
+            const invites = await this.state.friendsInvites.getValue();
+            if (!invites) {
+                console.error("StoreSetters: acceptFriendInvite: invites is undefined");
+                return ;
+            }
+            const newInvites = invites.filter((invite: FriendInvite) => invite.id !== inviteId);
+            this.state.friendsInvites.setValue(newInvites);
+            const friends = await this.state.freinds.getValue();
+            if (!friends) {
+                console.error("StoreSetters: acceptFriendInvite: friends is undefined");
+                return ;
+            }
+            const newFriend = [...friends, new User(response.data)];
+            this.state.freinds.setValue(newFriend);
+        } catch (err) {
+            console.error("StoreSetters: acceptFriendInvite: error accepting invite:", err);
+            return ;
+        }
+    }
+
+    async rejectFriendInvite(inviteId: number) {
+        try {
+            const response = await API.ums.friendRejectInvite(inviteId);
+            if (!response || response.status !== 200) {
+                throw new Error("Failed to accept friend invite: " + (response?.statusText || "Unknown error"));
+            }
+            const invites = await this.state.friendsInvites.getValue();
+            if (!invites) {
+                console.error("StoreSetters: acceptFriendInvite: invites is undefined");
+                return ;
+            }
+            const newInvites = invites.filter((invite: FriendInvite) => invite.id !== inviteId);
+            this.state.friendsInvites.setValue(newInvites);
+        } catch (err) {
+            console.error("StoreSetters: acceptFriendInvite: error accepting invite:", err);
+            return ;
+        }
+    }
+
+    async deleteFriend(userId: number) {
+        try {
+            const response = await API.ums.friendDelete(userId);
+            if (!response || response.status !== 200) {
+                throw new Error("Failed to delete friend: " + (response?.statusText || "Unknown error"));
+            }
+            const friends = await this.state.freinds.getValue();
+            if (!friends) {
+                console.error("StoreSetters: deleteFriend: friends is undefined");
+                return ;
+            }
+            const newFriends = friends.filter((friend: User) => friend.id !== userId);
+            this.state.freinds.setValue(newFriends);
+        } catch (err) {
+            console.error("StoreSetters: deleteFriend: error deleting friend:", err);
+            return ;
+        }
+    }
 }
 

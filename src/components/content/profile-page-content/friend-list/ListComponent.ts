@@ -1,6 +1,7 @@
 import API from "../../../../api/api";
 import FrontendyComponent from "../../../../pkg/frontendy/component/component";
 import { elem } from "../../../../pkg/frontendy/vdom/constructor";
+import Store from "../../../../store/store";
 import User from "../../../../types/User";
 import DeleteFriendModal from "../../../modals/DeleteFriendModal";
 import FriendListItemComponent from "./FriendListItemComponent";
@@ -14,8 +15,12 @@ export default class ListComponent extends FrontendyComponent {
 
     protected data(){
         return {
-            friendToDelete: false,
+            friendToDelete: undefined,
         }
+    }
+
+    private onDeleteFriendHandler(user:User) {
+        Store.setters.deleteFriend(user.id)
     }
 
     template() {
@@ -34,13 +39,7 @@ export default class ListComponent extends FrontendyComponent {
             // Delete friend modal
             new DeleteFriendModal(this.state.friendToDelete,)
             .setShow(this.state.friendToDelete !== undefined)
-            .onSubmit(() => {
-                // this.state.friends = this.state.friends.filter((user: User) => user.id !== this.state.friendToDelete?.id);
-                // console.log({
-                //     friends: this.state.friends,
-                // })
-                // this.state.friendToDelete = undefined;
-            })
+            .onSubmit(() => this.onDeleteFriendHandler(this.state.friendToDelete as User))
         ])
     }
 }

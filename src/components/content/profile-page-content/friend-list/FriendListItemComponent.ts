@@ -66,6 +66,7 @@ export default class FriendListItemComponent extends FrontendyComponent {
                         icon: "ti ti-device-gamepad",
                         color: "green",
                         type: "outline",
+                        size: "small",
                         isDisabled: true,
                     }).onClick(() => {}),
 
@@ -73,6 +74,7 @@ export default class FriendListItemComponent extends FrontendyComponent {
                         icon: "ti ti-minus",
                         color: "red",
                         type: "outline",
+                        size: "small",
                     }).onClick(() => this.onDeleteHandler()),
             ])
         ])

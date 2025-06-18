@@ -31,11 +31,11 @@ export default class InvitesListComponent extends FrontendyComponent {
         Store.setters.deleteFriendInvite(inviteId)
     }
 
-    private nicknameWrapper(nickname: string, isAuthor: boolean) {
-        if (isAuthor) {
-            return `You have send an invite to <span class="text-black text-bold">${nickname}</span>`;
-        }
-        return `<span class="text-black text-bold">${nickname}</span> has sent you an invite`;
+    private acceptInviteHandler(inviteId: number) {
+        Store.setters.acceptFriendInvite(inviteId)
+    }
+    private rejectInviteHandler(inviteId: number) {
+        Store.setters.rejectFriendInvite(inviteId)
     }
 
     template() {
@@ -57,13 +57,13 @@ export default class InvitesListComponent extends FrontendyComponent {
                     type: "outline",
                     color: "green",
                     size: "small",
-                })) 
+                }).onClick(() => this.acceptInviteHandler(invite.id))) 
                 buttons.push(new ButtonComponent({
                     icon: "ti ti-x",
                     type: "outline",
                     color: "red",
                     size: "small",
-                }))
+                }).onClick(() => this.rejectInviteHandler(invite.id)))
             }
             const content = []
             if (isAuthor) {

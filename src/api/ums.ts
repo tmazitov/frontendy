@@ -223,4 +223,23 @@ export default class UMS {
         })  
     }
 
+    public async friendAcceptInvite(id: number) {
+        return await this.client.request({
+            method: "PATCH",
+            url: `/friends/invite/${id}/accept`,
+        })  
+    }
+    public async friendRejectInvite(id: number) {
+        return await this.client.request({
+            method: "PATCH",
+            url: `/friends/invite/${id}/reject`,
+        })
+    }
+
+    public async friendDelete(userId: number) {
+        return await this.client.request({
+            method: "DELETE",
+            url: `/friends/${userId}`,
+        })
+    }
 }   
