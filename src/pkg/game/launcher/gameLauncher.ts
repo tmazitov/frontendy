@@ -1,3 +1,4 @@
+import API from "../../../api/api";
 import Config from "../../../config";
 import router from "../../../pages/router";
 import Store from "../../../store/store";
@@ -34,8 +35,8 @@ export default class GameLauncher {
             }
 
             const addr = game.id == 1 ?     
-                `ws://${options.serverAddr}/api/ws/matchmaking` : 
-                `ws://${options.serverAddr}/api/ws/tournament`;
+                `${API.ws()}://${options.serverAddr}/api/ws/matchmaking` : 
+                `${API.ws()}://${options.serverAddr}/api/ws/tournament`;
             
             this.client = new WebSocketClient<MMRS_Server_Messages>(addr, opts)
                 .on(MMRS_Server_Messages.MATCH_SEARCH, (data: any) => this.matchSearchStartHandler(game, options.onConnectedCallback))

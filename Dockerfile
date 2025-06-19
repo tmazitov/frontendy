@@ -8,6 +8,7 @@ ENV GOOGLE_OAUTH_REDIRECT_URI=http://localhost:3000/oauth-callback
 ENV UMS_ADDR=localhost:5000/auth
 ENV MMRS_ADDR=localhost:5001/mmrs
 ENV GAME_ADDR=localhost:5002/game
+ENV SECURE=false
 
 COPY package*.json ./
 

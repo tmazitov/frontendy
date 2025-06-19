@@ -1,3 +1,4 @@
+import API from "../../../api/api";
 import WebSocketClient from "../../ws-client/client";
 import { PLAYER_ACTION } from "./player";
 import ServerAction from "./server";
@@ -19,7 +20,7 @@ export default class GameWebSocket {
             return;
         }
 
-        GameWebSocket.conn = new WebSocketClient<ServerAction>(`ws://${params.serverAddr}/api/ws`, {
+        GameWebSocket.conn = new WebSocketClient<ServerAction>(`${API.ws()}://${params.serverAddr}/api/ws`, {
             onOpenCallback: () => {
                 console.log("GameWebSocket connection opened.");
                 this.listenerQueue.forEach((callback, action) => {

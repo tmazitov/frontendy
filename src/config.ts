@@ -7,6 +7,7 @@ declare global {
             MMRS_ADDR: string;
             GAME_ADDR: string;
             MODE: string;
+            SECURE: boolean;
         };
     }
 }
@@ -17,4 +18,5 @@ export default class Config {
     static readonly umsAddr: string = window.__ENV__.UMS_ADDR || 'localhost:5000/auth';
     static readonly mmrsAddr: string = window.__ENV__.MMRS_ADDR || 'localhost:5001/mmrs';
     static readonly gameServerAddr: string = window.__ENV__.GAME_ADDR || 'localhost:5002/game';
+    static readonly secure: boolean = window.__ENV__.SECURE ?? false;
 }   
