@@ -40,3 +40,13 @@ app.listen({ host, port }, (err, address) => {
 	}
 	console.log(`🚀 Server listening at ${address}`);
 });
+
+process.on('SIGINT', async () => {
+    await app.close();
+    process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+	await app.close();
+	process.exit(0);
+});

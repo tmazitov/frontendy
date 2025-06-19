@@ -22,7 +22,7 @@ export default class GameComponent extends FrontendyComponent {
 
     protected data(): {} {
         return {
-            gameResults: false,
+            gameResults: undefined,
             gameWaitingConf: undefined,
             errorMessage: undefined,
         }
@@ -80,7 +80,8 @@ export default class GameComponent extends FrontendyComponent {
                 
                 Player.setup(newTokens.accessToken, {
                     onAuthorized: onAuthorizedCallback,
-                    onUnauthorized: onUnauthorizedCallback
+                    onUnauthorized: onUnauthorizedCallback,
+                    onCloseCallback: this.onCloseConnection.bind(this),
                 })
             })
         }
@@ -107,19 +108,16 @@ export default class GameComponent extends FrontendyComponent {
             this.state.gameWaitingConf = {timeLeft: 0, isReady: true};
         })
 
+
         GameWebSocket.on(SERVER_ACTION.MatchOver, (data: any) => {
-            console.log("Match over cough!")
+            console.log("render results", this.state.gameResults)
             const results = data.payload as MatchResultInfo
             Store.setters.updateMatchResult(results)
-            TimerStorage.removeTimer('game-ball');
-            TimerStorage.removeTimer('game-paddle-left');
-            TimerStorage.removeTimer('game-paddle-right');
-            Player.cleanup();
+            console.log("render results - match over")
         })
 
 
         GameWebSocket.on(SERVER_ACTION.MatchScoreUpdate, (data:any) => {
-            console.log("Match score update!", data.payload)
             const result = data.payload as {player1Score:number, player2Score:number};
             if (!result || result.player1Score === undefined || result.player2Score === undefined) {
                 console.warn("Match score update error: result is undefined or has no scores");
@@ -129,21 +127,32 @@ export default class GameComponent extends FrontendyComponent {
         })
 
         Store.getters.gameResults((value: MatchResultInfo | undefined) => {
-            if (!value) {
-                return ;
-            }
             this.state.gameResults = value;
         } )
     }
 
-    protected onUnmounted(): void {
-        console.log("GameComponent unmounted");
-        Player.cleanup();
-    }
+    private async onCloseConnection() {
 
+        TimerStorage.removeTimer('game-ball');
+        TimerStorage.removeTimer('game-paddle-left');
+        TimerStorage.removeTimer('game-paddle-right');
+        
+        Store.setters.removeGameSceneInfo();
+        Store.setters.removeGamePlayersInfo();
+        
+        Player.cleanup();
+
+        if (this.state.gameResults) {
+            return ;
+        }
+        this.state.errorMessage = "Server disconnected."
+    }
     template() {
 
         let content
+        
+        console.log("render results", this.state.gameResults)
+
         if (this.state.errorMessage) {
             content = new GameErrorComponent(this.state.errorMessage)
         } else if (this.state.gameResults) {
@@ -153,7 +162,6 @@ export default class GameComponent extends FrontendyComponent {
         } else {
             content = new SceneComponent()
         }
-
         
 
         return elem('div')

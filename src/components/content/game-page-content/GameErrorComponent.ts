@@ -3,6 +3,7 @@ import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
 import GameWebSocket from "../../../pkg/game/play/ws";
 import TimerStorage from "../../../pkg/timer";
+import Store from "../../../store/store";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import MessageComponent from "../../inputs/MessageComponent";
 import GameOverIconComponent from "./GameOverIconComponent";

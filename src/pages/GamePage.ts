@@ -1,7 +1,9 @@
 import GameComponent from "../components/content/game-page-content/GameComponent";
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
+import Player from "../pkg/game/play/player";
 import GameWebSocket from "../pkg/game/play/ws";
+import Store from "../store/store";
 
 export default class GamePage extends FrontendyComponent {
     componentName: string = 'game-page';

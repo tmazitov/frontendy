@@ -3,8 +3,31 @@ import GameProc from "./ws";
 export default class MoveController {
     private direction: number = 0;
     private pressedKeys: Set<string> = new Set();
+    private moveHandler: ((event: KeyboardEvent) => void) | undefined;
+    private stopHandler: ((event: KeyboardEvent) => void) | undefined;
 
-    public move(event:KeyboardEvent): void {
+    public enable() {
+        this.moveHandler = (event:KeyboardEvent) => this.move(event);
+        this.stopHandler = (event:KeyboardEvent) => this.stop(event);
+
+        window.addEventListener("keydown", this.moveHandler);
+        window.addEventListener("keyup", this.stopHandler);
+    }
+
+    public disable() {
+        if (this.moveHandler) {
+            window.removeEventListener("keydown", this.moveHandler);
+            this.moveHandler = undefined;
+        }
+        if (this.stopHandler) {
+            window.removeEventListener("keyup", this.stopHandler);
+            this.stopHandler = undefined;
+        }
+        this.direction = 0;
+        this.pressedKeys.clear();
+    }
+
+    private move(event:KeyboardEvent): void {
         if (this.direction != 1 && event.key === "w") {
             GameProc.playerMoveUp();
             this.direction = 1;
@@ -18,7 +41,7 @@ export default class MoveController {
         }
     }
 
-    public stop(event:KeyboardEvent): void {
+    private stop(event:KeyboardEvent): void {
         if (event.key !== 's' && event.key !== 'w') {
             return;
         }

@@ -369,5 +369,14 @@ export default class StoreSetters {
             return ;
         }
     }
+
+    async removeGameSceneInfo() {
+        this.state.gameSceneInfo.clearValue();
+    }
+
+    async removeGamePlayersInfo() {
+        this.state.gamePlayersInfo.clearValue();
+    }
+
 }
 

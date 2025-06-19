@@ -15,12 +15,11 @@ enum PLAYER_ACTION {
 type PlayerConnectionCallbacks = {
     onAuthorized?: (state: MatchInfo) => void;
     onUnauthorized?: () => void;
+    onCloseCallback?: () => void;
 }
 
 export default class Player {
     private static moveController: MoveController = new MoveController();
-    private static moveHandler: ((event: KeyboardEvent) => void) | undefined;
-    private static stopHandler: ((event: KeyboardEvent) => void) | undefined;
 
     public static setup(accessToken:string, callbacks?:PlayerConnectionCallbacks) {
 
@@ -29,7 +28,8 @@ export default class Player {
         
         GameWebSocket.connect({
             serverAddr: Config.gameServerAddr,
-            onOpenCallback: () => GameWebSocket.join(accessToken)
+            onOpenCallback: () => GameWebSocket.join(accessToken),
+            onCloseCallback: () => this.onCloseHandler(callbacks?.onCloseCallback),
         })
     }
 
@@ -39,11 +39,7 @@ export default class Player {
         const payload = data.payload as MatchInfo;
         onAuthorizedCallback?.(payload);
 
-        this.moveHandler = (event:KeyboardEvent) => this.moveController.move(event);
-        this.stopHandler = (event:KeyboardEvent) => this.moveController.stop(event);
-
-        window.addEventListener("keydown", this.moveHandler);
-        window.addEventListener("keyup", this.stopHandler);
+        this.moveController.enable();
     }
 
     private static onUnauthorizedHandler(onUnauthorizedCallback?:Function) {
@@ -51,20 +47,12 @@ export default class Player {
         onUnauthorizedCallback?.()
     }
 
+    private static onCloseHandler(onCloseCallback?:Function) {
+        onCloseCallback?.();
+    }
+
     public static cleanup() {
-        GameWebSocket.close();
-
-        console.log("Player cleanup complete. Removing key event listeners...");
-
-        if (this.moveHandler) {
-            window.removeEventListener("keydown", this.moveHandler);
-        }
-        if (this.stopHandler) {
-            window.removeEventListener("keyup", this.stopHandler);
-        }
-
-        this.moveHandler = undefined;
-        this.stopHandler = undefined;
+        this.moveController.disable();
     }
 
     public static onUpdatePosition(fn:(state:GameState) => void): void {
