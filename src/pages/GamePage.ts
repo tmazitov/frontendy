@@ -10,6 +10,7 @@ export default class GamePage extends FrontendyComponent {
 
     protected onUnmounted(): void {
         GameWebSocket.close();
+        Store.setters.setupUser();
     }
 
     template() {
