@@ -276,8 +276,8 @@ export default class StoreSetters {
                 } else if (err.status == 404) {
                     errorMessage = "User not found."
                 } else if (err.status == 409) {
-                    errorMessage = "User alreadt in friends list or invitation already exists."
-                } else if (err.status == 500) {
+                    errorMessage = "User already in friends list or invitation already exists."
+                } else if (err.status == 500) { 
                     errorMessage = "Internal server error."
                 }
             } else {
