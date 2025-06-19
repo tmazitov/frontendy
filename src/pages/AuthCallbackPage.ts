@@ -1,3 +1,4 @@
+import { AxiosError } from "axios";
 import GoogleOAuth from "../api/oauth/google";
 import AuthFailedMessageComponent from "../components/content/auth-callback-content/AuthFailedMessageComponent";
 import InProccessMessageComponent from "../components/content/auth-callback-content/InProccessMessageComponent";
@@ -12,7 +13,10 @@ export default class OAuthCallbackPage extends FrontendyComponent {
 
     protected data(): {} {
         return {
-            authIsFailed: false,
+            error: {
+                message: "",
+                status: undefined,
+            },
         };
     }
 
@@ -20,7 +24,27 @@ export default class OAuthCallbackPage extends FrontendyComponent {
         try {
             await GoogleOAuth.authorizeWithGoogle(Config.googleOauthRedirectUri)
         } catch (error) {
-            this.state.authIsFailed = true;
+            if (error instanceof AxiosError) {
+                let errorMessage = ""
+                if (error.status == 409) {
+                    errorMessage = "Account was deleted some time ago. Please contact our support if you want to restore it.";
+                } else if (error.status == 400) {
+                    errorMessage = "Invalid request. Please try again.";
+                } else if (error.status == 500) {
+                    errorMessage = "Server error. Please try again later.";
+                } else {
+                    errorMessage = "An unexpected error occurred. Please try again.";
+                }
+                this.state.error = {
+                    message: errorMessage,
+                    status: error.status || 1,
+                }
+            } else {
+                this.state.error = {
+                    message: "An unexpected error occurred. Please try again.",
+                    status: 1,
+                }
+            }
             console.log("Error during OAuth authorization:", error);
         }
     }
@@ -33,8 +57,8 @@ export default class OAuthCallbackPage extends FrontendyComponent {
                 class: "flex flex-col items-center justify-center h-full w-full pt-8" 
             })
             .addChild(
-                this.state.authIsFailed ? 
-                new AuthFailedMessageComponent() : new InProccessMessageComponent()
+                this.state.error.status ? 
+                new AuthFailedMessageComponent(this.state.error) : new InProccessMessageComponent()
             )
     }
 }
