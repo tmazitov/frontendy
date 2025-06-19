@@ -110,23 +110,11 @@ export default class StoreSetters {
                         throw new Error("no updates in response data");
                     }
 
-                    let currentRating = user.rating;
                     const values = data.updates
                     .map((update: {date: string, rate: number}) => {
                         return {date: new Date(update.date), rate: update.rate};
                     })
                     .sort((a, b) => a.date.getTime() - b.date.getTime())
-        
-                    for (let i = values.length - 1; i >= 0; i--) {
-                        if (i == values.length - 1) {
-                            values[i].rate = currentRating;
-                        } else {
-                            values[i].rate += currentRating;
-                        }
-                        currentRating = values[i].rate;
-                    }
-
-                    
 
                     this.state.ratingChanges.setValue({
                         playedMatches: data.playedMatches,
@@ -377,6 +365,7 @@ export default class StoreSetters {
     async removeGamePlayersInfo() {
         this.state.gamePlayersInfo.clearValue();
     }
+
 
 }
 
