@@ -4,6 +4,7 @@ import User from "../../../../types/User";
 import ButtonComponent from "../../../inputs/ButtonComponent";
 import SmallAvatarComponent from "../../../inputs/SmallAvatarComponent";
 import TagComponent from "../../../inputs/TagComponent";
+import FriendListItemNameComponent from "./FriendListItemNameComponent";
 
 export default class FriendListItemComponent extends FrontendyComponent {
     componentName: string = 'frient-list-item-componet';
@@ -47,9 +48,7 @@ export default class FriendListItemComponent extends FrontendyComponent {
                             'gray' : 'green'
                     }),
     
-                    elem("h4")
-                    .setProps({class: "font-semibold text-lg"})
-                    .addChild(this.props.user.nickname),
+                    new FriendListItemNameComponent(this.props.user.nickname, this.props.user.id),
 
                     elem("p")
                     .setProps({class: "text-gray-500 text-sm"})

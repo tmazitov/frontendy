@@ -11,6 +11,12 @@ export {
     RouterConfig,
 }
 
+type FrontendyRouteInfo = {
+    name: string, 
+    path: string,
+    component: typeof FrontendyComponent
+}
+    
 export default class FrontendyRouter {
 
     private routes: FrontendyRoute[] = [];
@@ -18,9 +24,9 @@ export default class FrontendyRouter {
     private currentRoute: FrontendyRoute | undefined;
     private routerView: FrontendyRouterView | undefined;
 
-    constructor(routes: FrontendyRoute[], config: RouterConfig | undefined = undefined) {
+    constructor(routesInfo: FrontendyRouteInfo[], config: RouterConfig | undefined = undefined) {
         this.config = config ?? {notFoundPage: undefined, routeIsAvailable: undefined};
-        this.routes = routes;
+        this.routes = routesInfo.map(routeInfo => new FrontendyRoute(routeInfo.name, routeInfo.path, routeInfo.component));
         this.currentRoute = this.findRoute(window.location.pathname);
 
         document.addEventListener("click", this.handleLinkClick.bind(this));
@@ -32,7 +38,18 @@ export default class FrontendyRouter {
     }
 
     findRoute(path: string): FrontendyRoute | undefined {
-        const route = this.routes.find(route => route.path === path)
+
+        const pathWithoutQuery = path.split("?")[0];
+
+        const route = this.routes.find(route => {
+            if (route.path === pathWithoutQuery) {
+                return true;
+            }
+            // Check if the path matches the route with parameters
+            const paramPattern = route.path.replace(/:[^\s/]+/g, "([^/]+)");
+            const regex = new RegExp(`^${paramPattern}$`);
+            return regex.test(pathWithoutQuery);
+        })
         if (!route) {
             return undefined
         }
@@ -67,20 +84,23 @@ export default class FrontendyRouter {
     private setCurrentRoute(){
         if (!this.routerView ) {
             throw new Error("Router error : routerView instance is not set");
-        } 
-        this.currentRoute = this.findRoute(window.location.pathname);
+        }
+        const currentPath = window.location.pathname;
+        this.currentRoute = this.findRoute(currentPath);
         this.routerView.updateCurrentRoute()
     }
 
-    public push(name: string) {
+    public push(name: string, opts?: {query?: Record<string, string>, params?: Record<string, string>}): void {
         const route = this.routes.find(route => route.name === name);
         if (!route) {
             throw new Error(`Router error: route ${name} not found`);
         }
-        if (route.path === this.currentRoute?.path) {
+        const futurePath = route.fullRoute(opts);
+        const currentPath = window.location.pathname;
+        if (futurePath === currentPath) {
             throw new Error(`Router error: route ${name} already active`);
         }
-        window.history.pushState({}, "", route.path);
+        window.history.pushState({}, "", futurePath);
         this.setCurrentRoute()
     }
 

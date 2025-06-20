@@ -8,19 +8,24 @@ import InfoContentComponent from "./InfoContentComponent";
 export default class ProfilePageContent extends FrontendyComponent {
     componentName: string = 'profile-page-content';
 
-    data() {
-        return {}
+    constructor(isFriend: boolean = false) {
+        super({isFriend});
     }
 
     template() {
-        return elem('div')
-            .setChild([
 
-                new TabsLayout("profile", [
-                    {title: "Info", content: InfoContentComponent},
-                    {title: "Games", content: GamesContentComponent},
-                    {title: "Friends", content: FriendListComponent},
-                ])
-            ])
+        const tabs = this.props.isFriend ?
+            [
+                {title: "Info", content: InfoContentComponent},
+                {title: "Games", content: GamesContentComponent},
+            ] :
+            [
+                {title: "Info", content: InfoContentComponent},
+                {title: "Games", content: GamesContentComponent},
+                {title: "Friends", content: FriendListComponent},
+            ];
+
+        return elem('div')
+        .addChild(new TabsLayout("profile", tabs))
     }
 }
