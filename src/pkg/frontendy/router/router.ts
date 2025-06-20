@@ -1,5 +1,5 @@
 import FrontendyComponent from "../component/component";
-import FrontendyRoute from "./route";
+import FrontendyRoute, { FrontendyRouteParamType } from "./route";
 import FrontendyRouterView from "./RouterView";
 
 type RouterConfig = {
@@ -7,27 +7,33 @@ type RouterConfig = {
     routeIsAvailable? : (route: FrontendyRoute) => string | undefined;
 }
 
-export {
-    RouterConfig,
-}
 
 type FrontendyRouteInfo = {
     name: string, 
     path: string,
-    component: typeof FrontendyComponent
+    component: typeof FrontendyComponent,
+    paramsTypes?: Record<string, FrontendyRouteParamType>
 }
     
+
+export {
+    RouterConfig,
+    FrontendyRouteInfo,
+}
+
 export default class FrontendyRouter {
 
     private routes: FrontendyRoute[] = [];
     private config: RouterConfig ;
-    private currentRoute: FrontendyRoute | undefined;
+    private _currentRoute: FrontendyRoute | undefined;
     private routerView: FrontendyRouterView | undefined;
 
     constructor(routesInfo: FrontendyRouteInfo[], config: RouterConfig | undefined = undefined) {
         this.config = config ?? {notFoundPage: undefined, routeIsAvailable: undefined};
-        this.routes = routesInfo.map(routeInfo => new FrontendyRoute(routeInfo.name, routeInfo.path, routeInfo.component));
-        this.currentRoute = this.findRoute(window.location.pathname);
+        this.routes = routesInfo.map(routeInfo => {
+            return new FrontendyRoute(routeInfo.name, routeInfo.path, routeInfo.component, routeInfo.paramsTypes)
+        });
+        this._currentRoute = this.findRoute(window.location.pathname);
 
         document.addEventListener("click", this.handleLinkClick.bind(this));
         window.addEventListener("popstate", () => this.setCurrentRoute());
@@ -54,15 +60,23 @@ export default class FrontendyRouter {
             return undefined
         }
 
-        if (!this.config.routeIsAvailable) {
-            return route
-        }
-        const reason = this.config.routeIsAvailable(route)
+        // Check this route is available
+        const reason = this.config.routeIsAvailable?.(route)
         if (reason) {
             console.error(`Router error : route ${route.name} is not available for reason : ${reason}` )
             return undefined;
         }
-        return route;
+
+        // Make clone of new route and feed it with query and params        
+        try {
+            const clone = route.clone();
+            clone.parseQuery(path.split("?")[1] ?? "");
+            clone.parseParams(pathWithoutQuery);
+            return clone;
+        } catch (e) {
+            console.error(`Router error : failed to parse route ${route.name} with path ${pathWithoutQuery}`, e);
+            return undefined;
+        }
     }
 
     getUndefinedMessageComponent(): typeof FrontendyComponent | undefined {
@@ -86,7 +100,7 @@ export default class FrontendyRouter {
             throw new Error("Router error : routerView instance is not set");
         }
         const currentPath = window.location.pathname;
-        this.currentRoute = this.findRoute(currentPath);
+        this._currentRoute = this.findRoute(currentPath);
         this.routerView.updateCurrentRoute()
     }
 
@@ -95,7 +109,15 @@ export default class FrontendyRouter {
         if (!route) {
             throw new Error(`Router error: route ${name} not found`);
         }
-        const futurePath = route.fullRoute(opts);
+        const clone = route.clone();
+        if (opts && opts.params) {
+            clone.params = opts.params
+        }
+        if (opts && opts.query) {
+            clone.query = opts.query;
+        }
+
+        const futurePath = clone.fullRoute();
         const currentPath = window.location.pathname;
         if (futurePath === currentPath) {
             throw new Error(`Router error: route ${name} already active`);
@@ -104,7 +126,7 @@ export default class FrontendyRouter {
         this.setCurrentRoute()
     }
 
-    public getCurrentRoute(): FrontendyRoute | undefined {
-        return this.currentRoute;
+    public get currentRoute(): FrontendyRoute | undefined {
+        return this._currentRoute;
     }
 }

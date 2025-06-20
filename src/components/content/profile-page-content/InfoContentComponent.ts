@@ -31,6 +31,15 @@ export default class InfoContentComponent extends FrontendyComponent {
     }
 
     protected onCreated(): void {
+
+        console.log("current route params", )
+        const currentRoute = router.currentRoute;
+        const userId = currentRoute?.params?.userId;
+
+        if (userId) {
+            // API.ums.getUserById(userId).then((response) => {
+        }
+
         Store.getters.user((user:User|undefined) => {
             if (!user) {
                 return ;

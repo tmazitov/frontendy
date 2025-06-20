@@ -25,7 +25,7 @@ export default class AppComponent extends Component {
     data() {
         return {
             isAuthorized: isAuthorized(),
-            currentRoute : router.getCurrentRoute(),
+            currentRoute : router.currentRoute,
             searchGameType: null,
             showGameConfirmationModal: false,
             confirmTime: undefined,

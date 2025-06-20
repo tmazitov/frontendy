@@ -20,13 +20,15 @@ function setItem(name: string, index: number) {
 export default class TabsLayout extends FrontendyComponent {
     componentName: string = 'tabs-layout';
 
-    constructor(name:string, tabs: TabItem[]) {
-        super({name, tabs});
+    constructor(name:string, tabs: TabItem[], disableSave?:boolean) {
+        super({name, tabs, disableSave});
     }
 
-    data() {
+    data() {    
         return {
-            currentTab: getItem(this.props.name, this.props.tabs.length),
+            currentTab: this.props.disableSave ? 
+                0 :    
+                getItem(this.props.name, this.props.tabs.length),
         }
     }
 
@@ -35,6 +37,10 @@ export default class TabsLayout extends FrontendyComponent {
             return this;
         }
 
+        if (this.props.disableSave) {
+            this.state.currentTab = index;
+            return this;
+        }
         this.state.currentTab = setItem(this.props.name, index);
 
         return this;    

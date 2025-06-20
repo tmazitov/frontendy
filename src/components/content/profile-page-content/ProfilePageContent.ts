@@ -13,7 +13,7 @@ export default class ProfilePageContent extends FrontendyComponent {
     }
 
     template() {
-
+        const isSaveDisabled = true
         const tabs = this.props.isFriend ?
             [
                 {title: "Info", content: InfoContentComponent},
@@ -26,6 +26,6 @@ export default class ProfilePageContent extends FrontendyComponent {
             ];
 
         return elem('div')
-        .addChild(new TabsLayout("profile", tabs))
+        .addChild(new TabsLayout("profile-friend", tabs, isSaveDisabled))
     }
 }
