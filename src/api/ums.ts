@@ -134,6 +134,10 @@ export default class UMS {
     }
 
     public async userUpdateAvatar(file:File){
+        if (file.size > 2 * 1024 * 1024) {
+            alert('File too large! Max 2MB');
+            return;
+        }
         const formData = new FormData();
         formData.append("file", file);
 
