@@ -42,9 +42,9 @@ export default class FriendListItemComponent extends FrontendyComponent {
                     }),
     
                     new TagComponent({
-                        label: this.props.user.status == 0 ?
+                        label: !this.props.user.isOnline ?
                             'Offline' : 'Online',
-                        color: this.props.user.status == 0 ? 
+                        color: !this.props.user.isOnline ? 
                             'gray' : 'green'
                     }),
     
@@ -53,7 +53,7 @@ export default class FriendListItemComponent extends FrontendyComponent {
                     elem("p")
                     .setProps({class: "text-gray-500 text-sm"})
 
-                    .addChild(`MMR: ${this.props.user.rating}`),
+                    // .addChild(`MMR: ${this.props.user.rating}`),
                 ]),
 
 
