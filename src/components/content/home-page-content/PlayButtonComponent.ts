@@ -25,7 +25,7 @@ export default class PlayButtonComponent extends FrontendyComponent {
             new ButtonComponent({
                 label: 'Play',
                 color: "blue",
-                icon: "ti ti-play",
+                icon: "ti ti-ping-pong",
             }).onClick(() => this.onOpenModal()),
             
             new GameLaunchModal().setShow(this.state.showGameLaunchModal),

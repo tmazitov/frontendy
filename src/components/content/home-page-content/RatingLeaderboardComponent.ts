@@ -41,7 +41,7 @@ export default class RatingLeaderboardComponent extends FrontendyComponent {
         }
 
         return elem('div')
-        .setProps({class : "max-h-[320px] w-full overflow-y-auto relative"})
+        .setProps({class : "max-h-[320px] w-full overflow-y-auto relative mb-4"})
         .setChild([
 
             content,
