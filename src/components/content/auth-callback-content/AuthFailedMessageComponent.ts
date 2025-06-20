@@ -15,7 +15,7 @@ export default class AuthFailedMessageComponent extends FrontendyComponent {
         switch (status) {
             case 400:
                 return 'ti ti-alert-triangle text-yellow-500';
-            case 409:
+            case 403:
                 return 'ti ti-mailbox text-gray-500';
             case 404:
                 return 'ti ti-exclamation-mark text-yellow-500';

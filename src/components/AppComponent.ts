@@ -11,6 +11,7 @@ import GameConfirmationModal from "./modals/GameConfirmationModal";
 import TimerStorage from "../pkg/timer";
 import { isAuthorized } from "../api/client";
 import Store from "../store/store";
+import UMSOnline from "../pkg/onlineConnection";
 
 const navBarLinks =  [
     new NavBarLink('Home', 'home', "ti ti-home"),
@@ -74,6 +75,8 @@ export default class AppComponent extends Component {
 
     protected onCreated(): void {
         Store.setters.setupUser()
+        const umsOnline = new UMSOnline();
+        umsOnline.connect();
     }
 
     onUnmounted(): void {

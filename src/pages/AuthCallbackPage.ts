@@ -26,7 +26,7 @@ export default class OAuthCallbackPage extends FrontendyComponent {
         } catch (error) {
             if (error instanceof AxiosError) {
                 let errorMessage = ""
-                if (error.status == 409) {
+                if (error.status == 403) {
                     errorMessage = "Account was deleted some time ago. Please contact our support if you want to restore it.";
                 } else if (error.status == 400) {
                     errorMessage = "Invalid request. Please try again.";
