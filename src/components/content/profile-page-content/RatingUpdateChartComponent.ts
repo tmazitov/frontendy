@@ -15,7 +15,13 @@ export default class RatingUpdateChartComponent extends FrontendyComponent {
 
     protected onMounted(): void {
 
-        const canvas = this.el as HTMLCanvasElement
+        const container = this.el as HTMLElement;
+        if (!container) {
+            console.error("Container element not found in RatingUpdateChartComponent");
+            return;
+        }
+
+        const canvas = container.querySelector('canvas#rating-update-chart') as HTMLCanvasElement;
         if (!canvas) {
             console.error("Canvas element not found in RatingUpdateChartComponent");
             return;
@@ -25,7 +31,11 @@ export default class RatingUpdateChartComponent extends FrontendyComponent {
     }
 
     template() {
-        return elem('canvas')
+        return elem('div')
+        .setProps({class: "relative h-32"})
+        .setChild([
+            elem('canvas')
             .setProps({id: "rating-update-chart", class: "w-full h-full"})
-    }
+        ])
+    }   
 }

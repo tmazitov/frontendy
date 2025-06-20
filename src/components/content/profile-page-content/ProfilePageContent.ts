@@ -3,7 +3,7 @@ import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 import FriendListComponent from "./friend-list/FriendListComponent";
 import GamesContentComponent from "./game-list/GamesContentComponent";
-import InfoContentComponent from "./InfoContentComponent";
+import InfoContentComponent from "./info/InfoContentComponent";
 
 export default class ProfilePageContent extends FrontendyComponent {
     componentName: string = 'profile-page-content';

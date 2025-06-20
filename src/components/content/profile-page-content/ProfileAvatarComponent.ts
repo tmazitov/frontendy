@@ -7,8 +7,8 @@ import AvatarChangeModal from "../../modals/AvatarChangeModal";
 export default class ProfileAvatarComponent extends FrontendyComponent {
     componentName: string = 'big-avatar-component';
 
-    constructor(imagePath: string | null) {
-        super({imagePath});
+    constructor(imagePath: string | null, noUpdate?: boolean) {
+        super({imagePath, noUpdate});
     }
 
     data() {
@@ -25,10 +25,15 @@ export default class ProfileAvatarComponent extends FrontendyComponent {
 
     template() {
 
+        const avatar = new BigAvatarComponent({imagePath: this.props.imagePath})
+        
+        if (!this.props.noUpdate) {
+            avatar.onClick(() => this.state.isAvatarChangeModalOpen = true)
+        }
+
         return elem('span')
         .setChild([
-            new BigAvatarComponent({imagePath: this.props.imagePath})
-            .onClick(() => this.state.isAvatarChangeModalOpen = true),
+            avatar,
 
             new AvatarChangeModal()
             .setShow(this.state.isAvatarChangeModalOpen)
