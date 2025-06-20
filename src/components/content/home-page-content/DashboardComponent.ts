@@ -5,11 +5,36 @@ import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 import InfoParagraphComponent from "../../inputs/InfoParagraphComponent";
 import PlayButtonComponent from "./PlayButtonComponent";
 import RatingLeaderboardComponent from "./RatingLeaderboardComponent";
+import ReconnectButtonComponent from "./ReconnectButtonComponent";
 
 export default class DashboardComponent extends FrontendyComponent {
     componentName: string = 'home-dashboard-component';
 
+    protected data(): {} {
+        return {
+            isReconnect: false,
+        }
+    }
+
+    protected onCreated(): void {
+        API.mmrs.userReconnect().then((res) => {
+            if (res.status === 200) {
+                this.state.isReconnect = true;
+            }
+        })
+    }
+
     template() {
+
+        let action;
+        if (this.state.isReconnect) {
+            action = new ReconnectButtonComponent()
+        } else if (isAuthorized()) {
+            action = new PlayButtonComponent();
+        } else {
+            action = new InfoParagraphComponent("You have to sign in to play.");
+        }
+
         return elem("div")
             .setProps({ 
                 id: "home-dashboard-component",
@@ -25,11 +50,7 @@ export default class DashboardComponent extends FrontendyComponent {
 
                 new RatingLeaderboardComponent(),
                 
-                isAuthorized() ?
-                    new PlayButtonComponent()
-                    :
-                    new InfoParagraphComponent("You have to sign in in to play.")
-            
+                action,
             ]);
     }
-}
+}   

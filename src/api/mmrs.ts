@@ -23,4 +23,13 @@ export default class MMRS {
 
         return response;
     }
+
+    public async userReconnect() {
+        const response = await this.client.request({
+            method: "GET",
+            url: `/reconnect`,
+        });
+        
+        return response;
+    }
 }

@@ -2,6 +2,7 @@ import EventBroker from "../../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
 import GameLauncher from "../../../pkg/game/launcher/gameLauncher";
+import ButtonComponent from "../../inputs/ButtonComponent";
 import GameLaunchModal from "../../modals/GameLauncherModal";
 
 export default class PlayButtonComponent extends FrontendyComponent {
@@ -21,12 +22,11 @@ export default class PlayButtonComponent extends FrontendyComponent {
     template() {
         return elem("span")
         .setChild([
-            elem('button')
-            .setProps({
-                class : "bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-2 px-4 mt-2 rounded",
-            })
-            .addEventListener("click", this.onOpenModal.bind(this))
-            .addChild(text("Play")),
+            new ButtonComponent({
+                label: 'Play',
+                color: "blue",
+                icon: "ti ti-play",
+            }).onClick(() => this.onOpenModal()),
             
             new GameLaunchModal().setShow(this.state.showGameLaunchModal),
         ])
