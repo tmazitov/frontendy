@@ -13,7 +13,7 @@ export default class ProfilePageContent extends FrontendyComponent {
     }
 
     template() {
-        const isSaveDisabled = true
+        const isSaveDisabled = this.props.isFriend
         const tabs = this.props.isFriend ?
             [
                 {title: "Info", content: InfoContentComponent},

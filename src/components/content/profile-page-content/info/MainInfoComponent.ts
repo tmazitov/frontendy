@@ -7,6 +7,8 @@ import Store from "../../../../store/store";
 import RatingChangeInfo from "../../../../types/RatingChangeInfo";
 import User from "../../../../types/User";
 import ButtonComponent from "../../../inputs/ButtonComponent";
+import TagComponent from "../../../inputs/TagComponent";
+import NicknameComponent from "./NicknameComponent";
 
 export default class MainInfoComponent extends FrontendyComponent {
     componentName: string = 'main-info-component';
@@ -38,6 +40,22 @@ export default class MainInfoComponent extends FrontendyComponent {
             ])
         }
 
+        const headers:Array<any> = [
+            new NicknameComponent(`${this.props.user?.nickname ?? ''}`)
+        ]
+        
+        if (!this.props.withButtons) {
+            console.log("tag :: ", this.props.user?.isOnline)
+            const tag = new TagComponent({
+                label: this.props.user?.isOnline ?
+                    'Online' : 'Offline',
+                color: this.props.user?.isOnline ? 
+                    'green' : 'gray'
+            })
+
+            headers.unshift(tag)
+        }
+
         return elem('div')
         .setProps({class: "flex flex-col gap-2 justify-between h-full "})
         .setChild([
@@ -45,8 +63,8 @@ export default class MainInfoComponent extends FrontendyComponent {
             .setProps({class: "flex gap-2 flex-col"})
             .setChild([
             elem('h2')
-                .setProps({class: "text-xl font-bold"})
-                .addChild(`${this.props.user?.nickname}`),
+                .setProps({class: "flex gap-2 items-center"})
+                .setChild(headers),
         
                 elem('p')
                 .setProps({class: "text-gray-600 text-sm"})

@@ -42,9 +42,9 @@ export default class FriendListItemComponent extends FrontendyComponent {
                     }),
     
                     new TagComponent({
-                        label: !this.props.user.isOnline ?
+                        label: !this.props.user?.isOnline ?
                             'Offline' : 'Online',
-                        color: !this.props.user.isOnline ? 
+                        color: !this.props.user?.isOnline ? 
                             'gray' : 'green'
                     }),
     

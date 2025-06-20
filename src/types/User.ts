@@ -10,6 +10,6 @@ export default class User {
         this.nickname = data.nickname;
         this.rating = data.rating;
         this.avatarUrl = data.avatar || null;
-        this.isOnline = data.isOnline ?? false; // Default status to 0 (Offline) if not provided
+        this.isOnline = data.isOnline ?? data.is_online ?? false; // Default status to 0 (Offline) if not provided
     }
 }

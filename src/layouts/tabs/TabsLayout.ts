@@ -25,6 +25,7 @@ export default class TabsLayout extends FrontendyComponent {
     }
 
     data() {    
+        console.log(this.props.disableSave)
         return {
             currentTab: this.props.disableSave ? 
                 0 :    
