@@ -70,13 +70,17 @@ export default class AppComponent extends Component {
 
         EventBroker.getInstance().on("update-auth", () => {
             this.state.isAuthorized = isAuthorized();
+            if (this.state.isAuthorized) {
+                UMSOnline.connect();
+            } else {
+                UMSOnline.disconnect();
+            }
         })
     }
 
     protected onCreated(): void {
         Store.setters.setupUser()
-        const umsOnline = new UMSOnline();
-        umsOnline.connect();
+        UMSOnline.connect();
     }
 
     onUnmounted(): void {

@@ -9,9 +9,9 @@ enum UMSOnlineEvents {
 
 export default class UMSOnline {
 
-    private conn:WebSocketClient<UMSOnlineEvents> | null = null;
+    private static conn:WebSocketClient<UMSOnlineEvents> | null = null;
 
-    connect() {
+    public static connect() {
         if (!isAuthorized() || this.conn) {
             return ;
         }
@@ -22,7 +22,7 @@ export default class UMSOnline {
         this.conn.on(UMSOnlineEvents.Unauthorized, this.unauthorizedHandler.bind(this));
     }
 
-    private sendJoin() {
+    private static sendJoin() {
         if (!this.conn) {
             console.warn("Unable to send join request, connection is not established.");
             return;
@@ -35,19 +35,23 @@ export default class UMSOnline {
         }
 
         this.conn.send('join', {
-            token: tokens.accessToken,
+            payload: {
+                accessToken: tokens.accessToken,
+            }
         });
     }
 
-    private unauthorizedHandler() {
+    private static unauthorizedHandler() {
         console.warn("UMSOnline: Unauthorized event received, closing connection.");
-        this.close();
-        this.conn = new WebSocketClient<UMSOnlineEvents>(`${API.ws()}://${Config.umsAddr}/api/ws/online`, {
-            onOpenCallback: () => this.sendJoin(),
-        });
+        API.ums.refresh().then(() => {
+            this.disconnect();
+            this.conn = new WebSocketClient<UMSOnlineEvents>(`${API.ws()}://${Config.umsAddr}/api/ws/online`, {
+                onOpenCallback: () => this.sendJoin(),
+            });
+        })
     }
 
-    close() {
+    public static disconnect() {
         if (this.conn) {
             this.conn.close();
             this.conn = null;
