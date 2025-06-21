@@ -51,10 +51,7 @@ export default class FrontendyRouter {
             if (route.path === pathWithoutQuery) {
                 return true;
             }
-            // Check if the path matches the route with parameters
-            const paramPattern = route.path.replace(/:[^\s/]+/g, "([^/]+)");
-            const regex = new RegExp(`^${paramPattern}$`);
-            return regex.test(pathWithoutQuery);
+            return route.getRouteRegexp().test(pathWithoutQuery);
         })
         if (!route) {
             return undefined

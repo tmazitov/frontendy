@@ -117,6 +117,24 @@ class FrontendyRoute {
             query: query
         };
     }
+
+    public getRouteRegexp(): RegExp {
+        const pathParts = this.path
+        .split("/")
+        .map(part => {
+            if (!part.startsWith(":")) {
+                return part;
+            }
+            const paramName = part.slice(1);
+            const paramType = this.paramsTypes?.[paramName];
+            if (paramType === "number") {
+                return "\\d+";
+            }
+            return "[^/]+?";
+        })
+        const pattern = pathParts.join("/");
+        return new RegExp(`^${pattern}$`)
+    }
 }
 
 export default FrontendyRoute;
