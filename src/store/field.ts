@@ -9,7 +9,7 @@ export default class StoreField<T> {
         this.isSet = true;
         this.pendingResolversQueue.forEach(resolve => resolve(newValue))
         this.pendingResolversQueue = [];
-        this.onUpdateCallbacks.forEach(callback => callback(this.value));
+        this.onUpdateCallbacks.forEach(callback => callback(newValue));
     }
 
     public getValue(onUpdate?:(value:T|undefined) => void): Promise<T | undefined> {

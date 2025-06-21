@@ -22,10 +22,12 @@ export default class FriendListContentComponent extends FrontendyComponent {
     protected onCreated(): void {
         Store.setters.setupFriends();
         Store.setters.setupFriendsInvites();
-        Store.getters.userFriends((friends: User[]| undefined) => this.state.freinds = friends || [])
-            .then((friends: User[] | undefined) => this.state.friends = friends || []);
+        Store.getters.userFriends((friends: User[]| undefined) => this.userFriendsUpdate(friends))
         Store.getters.userFriendsInvites((invites: FriendInvite[] | undefined) => this.state.invites = invites || [])
-            .then((invites: FriendInvite[] | undefined) => this.state.invites = invites || [])
+    }
+
+    private userFriendsUpdate(friends: User[]| undefined) {
+        this.state.friends = friends ?? []
     }
 
     template() {

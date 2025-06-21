@@ -308,11 +308,11 @@ export default class StoreSetters {
             const newInvites = invites.filter((invite: FriendInvite) => invite.id !== inviteId);
             this.state.friendsInvites.setValue(newInvites);
             const friends = await this.state.freinds.getValue();
-            if (!friends) {
+            if (friends === undefined) {
                 console.error("StoreSetters: acceptFriendInvite: friends is undefined");
                 return ;
             }
-            const newFriend = [...friends, new User(response.data)];
+            const newFriend = [...friends, new User(response.data.senderUserBaseInfo)];
             this.state.freinds.setValue(newFriend);
         } catch (err) {
             console.error("StoreSetters: acceptFriendInvite: error accepting invite:", err);
@@ -346,11 +346,12 @@ export default class StoreSetters {
                 throw new Error("Failed to delete friend: " + (response?.statusText || "Unknown error"));
             }
             const friends = await this.state.freinds.getValue();
-            if (!friends) {
+            if (friends === undefined) {
                 console.error("StoreSetters: deleteFriend: friends is undefined");
                 return ;
             }
             const newFriends = friends.filter((friend: User) => friend.id !== userId);
+            console.log("StoreSetters: deleteFriend: newFriends:", newFriends);
             this.state.freinds.setValue(newFriends);
         } catch (err) {
             console.error("StoreSetters: deleteFriend: error deleting friend:", err);

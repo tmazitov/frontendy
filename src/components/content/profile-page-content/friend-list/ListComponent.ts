@@ -27,7 +27,7 @@ export default class ListComponent extends FrontendyComponent {
         return elem('div')
         .setChild([
             elem('div')
-            .setProps({class : "flex flex-col gap-2 min-h-32 max-h-96 overflow-auto "})
+            .setProps({class : "flex flex-col gap-2 min-h-64 max-h-96 overflow-auto "})
             .setChild(this.props.friends.map((user:User) => {
     
                 user.avatarUrl = API.ums.appropriateAvatar(user.avatarUrl);
