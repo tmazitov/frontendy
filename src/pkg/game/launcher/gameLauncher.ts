@@ -40,6 +40,7 @@ export default class GameLauncher {
             
             this.client = new WebSocketClient<MMRS_Server_Messages>(addr, opts)
                 .on(MMRS_Server_Messages.MATCH_SEARCH, (data: any) => this.matchSearchStartHandler(game, options.onConnectedCallback))
+                .on(MMRS_Server_Messages.JOINED, (data: any) => this.matchSearchStartHandler(game, options.onConnectedCallback))
                 .on(MMRS_Server_Messages.MATCH_FOUND, (data: any) => this.matchFoundHandler(data))
                 .on(MMRS_Server_Messages.MATCH_TIMEOUT, (data: any) => this.matchTimeoutHandler(data))
                 .on(MMRS_Server_Messages.UNAUTHORIZED, (data:any) => this.unatuhorizedHandler(data, options.onUnauthorizedCallback))

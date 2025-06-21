@@ -5,6 +5,7 @@ enum MMRS_Server_Messages {
     MATCH_FOUND = "match_found",
     MATCH_READY = "match_ready",
     UNAUTHORIZED = "unauthorized",
+    JOINED = "joined",
 }
 
 enum MMRS_Client_Messages {
