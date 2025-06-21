@@ -1,11 +1,18 @@
+import API from "../../../api/api";
+import { getTokens } from "../../../api/client";
+import Config from "../../../config";
+import games from "../../../data/games";
 import router from "../../../pages/router";
+import EventBroker from "../../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
+import GameLauncher from "../../../pkg/game/launcher/gameLauncher";
 import Store from "../../../store/store";
 import { MatchResultInfo, MatchResultStatus } from "../../../types/MatchResultInfo";
 import PlayersInfo from "../../../types/PlayersInfo";
 import ButtonComponent from "../../inputs/ButtonComponent";
 import InfoParagraphComponent from "../../inputs/InfoParagraphComponent";
+import MessageComponent from "../../inputs/MessageComponent";
 import GameOverIconComponent from "./GameOverIconComponent";
 import GameOverTitleComponent from "./GameOverTitleComponent";
 
@@ -57,11 +64,59 @@ export default class GameOverComponent extends FrontendyComponent {
         this.state.shownInfo = {icon, title};
     }
 
+    private subscibeOnNextMatch() {
+
+        const tokens = getTokens()
+
+        let onUnauthorizedIsCalled = false;
+        const onUnauthorized = () => {
+            if (onUnauthorizedIsCalled) {
+                console.warn("GameOverComponent : onUnauthorized is called multiple times");
+                return ;
+            }
+            onUnauthorizedIsCalled = true;
+
+            API.ums.refresh().then((response) => {
+                const newTokens = getTokens();
+                if (!newTokens || !newTokens.accessToken) {
+                    console.warn("GameOverComponent : accessToken is undefined after refresh");
+                    return ;
+                }
+                
+                GameLauncher.startGameSearching(newTokens.accessToken, games[2], {
+                    serverAddr: Config.mmrsAddr,
+                    onUnauthorizedCallback: onUnauthorized,
+                    onMatchReadyCallback: this.onMatchReadyHandler.bind(this),
+                });
+            })
+        }
+
+
+        GameLauncher.startGameSearching(tokens.accessToken, games[2], {
+            serverAddr: Config.mmrsAddr,
+            withoutModals: true,
+            onUnauthorizedCallback: onUnauthorized,
+            onConnectedCallback: this.onMatchReadyHandler.bind(this),
+        });
+    }
+
+    private onMatchReadyHandler() {
+        console.log("match ready!")
+        EventBroker.getInstance().emit("game-page-rerender")
+    }
+
     protected onMounted(): void {
         Store.getters.gamePlayersInfo((info:PlayersInfo|undefined) => this.updatePlayers(info))
             .then((info:PlayersInfo|undefined) => this.updatePlayers(info))
         Store.getters.userId((userId:number|undefined) => this.updateUserID(userId))
             .then((userId:number|undefined) => this.updateUserID(userId))
+
+        const isTournament = this.props.results.isTournament;
+        const isWinner = this.isWinner(this.props.results.matchResult)
+
+        if (isTournament && isWinner) {
+            this.subscibeOnNextMatch();
+        }
     }
 
     getAppropriateStatusMessage(status:MatchResultStatus | undefined){
@@ -76,17 +131,23 @@ export default class GameOverComponent extends FrontendyComponent {
             return undefined;
         }
 
+        const isTournament = this.props.results.isTournament
+
         switch (status) {
             case 'FAIL':
                 return "Game failed";
             case 'P1WIN':
-                if (publicInfo.player1.id == userId) {
+                if (isTournament && publicInfo.player1.id == userId) {   
+                    return "You won! Proceed to the next round.";
+                } else if (publicInfo.player1.id == userId) {
                     return "You won!"
                 } else {
                     return "You lost."
                 }
             case 'P2WIN':
-                if (publicInfo.player2.id == userId) {
+                if (isTournament && publicInfo.player2.id == userId) {
+                    return "You won! Proceed to the next round."
+                } else if (publicInfo.player2.id == userId) {
                     return "You won!"
                 } else {
                     return "You lost."
@@ -124,7 +185,31 @@ export default class GameOverComponent extends FrontendyComponent {
         return "mood-sad";
     }
 
+    isWinner(status: MatchResultStatus | undefined): boolean {
+        const publicInfo = this.state.gameInfo.players
+        const userId = this.state.gameInfo.currentUserId
+        if (!publicInfo || !userId) {
+            console.warn("GameOverComponent: publicInfo or userId is undefined", {publicInfo, userId});
+            return false;
+        }
+        return (status === 'P1WIN' && publicInfo.player1.id === userId) ||
+               (status === 'P2WIN' && publicInfo.player2.id === userId);
+    }
+
     template() {
+
+        const buttons = []
+        const isWinner = this.isWinner(this.props.results.matchResult)
+
+        if (this.props.results.isTournament && isWinner) {
+            buttons.push(new MessageComponent("Wait for the next round!", {color: "blue"}))
+        } else {
+            buttons.push(new ButtonComponent({
+                label: "Home",
+                color: "blue",
+            }).onClick(() => router.push('home')))
+        }
+
         return elem('div')
             .setProps({class: 'p-[16px] w-[512px] relative flex flex-col items-center gap-4 align-center'})
             .setChild([
@@ -132,10 +217,7 @@ export default class GameOverComponent extends FrontendyComponent {
 
                 new GameOverTitleComponent(this.state.shownInfo.title),
 
-                new ButtonComponent({
-                    label: "Home",
-                    color: "blue",
-                }).onClick(() => router.push('home')),
+                ...buttons
             ])
     }
 }

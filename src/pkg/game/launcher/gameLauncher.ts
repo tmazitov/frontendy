@@ -12,6 +12,8 @@ type GameLauncherOptions = {
     serverAddr: string;
     onConnectedCallback?: Function;
     onUnauthorizedCallback?: Function;
+    onMatchReadyCallback?: Function;
+    withoutModals?: boolean;
 }
 
 export default class GameLauncher {
@@ -21,9 +23,11 @@ export default class GameLauncher {
     private static client?: WebSocketClient<MMRS_Server_Messages>;
     private static confirmation?: PlayersConfirmation;
     private static userId?: number;
+    private static opts?: GameLauncherOptions;
 
     static async startGameSearching(accessToken:string, game:Game, options: GameLauncherOptions) {
         try {
+            this.opts = options;
             const opts = {
                 onOpenCallback: () => this.onEstablishConnection(accessToken, game),
                 onCloseCallback: () => this.onCloseConnection(),
@@ -66,8 +70,11 @@ export default class GameLauncher {
         this.isConfirmed = false;
         this.confirmation = undefined;
         this.client = undefined;
-        EventBroker.getInstance().emit("deactivate-search-game-bar");
-        EventBroker.getInstance().emit("deactivate-confirmation-modal");
+        if (!this.opts?.withoutModals) {
+            EventBroker.getInstance().emit("deactivate-search-game-bar");
+            EventBroker.getInstance().emit("deactivate-confirmation-modal");
+        }
+        this.opts = undefined;
     }
 
     static stopGameSearching() {
@@ -87,8 +94,10 @@ export default class GameLauncher {
         }
 
         this.confirmation = new PlayersConfirmation(this.searchGameType?.players || 0);
-        EventBroker.getInstance().emit("deactivate-search-game-bar");
-        EventBroker.getInstance().emit("activate-confirmation-modal", {confirmTime: data.timeLeft});
+        if (!this.opts?.withoutModals) {
+            EventBroker.getInstance().emit("deactivate-search-game-bar");
+            EventBroker.getInstance().emit("activate-confirmation-modal", {confirmTime: data.timeLeft});
+        }
     }
 
     private static matchSearchStartHandler(game:Game, onConnectedCallback?: Function) {
@@ -96,15 +105,19 @@ export default class GameLauncher {
             onConnectedCallback();
         }
         this.searchGameType = game;
-        EventBroker.getInstance().emit("activate-search-game-bar", this.searchGameType);
+        if (!this.opts?.withoutModals) {
+            EventBroker.getInstance().emit("activate-search-game-bar", this.searchGameType);
+        }
     }
 
     private static matchTimeoutHandler(data: any) {
         this.confirmation = undefined
         if (this.isConfirmed) {
-            EventBroker.getInstance().emit("deactivate-confirmation-modal");
-            EventBroker.getInstance().emit("deactivate-search-game-bar");
-            EventBroker.getInstance().emit("activate-search-game-bar", this.searchGameType);
+            if (!this.opts?.withoutModals) {
+                EventBroker.getInstance().emit("deactivate-confirmation-modal");
+                EventBroker.getInstance().emit("deactivate-search-game-bar");
+                EventBroker.getInstance().emit("activate-search-game-bar", this.searchGameType);
+            }
             this.isConfirmed = false
         } else  {
             this.stopGameSearching()
@@ -113,7 +126,11 @@ export default class GameLauncher {
 
     private static matchReadyHandler() {
         this.stopGameSearching();
-        router.push('game')
+        this.opts?.onMatchReadyCallback?.();
+        const currentRoute = router.currentRoute;
+        if (currentRoute?.name !== 'game') {
+            router.push('game')
+        }
     }
 
     public static async confirmGame(callback: Function | null = null) {
