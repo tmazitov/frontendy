@@ -89,6 +89,12 @@ class AxiosClient {
 					});
 				}
 
+				console.log('AxiosClient: 401 Unauthorized, same tokens ', tokens.accessToken === originalRequest.headers['Authorization']);
+				if (tokens.accessToken != originalRequest.headers['Authorization']) {
+					originalRequest.headers['Authorization'] = tokens.accessToken;
+					return this.axiosInstance(originalRequest);
+				}
+
 				// Начинаем процесс обновления токенов
 				AxiosClient.isRefreshing = true;
 
@@ -146,6 +152,40 @@ class AxiosClient {
 		}
 	}
 
+
+	public async getFreshAccessToken(): Promise<string> {
+		// 1. Если процесс уже запущен, ждём, когда он закончится.
+		if (AxiosClient.isRefreshing) {
+			return new Promise<string>((resolve, reject) => {
+				//   ⚠️  используем ту же очередь, что и перехватчик
+				this.addRefreshQueueItem((token: string) => {
+					if (token) {
+						resolve(token);
+					} else {
+						reject(new Error("Не удалось обновить access-token"));
+					}
+				});
+			});
+		}
+	
+		// 2. Начинаем собственное обновление
+		AxiosClient.isRefreshing = true;
+		try {
+			const newPair = await this.refreshTokens();           // = { accessToken, refreshToken }
+			// отдадим токен всем, кто ждал:
+			AxiosClient.requestQueue.forEach(cb => cb(newPair.accessToken));
+			AxiosClient.requestQueue = [];                        // очередь обработана
+			return newPair.accessToken;
+		} catch (err) {
+			// если не вышло — сообщаем тем, кто ждал
+			AxiosClient.requestQueue.forEach(cb => cb(''));
+			AxiosClient.requestQueue = [];
+			throw err;
+		} finally {
+			AxiosClient.isRefreshing = false;                     // сбрасываем флаг
+		}
+	}
+	
 
 	public async refresh(): Promise<AxiosResponse> {
 		// const authServicePrefix = import.meta.env["VITE_AUTH_PREFIX"]

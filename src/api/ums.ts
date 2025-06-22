@@ -68,24 +68,7 @@ export default class UMS {
     }
 
     public async refresh() {
-        console.log("Trying to refresh manualy...", AxiosClient.isRefreshing)
-        if (AxiosClient.isRefreshing == true) {
-            console.log("Already refreshing, adding to queue...")
-            return new Promise((resolve) => {
-                const addRes = this.client.addRefreshQueueItem(resolve);
-                console.log("Added to queue, waiting for refresh...", addRes);
-            });
-        }
-        
-        console.log("Not refreshing, proceeding with refresh...")
-
-        AxiosClient.isRefreshing = true;
-
-        const response = this.client.refresh();
-
-        AxiosClient.isRefreshing = false;
-
-        return response;
+        return this.client.getFreshAccessToken();
     }
  
     public async signOut() {
