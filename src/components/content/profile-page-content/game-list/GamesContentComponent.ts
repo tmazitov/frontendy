@@ -1,4 +1,6 @@
+import API from "../../../../api/api";
 import LoadingLayout from "../../../../layouts/loading/LoadingLayout";
+import router from "../../../../pages/router";
 import FrontendyComponent from "../../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../../pkg/frontendy/vdom/constructor";
 import Store from "../../../../store/store";
@@ -18,15 +20,37 @@ function getLastPage() {
 export default class GamesContentComponent extends FrontendyComponent {
     componentName: string = 'games-content';
 
+    constructor() {
+        super();
+        const currentRoute = router.currentRoute;
+        const userId = currentRoute?.params?.userId;
+
+        if (userId && !isNaN(parseInt(userId))) {
+            this.state.userId = parseInt(userId);
+            this.state.isOtherUser = true;
+            console.log("this.state.isOtherUser", this.state.isOtherUser, this.state.userId);
+        }
+    }
+    
     data() {
         return {
             games: undefined,
+            isOtherUser: false,
             userId: 0,
             settings: {page: getLastPage()},
         }
     }
 
-    protected onCreated(): void {
+
+
+    protected onMounted(): void {
+
+        console.log("this.state.isOtherUser ", this.state.isOtherUser)
+        if (this.state.isOtherUser) {
+            this.setupOtherUserGames();
+            return ;
+        }
+
         Store.setters.setupGameStats(this.state.settings.page).then(() => {
             Store.getters.gameStats((stats:GameStat[] | undefined) => {
                 this.state.games = stats || [];
@@ -40,6 +64,17 @@ export default class GamesContentComponent extends FrontendyComponent {
         })
     }
 
+    private setupOtherUserGames() {
+        API.mmrs.userMatchStats(this.state.settings.page, this.state.userId).then((response) => {
+            let gameStats: GameStat[] = [];
+            if (response.status == 200) {
+                gameStats = response.data.map((stat: any) => new GameStat(stat));
+            }
+
+            this.state.games = gameStats;
+        })
+    }
+
     private onNextPage() {
         if (this.state.games.length != 10) {
             return ;
@@ -47,6 +82,11 @@ export default class GamesContentComponent extends FrontendyComponent {
 
         this.state.settings.page += 1;
         localStorage.setItem("games-page", this.state.settings.page.toString());    
+
+        if (this.state.isOtherUser) {
+            this.setupOtherUserGames();
+            return ;
+        }
 
         Store.setters.setupGameStats(this.state.settings.page)
     }
@@ -57,6 +97,11 @@ export default class GamesContentComponent extends FrontendyComponent {
 
         this.state.settings.page -= 1;
         localStorage.setItem("games-page", this.state.settings.page.toString());    
+
+        if (this.state.isOtherUser) {
+            this.setupOtherUserGames();
+            return ;
+        }
 
         Store.setters.setupGameStats(this.state.settings.page)
     }

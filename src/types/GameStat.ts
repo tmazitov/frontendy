@@ -2,7 +2,7 @@ class GameStat {
     uid: string;
     date: Date;
     typeId: number;
-    statusId: number;
+    status: string;
     winnerId: number;
 
     constructor(data:any) {
@@ -10,7 +10,7 @@ class GameStat {
         this.date = new Date(data.startedAt || data.started_at);
         this.date.setHours(this.date.getHours() + 4)// GCC time zone offset
         this.typeId = data.typeId || data.mode;
-        this.statusId = data.statusId || data.status;
+        this.status = data.status;
         this.winnerId = data.winnerId || data.winner_id;
     }
 

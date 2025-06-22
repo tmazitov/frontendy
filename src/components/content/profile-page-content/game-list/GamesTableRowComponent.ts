@@ -16,6 +16,10 @@ export default class GamesTableRowComponent extends FrontendyComponent {
     }
 
     getGameResult() {
+        if (this.props.gameStat.status == 'failed') {
+            return 'Failed';
+        }
+
         if (this.props.gameStat.winnerId == null) {
             return 'Playing'
         }
@@ -24,6 +28,10 @@ export default class GamesTableRowComponent extends FrontendyComponent {
     }
 
     getGameResultStyle() {
+
+        if (this.props.gameStat.status == 'failed') {
+            return 'gray'
+        }
 
         if (this.props.gameStat.winnerId == null) {
             return 'blue'
