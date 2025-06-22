@@ -85,6 +85,7 @@ export default class GameOverComponent extends FrontendyComponent {
                 
                 GameLauncher.startGameSearching(newTokens.accessToken, games[2], {
                     serverAddr: Config.mmrsAddr,
+                    withoutModals: true,
                     onUnauthorizedCallback: onUnauthorized,
                     onMatchReadyCallback: this.onMatchReadyHandler.bind(this),
                 });
@@ -96,7 +97,7 @@ export default class GameOverComponent extends FrontendyComponent {
             serverAddr: Config.mmrsAddr,
             withoutModals: true,
             onUnauthorizedCallback: onUnauthorized,
-            onConnectedCallback: this.onMatchReadyHandler.bind(this),
+            onMatchReadyCallback: this.onMatchReadyHandler.bind(this),
         });
     }
 
