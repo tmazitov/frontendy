@@ -11,7 +11,9 @@ import { MMRS_Client_Messages, MMRS_Server_Messages } from "./messages";
 type GameLauncherOptions = {
     serverAddr: string;
     onConnectedCallback?: Function;
+    onCloseCallback?: Function;
     onUnauthorizedCallback?: Function;
+    onJoinedCallback?: Function;
     onMatchReadyCallback?: Function;
     withoutModals?: boolean;
 }
@@ -27,6 +29,7 @@ export default class GameLauncher {
 
     static async startGameSearching(accessToken:string, game:Game, options: GameLauncherOptions) {
         if (this.client) {
+            console.warn("GameWebSocket warn: client already exists. Cannot start new game searching.");
             return ;
         }
 
@@ -34,7 +37,7 @@ export default class GameLauncher {
             this.opts = options;
             const opts = {
                 onOpenCallback: () => this.onEstablishConnection(accessToken, game),
-                onCloseCallback: () => this.onCloseConnection(),
+                onCloseCallback: () => this.onCloseConnection(options.onCloseCallback),
             }
 
             const user = await Store.getters.user()
@@ -68,7 +71,7 @@ export default class GameLauncher {
         this.client?.send(MMRS_Client_Messages.JOIN, {token: accessToken})
     }
 
-    private static onCloseConnection() {
+    private static onCloseConnection(onCloseCallback?: Function) {
         console.log("GameLauncher : WebSocket connection closed");
         this.searchGameType = null;
         this.isConfirmed = false;
@@ -79,10 +82,12 @@ export default class GameLauncher {
             EventBroker.getInstance().emit("deactivate-confirmation-modal");
         }
         this.opts = undefined;
+        onCloseCallback?.();
     }
 
     static stopGameSearching() {
         this.client?.close();
+        this.client = undefined;
     }
 
     private static unatuhorizedHandler(data: any, onUnauthorizedCallback?:Function) {

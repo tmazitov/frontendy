@@ -9,13 +9,17 @@ import SERVER_ACTION from "../../../pkg/game/play/server";
 import GameWebSocket from "../../../pkg/game/play/ws";
 import Store from "../../../store/store";
 import { MatchInfo } from "../../../types/MatchInfo";
-import { MatchResultInfo } from "../../../types/MatchResultInfo";
+import { MatchResultInfo, MatchResultStatus } from "../../../types/MatchResultInfo";
 import GameOverComponent from "./GameOverComponent";
 import InfoBarComponent from "./InfoBarComponent";
 import SceneComponent from "./SceneComponent";
 import GameWaitingComponent from "./GameWaitingComponent";
 import TimerStorage from "../../../pkg/timer";
 import GameErrorComponent from "./GameErrorComponent";
+import Config from "../../../config";
+import games from "../../../data/games";
+import GameLauncher from "../../../pkg/game/launcher/gameLauncher";
+import EventBroker from "../../../pkg/event-broker/eventBroker";
 
 export default class GameComponent extends FrontendyComponent {
     componentName: string = 'game-component';
@@ -25,7 +29,8 @@ export default class GameComponent extends FrontendyComponent {
             gameResults: undefined,
             gameWaitingConf: undefined,
             errorMessage: undefined,
-            info: {isUnauthorized: false, isCallbackActivated: false}
+            info: {isUnauthorized: false, isCallbackActivated: false},
+            mmrsInfo: {isUnathorized: false, isCallbackActivated: false},
         }
     }
 
@@ -34,11 +39,7 @@ export default class GameComponent extends FrontendyComponent {
 
         const tokens = getTokens();
         
-        Player.setup(tokens.accessToken, {
-            onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
-            onUnauthorized: () => this.state.info.isUnauthorized = true,
-            onCloseCallback: this.onCloseConnection.bind(this),
-        });
+
 
         GameWebSocket.on(SERVER_ACTION.Error, (data: any) => {
             const errorMessage = data.payload.message || "Unknown error";
@@ -75,9 +76,97 @@ export default class GameComponent extends FrontendyComponent {
             Store.setters.updateMatchScore(result.player1Score, result.player2Score);
         })
 
-        Store.getters.gameResults((value: MatchResultInfo | undefined) => {
-            this.state.gameResults = value;
-        } )
+        Player.setup(tokens.accessToken, {
+            onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
+            onUnauthorized: () => this.state.info.isUnauthorized = true,
+            onCloseCallback: this.onCloseConnection.bind(this),
+        });
+
+        Store.getters.gameResults((value: MatchResultInfo | undefined) => this.updateMatchResults(value))
+            .then((value: MatchResultInfo | undefined) => this.updateMatchResults(value))
+    }
+
+    private async updateMatchResults(value: MatchResultInfo | undefined){
+        this.state.gameResults = value;
+
+        if (!value) {
+            return ;
+        }
+
+        const isTournament = value.isTournament;
+        const isWinner = await this.isWinner(value.matchResult)
+
+        if (isTournament && isWinner) {
+            this.subscibeOnNextMatch();
+        }
+    }
+
+    async isWinner(status: MatchResultStatus | undefined) {
+        const players = await Store.getters.gamePlayersInfo();
+        const userId = await Store.getters.userId();
+        const publicInfo = players?.getPlayersPublicInfo(); 
+        if (!publicInfo || !userId) {
+            console.warn("GameOverComponent: publicInfo or userId is undefined", {publicInfo, userId});
+            return false;
+        }
+        return (status === 'P1WIN' && publicInfo.player1.id === userId) ||
+               (status === 'P2WIN' && publicInfo.player2.id === userId);
+    }
+
+    private onUnauthorizedSearch() {
+
+        if (this.state.mmrsInfo.isCallbackActivated) {
+            console.warn("GameOverComponent : onUnauthorized is called multiple times");
+            return ;
+        }
+        this.state.mmrsInfo.isCallbackActivated = true;
+
+        API.ums.refresh().then((response) => {
+            const newTokens = getTokens();
+            if (!newTokens || !newTokens.accessToken) {
+                console.warn("GameOverComponent : accessToken is undefined after refresh");
+                return ;
+            }
+            
+            GameLauncher.stopGameSearching()
+            GameLauncher.startGameSearching(newTokens.accessToken, games[2], {
+                serverAddr: Config.mmrsAddr,
+                withoutModals: true,
+                onConnectedCallback: () => {
+                    this.state.mmrsInfo.isUnauthorized = false
+                    this.state.mmrsInfo.isCallbackActivated = false;
+                },
+                onCloseCallback: () => this.onUnauthorizedSearch(),
+                onMatchReadyCallback: this.onMatchReadyHandler.bind(this),
+            });
+        })
+    }
+
+    private subscibeOnNextMatch() {
+
+        const tokens = getTokens()
+
+        GameLauncher.stopGameSearching()
+        GameLauncher.startGameSearching(tokens.accessToken, games[2], {
+            serverAddr: Config.mmrsAddr,
+            withoutModals: true,
+            onCloseCallback: () => this.onUnauthorizedSearch(),
+            onUnauthorizedCallback: () => this.state.mmrsInfo.isUnauthorized = true,
+            onMatchReadyCallback: this.onMatchReadyHandler.bind(this),
+        });
+    }
+
+
+    private onMatchReadyHandler() {
+        console.log("final match ready!")
+        const tokens = getTokens();
+
+        GameLauncher.stopGameSearching()
+        Player.setup(tokens.accessToken, {
+            onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
+            onUnauthorized: () => this.state.info.isUnauthorized = true,
+            onCloseCallback: this.onCloseConnection.bind(this),
+        });
     }
 
     private onAuthorizedCallback (data:MatchInfo) {

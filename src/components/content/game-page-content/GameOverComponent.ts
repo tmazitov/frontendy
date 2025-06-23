@@ -65,47 +65,7 @@ export default class GameOverComponent extends FrontendyComponent {
         this.state.shownInfo = {icon, title};
     }
 
-    private subscibeOnNextMatch() {
 
-        const tokens = getTokens()
-
-        let onUnauthorizedIsCalled = false;
-        const onUnauthorized = () => {
-            if (onUnauthorizedIsCalled) {
-                console.warn("GameOverComponent : onUnauthorized is called multiple times");
-                return ;
-            }
-            onUnauthorizedIsCalled = true;
-
-            API.ums.refresh().then((response) => {
-                const newTokens = getTokens();
-                if (!newTokens || !newTokens.accessToken) {
-                    console.warn("GameOverComponent : accessToken is undefined after refresh");
-                    return ;
-                }
-                
-                GameLauncher.startGameSearching(newTokens.accessToken, games[2], {
-                    serverAddr: Config.mmrsAddr,
-                    withoutModals: true,
-                    onUnauthorizedCallback: onUnauthorized,
-                    onMatchReadyCallback: this.onMatchReadyHandler.bind(this),
-                });
-            })
-        }
-
-
-        GameLauncher.startGameSearching(tokens.accessToken, games[2], {
-            serverAddr: Config.mmrsAddr,
-            withoutModals: true,
-            onUnauthorizedCallback: onUnauthorized,
-            onMatchReadyCallback: this.onMatchReadyHandler.bind(this),
-        });
-    }
-
-    private onMatchReadyHandler() {
-        console.log("match ready!")
-        EventBroker.getInstance().emit("game-page-rerender")
-    }
 
     protected onCreated(): void {
         TimerStorage.removeTimer(`game-paddle-left`);
@@ -116,13 +76,6 @@ export default class GameOverComponent extends FrontendyComponent {
             .then((info:PlayersInfo|undefined) => this.updatePlayers(info))
         Store.getters.userId((userId:number|undefined) => this.updateUserID(userId))
             .then((userId:number|undefined) => this.updateUserID(userId))
-
-        const isTournament = this.props.results.isTournament;
-        const isWinner = this.isWinner(this.props.results.matchResult)
-
-        if (isTournament && isWinner) {
-            this.subscibeOnNextMatch();
-        }
     }
 
     getAppropriateStatusMessage(status:MatchResultStatus | undefined){
