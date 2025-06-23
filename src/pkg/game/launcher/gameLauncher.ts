@@ -26,6 +26,10 @@ export default class GameLauncher {
     private static opts?: GameLauncherOptions;
 
     static async startGameSearching(accessToken:string, game:Game, options: GameLauncherOptions) {
+        if (this.client) {
+            return ;
+        }
+
         try {
             this.opts = options;
             const opts = {
@@ -85,6 +89,7 @@ export default class GameLauncher {
         if (onUnauthorizedCallback) {
             onUnauthorizedCallback();
         }
+        this.stopGameSearching();
     }
 
     private static matchFoundHandler(data: any) {
@@ -126,6 +131,7 @@ export default class GameLauncher {
 
     private static matchReadyHandler() {
         this.stopGameSearching();
+        this.client?.close();
         this.opts?.onMatchReadyCallback?.();
         const currentRoute = router.currentRoute;
         if (currentRoute?.name !== 'game') {

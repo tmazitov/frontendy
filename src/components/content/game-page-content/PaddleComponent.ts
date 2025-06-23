@@ -17,16 +17,20 @@ export default class PaddleComponent extends FrontendyComponent {
 
     constructor(props: PaddleComponentProps) {
         super(props);
+    }
+
+    protected onMounted(): void {
         TimerStorage.removeTimer(`game-paddle-${this.props.side}`);
         TimerStorage.addTimer(`game-paddle-${this.props.side}`, () => this.updatePosition(), 1000 / TICK_RATE);
     }
 
     private updatePosition() {
         const el = this.el as HTMLElement;
+        // console.log(`scene paddle ${this.props.side} elem: `, this.el, 'isHidden:', this.props.isHidden, 'info:', this.props.info);
         if (!el) {
             return ;
         }
-        if (el.style.display === 'none') {
+        if (this.props.isHidden && el.style.display === 'none') {
             return ;
         }
         if (this.props.isHidden && el.style.display !== 'none') {

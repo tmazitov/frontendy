@@ -7,6 +7,7 @@ import EventBroker from "../../../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
 import GameLauncher from "../../../pkg/game/launcher/gameLauncher";
+import TimerStorage from "../../../pkg/timer";
 import Store from "../../../store/store";
 import { MatchResultInfo, MatchResultStatus } from "../../../types/MatchResultInfo";
 import PlayersInfo from "../../../types/PlayersInfo";
@@ -106,7 +107,11 @@ export default class GameOverComponent extends FrontendyComponent {
         EventBroker.getInstance().emit("game-page-rerender")
     }
 
-    protected onMounted(): void {
+    protected onCreated(): void {
+        TimerStorage.removeTimer(`game-paddle-left`);
+        TimerStorage.removeTimer(`game-paddle-right`);
+        TimerStorage.removeTimer(`game-ball`);
+
         Store.getters.gamePlayersInfo((info:PlayersInfo|undefined) => this.updatePlayers(info))
             .then((info:PlayersInfo|undefined) => this.updatePlayers(info))
         Store.getters.userId((userId:number|undefined) => this.updateUserID(userId))

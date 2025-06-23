@@ -35,6 +35,14 @@ export default class WebSocketClient<T> {
     }
 
     public send(type: string, data?: Record<string, any> ) {
+
+        console.log(`SEND WS : ${type}`, this.socket.readyState);
+
+        if (this.socket.readyState !== WebSocket.OPEN) {
+            console.warn("WebSocketClient error : Cannot send message, WebSocket is not open");
+            return;
+        }
+
         this.socket.send(JSON.stringify({ type, ...data }));
     }
 

@@ -169,7 +169,6 @@ export default class UMS {
     }
 
     public appropriateAvatar(avatarPath: string | null ) {
-        console.log()
         if (!avatarPath) {
             return this.defaultAvatarUrl();
         }

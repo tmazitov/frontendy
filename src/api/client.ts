@@ -10,17 +10,20 @@ import Config from "../config";
 function cacheTokens(tokenPair:TokenPair){
 	localStorage.setItem('access-token', tokenPair.accessToken)
 	localStorage.setItem('refresh-token', tokenPair.refreshToken)
+	localStorage.setItem('last-update', new Date().toISOString())
 }
 
 function removeTokens() {
 	localStorage.removeItem('access-token')
 	localStorage.removeItem('refresh-token')
+	localStorage.removeItem('last-update')
 }
 
 function getTokens():TokenPair {
 	return {
 		accessToken: localStorage.getItem('access-token') || '', 
 		refreshToken: localStorage.getItem('refresh-token') || '',
+		lastUpdate: new Date(localStorage.getItem('last-update') || ''),
 	}
 }
 
@@ -89,7 +92,6 @@ class AxiosClient {
 					});
 				}
 
-				console.log('AxiosClient: 401 Unauthorized, same tokens ', tokens.accessToken === originalRequest.headers['Authorization']);
 				if (tokens.accessToken != originalRequest.headers['Authorization']) {
 					originalRequest.headers['Authorization'] = tokens.accessToken;
 					return this.axiosInstance(originalRequest);
@@ -167,6 +169,14 @@ class AxiosClient {
 				});
 			});
 		}
+
+		const now = new Date()
+		const lastUpdate = getTokens().lastUpdate;
+		if (now.getTime() - lastUpdate.getTime() < 1000 * 5) {
+			console.log("Token was updated recently, using cached token");
+			const tokens = getTokens();
+			return tokens.accessToken;
+		}
 	
 		// 2. Начинаем собственное обновление
 		AxiosClient.isRefreshing = true;
@@ -188,12 +198,7 @@ class AxiosClient {
 	
 
 	public async refresh(): Promise<AxiosResponse> {
-		// const authServicePrefix = import.meta.env["VITE_AUTH_PREFIX"]
 		const tokens = getTokens()
-		// console.log('old tokens :>> ', tokens);
-        console.log("AXIOS CLIENT refresh called...")
-
-
 		try {
 			const response = await axios.request({
 				method: "POST",
@@ -201,7 +206,6 @@ class AxiosClient {
 				headers: {
 					'Content-Type': 'application/json',
 					'Access-Control-Allow-Origin': '*',
-					// 'Authorization': `${tokens.accessToken}`
 				},
 				data: {
 					"refreshToken" : tokens.refreshToken 
@@ -216,7 +220,7 @@ class AxiosClient {
 			console.log('refresh error :>> ', error);
 			if (error.response && error.response.status == 401) {
 				setTimeout(async () => {
-					// await API.ums.signOut()
+
 					removeTokens()
 
 					router.push("home")

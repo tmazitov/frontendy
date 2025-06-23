@@ -12,7 +12,7 @@ type GameWebSocketParams = {
 
 export default class GameWebSocket {
     private static conn: WebSocketClient<ServerAction> | undefined;
-    private static listenerQueue: Map<ServerAction, (data: any) => void> = new Map();
+    private static activeListeners: Map<ServerAction, (data: any) => void> = new Map();
 
     public static connect(params:GameWebSocketParams):void {
         if (GameWebSocket.conn !== undefined) {
@@ -23,7 +23,7 @@ export default class GameWebSocket {
         GameWebSocket.conn = new WebSocketClient<ServerAction>(`${API.ws()}://${params.serverAddr}/api/ws`, {
             onOpenCallback: () => {
                 console.log("GameWebSocket connection opened.");
-                this.listenerQueue.forEach((callback, action) => {
+                this.activeListeners.forEach((callback, action) => {
                     console.log("Registering action listener from queue for:", action);
                     GameWebSocket.conn?.on(action, callback);
                 });
@@ -34,10 +34,10 @@ export default class GameWebSocket {
             },
             onCloseCallback: () => {
                 console.log("GameWebSocket connection closed.");
+                GameWebSocket.conn = undefined;
                 if (params.onCloseCallback) {
                     params.onCloseCallback()
                 }
-                GameWebSocket.conn = undefined;
             },
             onErrorCallback: (error: Event) => {
                 if (params.onErrorCallback) {
@@ -49,16 +49,13 @@ export default class GameWebSocket {
     }
 
     public static on(action: ServerAction, callback: (data: any) => void): void {
-
-        if (GameWebSocket.conn === undefined) {
+        this.activeListeners.set(action, callback)
+        if (GameWebSocket.conn !== undefined) {
             // console.warn("WebSocket connection does not exist. Cannot register action listener.");
-            this.listenerQueue.set(action, callback)
+            GameWebSocket.conn.on(action, callback);
+            console.log("Registering action listener for:", action);
             return;
         }
-
-        
-        GameWebSocket.conn.on(action, callback);
-        console.log("Registering action listener for:", action);
     }
 
     public static close():void {    

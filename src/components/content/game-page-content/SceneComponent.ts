@@ -81,28 +81,31 @@ export default class SceneComponent extends FrontendyComponent {
             ballInfo.speedY = state.ball.speedY;
         })
 
-        Store.getters.gameSceneInfo((sceneInfo: MatchSceneInfo | undefined) => {
-            if (!sceneInfo) {
-                return ;
-            }
+        Store.getters.gameSceneInfo((info: MatchSceneInfo | undefined) => this.setupGameSceneInfo(info))
+            .then((info: MatchSceneInfo | undefined) => this.setupGameSceneInfo(info))
+    }
 
-            this.state.fieldSize = {
-                length: sceneInfo.table.length, 
-                width: sceneInfo.table.width,
-            }
+    private setupGameSceneInfo(sceneInfo: MatchSceneInfo | undefined){
+        if (!sceneInfo) {
+            return ;
+        }
 
-            const paddle1Info = sceneInfo.paddle1;
-            const paddle2Info = sceneInfo.paddle2;
-            const ballInfo = sceneInfo.ball;
+        this.state.fieldSize = {
+            length: sceneInfo.table.length, 
+            width: sceneInfo.table.width,
+        }
 
-            this.state.player1Config.info = paddle1Info;
-            this.state.player1Config.isHidden = false;
-            this.state.player2Config.info = paddle2Info;
-            this.state.player2Config.isHidden = false;
-            this.state.ballConfig.info = ballInfo;
-            this.state.ballConfig.isHidden = false;
-            // this.update();
-        })
+        const paddle1Info = sceneInfo.paddle1;
+        const paddle2Info = sceneInfo.paddle2;
+        const ballInfo = sceneInfo.ball;
+
+        this.state.player1Config.info = paddle1Info;
+        this.state.player1Config.isHidden = false;
+        this.state.player2Config.info = paddle2Info;
+        this.state.player2Config.isHidden = false;
+        this.state.ballConfig.info = ballInfo;
+        this.state.ballConfig.isHidden = false;
+        // this.update();
     }
 
     template() {

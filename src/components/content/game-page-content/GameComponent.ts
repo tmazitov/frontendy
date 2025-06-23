@@ -25,70 +25,19 @@ export default class GameComponent extends FrontendyComponent {
             gameResults: undefined,
             gameWaitingConf: undefined,
             errorMessage: undefined,
+            info: {isUnauthorized: false, isCallbackActivated: false}
         }
     }
 
-    protected onMounted(): void {
+    protected onCreated(): void {
+        console.log("Component created: GameComponent")
+
         const tokens = getTokens();
-        if (!tokens) {
-            router.push('home');
-            return;
-        }
-
-        let isCallbackActivated = false
-
-        const onAuthorizedCallback = (data:MatchInfo) => {
-            if (!data) { 
-                console.warn("Authorized warning: data is undefined");
-                return ;
-            }
-
-            if (!data.player1 || !data.player2) {
-                console.warn("MatchStart warning: player IDs are missing : ", data);
-                return ;
-            }
-
-            const matchIsReady = data.player1.isOnline && data.player2.isOnline
-            const timeLeft = matchIsReady ? 
-                0 : Math.floor((data.timeoutStamp - Date.now()) / 1000);
-
-            try{
-                data.scene.timeLeft = timeLeft;
-                data.scene.isReady = matchIsReady;
-                data.scene.result = undefined;
-                this.state.gameWaitingConf = {timeLeft, isReady: matchIsReady};
-                Store.setters.setupMatchSceneInfo(data.scene);
-                Store.setters.setupGamePlayersInfo(data.player1, data.player2);
-            } catch (e) {
-                console.error("Error setting up game players info: ", e);
-            }
-        }
-        const onUnauthorizedCallback = () => {
-            if (isCallbackActivated) {
-                this.state.errorMessage = "Unauthorized access. Please log in again.";
-                return ;
-            }
-            isCallbackActivated = true;
-            
-            API.ums.refresh().then(() => {
-                const newTokens = getTokens();
-                console.log("new tokens for the game: ", newTokens);
-                if (!newTokens || !newTokens.accessToken) {
-                    this.state.errorMessage = "Failed to refresh tokens. Please log in again.";
-                    return ;
-                }
-                
-                Player.setup(newTokens.accessToken, {
-                    onAuthorized: onAuthorizedCallback,
-                    onUnauthorized: onUnauthorizedCallback,
-                    onCloseCallback: this.onCloseConnection.bind(this),
-                })
-            })
-        }
         
         Player.setup(tokens.accessToken, {
-            onAuthorized: onAuthorizedCallback,
-            onUnauthorized: onUnauthorizedCallback
+            onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
+            onUnauthorized: () => this.state.info.isUnauthorized = true,
+            onCloseCallback: this.onCloseConnection.bind(this),
         });
 
         GameWebSocket.on(SERVER_ACTION.Error, (data: any) => {
@@ -131,20 +80,77 @@ export default class GameComponent extends FrontendyComponent {
         } )
     }
 
+    private onAuthorizedCallback (data:MatchInfo) {
+        if (!data) { 
+            console.warn("Authorized warning: data is undefined");
+            return ;
+        }
+
+        if (!data.player1 || !data.player2) {
+            console.warn("MatchStart warning: player IDs are missing : ", data);
+            return ;
+        }
+        this.state.info.isUnauthorized = false;
+
+        const matchIsReady = data.player1.isOnline && data.player2.isOnline
+        const timeLeft = matchIsReady ? 
+            0 : Math.floor((data.timeoutStamp - Date.now()) / 1000);
+
+        try{
+            data.scene.timeLeft = timeLeft;
+            data.scene.isReady = matchIsReady;
+            data.scene.result = undefined;
+            this.state.gameWaitingConf = {timeLeft, isReady: matchIsReady};
+            Store.setters.setupMatchSceneInfo(data.scene);
+            Store.setters.setupGamePlayersInfo(data.player1, data.player2);
+        } catch (e) {
+            console.error("Error setting up game players info: ", e);
+        }
+    }
+
+    private onUnauthorizedCallback() {
+
+        if (this.state.info.isCallbackActivated) {
+            this.state.errorMessage = "Unauthorized access. Please log in again.";
+            return ;
+        }
+
+        this.state.info.isCallbackActivated = true;
+        
+        API.ums.refresh().then(() => {
+            const newTokens = getTokens();
+            if (!newTokens || !newTokens.accessToken) {
+                this.state.errorMessage = "Failed to update access. Please log in again.";
+                return ;
+            }
+
+            this.state.errorMessage = undefined;
+            
+            Player.setup(newTokens.accessToken, {
+                onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
+                onUnauthorized: () => this.state.info.isUnauthorized = true,
+                onCloseCallback: this.onCloseConnection.bind(this),
+            })
+        })
+    }
+
     private async onCloseConnection() {
 
         TimerStorage.removeTimer('game-ball');
         TimerStorage.removeTimer('game-paddle-left');
         TimerStorage.removeTimer('game-paddle-right');
         
-        Store.setters.removeGameSceneInfo();
-        Store.setters.removeGamePlayersInfo();
-        
         Player.cleanup();
 
         if (this.state.gameResults) {
             return ;
         }
+        
+        if (this.state.info.isUnauthorized) {
+            this.onUnauthorizedCallback();
+            return ;
+        }
+
         this.state.errorMessage = "Server disconnected."
     }
     template() {

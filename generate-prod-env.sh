@@ -2,7 +2,7 @@
 
 echo "window.__ENV__ = {" > public/env.js
 
-for key in PORT GOOGLE_OAUTH_CLIENT_ID GOOGLE_OAUTH_REDIRECT_URI UMS_ADDR MMRS_ADDR GAME_ADDR MODE; do
+for key in SECURE PORT GOOGLE_OAUTH_CLIENT_ID GOOGLE_OAUTH_REDIRECT_URI UMS_ADDR MMRS_ADDR GAME_ADDR MODE; do
     value="${!key}"
     [[ -z "$value" ]] && continue
 

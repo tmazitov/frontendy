@@ -4,6 +4,7 @@ import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
 import Player from "../pkg/game/play/player";
 import GameWebSocket from "../pkg/game/play/ws";
+import TimerStorage from "../pkg/timer";
 import Store from "../store/store";
 
 export default class GamePage extends FrontendyComponent {
@@ -23,6 +24,13 @@ export default class GamePage extends FrontendyComponent {
         GameWebSocket.close();
         Store.setters.setupUser();
         EventBroker.getInstance().off("game:page:rerender");
+        
+        Store.setters.removeGameSceneInfo();
+        Store.setters.removeGamePlayersInfo();
+
+        TimerStorage.removeTimer(`game-paddle-left`);
+        TimerStorage.removeTimer(`game-paddle-right`);
+        TimerStorage.removeTimer(`game-ball`);
     }
 
     template() {

@@ -21,6 +21,11 @@ export default class GameErrorComponent extends FrontendyComponent {
         router.push('home');
         return ;
     }
+    protected onCreated(): void {
+        TimerStorage.removeTimer(`game-paddle-left`);
+        TimerStorage.removeTimer(`game-paddle-right`);
+        TimerStorage.removeTimer(`game-ball`);
+    }
 
     template() {
         return elem('div')
