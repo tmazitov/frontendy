@@ -91,7 +91,7 @@ export default class GoogleOAuth {
 
         Store.setters.setupUser()
 
-        router.push("home")
         EventBroker.getInstance().emit("update-auth");
+        setTimeout(() => router.push("home"), 200);
     }
 }
