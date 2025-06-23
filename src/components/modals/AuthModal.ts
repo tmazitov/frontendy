@@ -104,6 +104,8 @@ export default class AuthModal extends FrontendyComponent {
                 return "Validation error. Please check your input.";
             case 401:
                 return "Invalid credentials. Please try again.";
+            case 404:
+                return "User with this nickname is not found";
             case 409:
                 return "User with this login or email already exists.";
             case 500:
