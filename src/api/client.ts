@@ -200,9 +200,11 @@ class AxiosClient {
 	public async refresh(): Promise<AxiosResponse> {
 		const tokens = getTokens()
 		try {
+			const protocol = Config.secure ? 'https' : 'http';
+
 			const response = await axios.request({
 				method: "POST",
-				url: `http://${Config.umsAddr}/api/rest/refresh`,
+				url: `${protocol}://${Config.umsAddr}/api/rest/refresh`,
 				headers: {
 					'Content-Type': 'application/json',
 					'Access-Control-Allow-Origin': '*',
