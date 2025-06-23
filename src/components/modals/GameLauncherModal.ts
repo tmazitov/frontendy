@@ -42,11 +42,6 @@ export default class GameLauncherModal extends FrontendyComponent {
  
         this.state.isLoading = true;
 
-        const accessToken = getTokens()?.accessToken
-        if (!accessToken) {
-            return ;
-        }
-
         const onAuthorized = () => {
             this.state.show = false;
             this.state.isLoading = false;
@@ -80,11 +75,15 @@ export default class GameLauncherModal extends FrontendyComponent {
         }
 
 
-        GameLauncher.startGameSearching(accessToken, game, {
-            serverAddr: Config.mmrsAddr,
-            onConnectedCallback: onAuthorized,
-            onUnauthorizedCallback: onUnauthorized,
-        });
+        API.ums.refresh().then(() => {
+            const accessToken = getTokens()?.accessToken
+
+            GameLauncher.startGameSearching(accessToken, game, {
+                serverAddr: Config.mmrsAddr,
+                onConnectedCallback: onAuthorized,
+                onUnauthorizedCallback: onUnauthorized,
+            });
+        })
     }
 
     template() {

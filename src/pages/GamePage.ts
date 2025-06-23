@@ -31,6 +31,7 @@ export default class GamePage extends FrontendyComponent {
         TimerStorage.removeTimer(`game-paddle-left`);
         TimerStorage.removeTimer(`game-paddle-right`);
         TimerStorage.removeTimer(`game-ball`);
+        TimerStorage.removeTimer("game-waiting");
     }
 
     template() {

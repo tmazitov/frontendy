@@ -12,6 +12,7 @@ import TimerStorage from "../pkg/timer";
 import { isAuthorized } from "../api/client";
 import Store from "../store/store";
 import UMSOnline from "../pkg/onlineConnection";
+import API from "../api/api";
 
 const navBarLinks =  [
     new NavBarLink('Home', 'home', "ti ti-home"),
@@ -71,7 +72,8 @@ export default class AppComponent extends Component {
         EventBroker.getInstance().on("update-auth", () => {
             this.state.isAuthorized = isAuthorized();
             if (this.state.isAuthorized) {
-                UMSOnline.connect();
+                API.ums.refresh().then(() => UMSOnline.connect())
+                
             } else {
                 UMSOnline.disconnect();
             }
@@ -80,7 +82,7 @@ export default class AppComponent extends Component {
 
     protected onCreated(): void {
         Store.setters.setupUser()
-        UMSOnline.connect();
+    API.ums.refresh().then(() => UMSOnline.connect())
     }
 
     onUnmounted(): void {

@@ -37,7 +37,6 @@ export default class GameComponent extends FrontendyComponent {
     protected onCreated(): void {
         console.log("Component created: GameComponent")
 
-        const tokens = getTokens();
         
 
 
@@ -76,17 +75,30 @@ export default class GameComponent extends FrontendyComponent {
             Store.setters.updateMatchScore(result.player1Score, result.player2Score);
         })
 
-        Player.setup(tokens.accessToken, {
-            onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
-            onUnauthorized: () => this.state.info.isUnauthorized = true,
-            onCloseCallback: this.onCloseConnection.bind(this),
-        });
+        const searching = localStorage.getItem('start-searching-final-match') === 'true';
+        if (searching) {
+            this.subscibeOnNextMatch();
+        } else {
+            API.ums.refresh().then(() => {
+                const tokens = getTokens();
+                Player.setup(tokens.accessToken, {
+                    onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
+                    onUnauthorized: () => this.state.info.isUnauthorized = true,
+                    onCloseCallback: this.onCloseConnection.bind(this),
+                });
+            })
+        }
 
         Store.getters.gameResults((value: MatchResultInfo | undefined) => this.updateMatchResults(value))
             .then((value: MatchResultInfo | undefined) => this.updateMatchResults(value))
     }
 
     private async updateMatchResults(value: MatchResultInfo | undefined){
+        if (value && localStorage.getItem('final-match-found') === 'true') {
+            localStorage.removeItem('final-match-found');
+            value.isTournament = false;
+        }
+
         this.state.gameResults = value;
 
         if (!value) {
@@ -143,30 +155,38 @@ export default class GameComponent extends FrontendyComponent {
     }
 
     private subscibeOnNextMatch() {
-
-        const tokens = getTokens()
-
-        GameLauncher.stopGameSearching()
-        GameLauncher.startGameSearching(tokens.accessToken, games[2], {
-            serverAddr: Config.mmrsAddr,
-            withoutModals: true,
-            onCloseCallback: () => this.onUnauthorizedSearch(),
-            onUnauthorizedCallback: () => this.state.mmrsInfo.isUnauthorized = true,
-            onMatchReadyCallback: this.onMatchReadyHandler.bind(this),
-        });
+        API.ums.refresh().then(() => {
+            const tokens = getTokens()
+    
+            localStorage.setItem('start-searching-final-match', 'true');
+    
+            GameLauncher.stopGameSearching()
+            GameLauncher.startGameSearching(tokens.accessToken, games[2], {
+                serverAddr: Config.mmrsAddr,
+                withoutModals: true,
+                onCloseCallback: () => this.onUnauthorizedSearch(),
+                onUnauthorizedCallback: () => this.state.mmrsInfo.isUnauthorized = true,
+                onMatchReadyCallback: this.onMatchReadyHandler.bind(this),
+            });
+        })
     }
 
 
     private onMatchReadyHandler() {
         console.log("final match ready!")
-        const tokens = getTokens();
+        API.ums.refresh().then(() => {
+            const tokens = getTokens();
 
-        GameLauncher.stopGameSearching()
-        Player.setup(tokens.accessToken, {
-            onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
-            onUnauthorized: () => this.state.info.isUnauthorized = true,
-            onCloseCallback: this.onCloseConnection.bind(this),
-        });
+            localStorage.setItem('final-match-found', 'true');
+            localStorage.removeItem('start-searching-final-match');
+    
+            GameLauncher.stopGameSearching()
+            Player.setup(tokens.accessToken, {
+                onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
+                onUnauthorized: () => this.state.info.isUnauthorized = true,
+                onCloseCallback: this.onCloseConnection.bind(this),
+            });
+        })
     }
 
     private onAuthorizedCallback (data:MatchInfo) {
@@ -198,6 +218,7 @@ export default class GameComponent extends FrontendyComponent {
     }
 
     private onUnauthorizedCallback() {
+        console.log("connection closed --> callback activated", this.state.info.isCallbackActivated);
 
         if (this.state.info.isCallbackActivated) {
             this.state.errorMessage = "Unauthorized access. Please log in again.";
@@ -208,12 +229,14 @@ export default class GameComponent extends FrontendyComponent {
         
         API.ums.refresh().then(() => {
             const newTokens = getTokens();
+            console.log("connection closed --> tokens refreshed", newTokens.accessToken);
             if (!newTokens || !newTokens.accessToken) {
                 this.state.errorMessage = "Failed to update access. Please log in again.";
                 return ;
             }
 
             this.state.errorMessage = undefined;
+            console.log("connection closed --> player setup", newTokens.accessToken);
             
             Player.setup(newTokens.accessToken, {
                 onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
@@ -235,7 +258,9 @@ export default class GameComponent extends FrontendyComponent {
             return ;
         }
         
+        console.log("connection closed");
         if (this.state.info.isUnauthorized) {
+            console.log("connection closed --> unauthorized");
             this.onUnauthorizedCallback();
             return ;
         }
