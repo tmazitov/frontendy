@@ -8,6 +8,8 @@ export default class API {
     public static readonly mmrs = new MMRS(`${this.http()}://${Config.mmrsAddr}/api/rest`)
 
     public static http() {
+        console.log("secure: ", Config.secure);
+
         if (Config.secure) {
             return "https";
         }
