@@ -28,7 +28,6 @@ export default class GamesContentComponent extends FrontendyComponent {
         if (userId && !isNaN(parseInt(userId))) {
             this.state.userId = parseInt(userId);
             this.state.isOtherUser = true;
-            console.log("this.state.isOtherUser", this.state.isOtherUser, this.state.userId);
         }
     }
     
@@ -45,7 +44,6 @@ export default class GamesContentComponent extends FrontendyComponent {
 
     protected onMounted(): void {
 
-        console.log("this.state.isOtherUser ", this.state.isOtherUser)
         if (this.state.isOtherUser) {
             this.setupOtherUserGames();
             return ;
@@ -109,7 +107,6 @@ export default class GamesContentComponent extends FrontendyComponent {
     template() {
 
         const isLoading = this.state.games === undefined;
-        console.log({isLoading})
         const views = [
             {cond: isLoading, action: () => new LoadingLayout({
                 icon: "ti ti-loader",

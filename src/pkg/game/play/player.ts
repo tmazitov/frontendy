@@ -34,7 +34,6 @@ export default class Player {
     }
 
     private static onAuthorizedHandler(data:any, onAuthorizedCallback?:(state: MatchInfo) => void) {
-        console.log("Player setup complete. Listening for key events...");
 
         const payload = data.payload as MatchInfo;
         onAuthorizedCallback?.(payload);

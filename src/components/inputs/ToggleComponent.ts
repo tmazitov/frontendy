@@ -32,9 +32,6 @@ export default class ToggleComponent extends FrontendyComponent {
 
     template() {
 
-        console.log("ToggleComponent template", this.props.value, this.props.label);
-
-        
         const inputProps:any = {type: "checkbox", class: "w-4 h-4 cursor-pointer"}
         if (!this.props.isDisabled && this.props.value == true) {
             inputProps["checked"] = true;

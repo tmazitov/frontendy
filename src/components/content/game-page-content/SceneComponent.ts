@@ -51,7 +51,6 @@ export default class SceneComponent extends FrontendyComponent {
         Player.onUpdatePosition((data:Record<string,any>) => {
 
             if (this.props.isOpponentDisconnected) {
-                console.log("sync canceled : opponent disconnected, waiting for reconnection...");
                 return ;
             }
 

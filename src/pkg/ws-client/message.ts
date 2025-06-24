@@ -4,7 +4,6 @@ export default class Message<T> {
     private data: any;
 
     constructor(raw:string) {
-        console.log("Message info: Message constructor", raw);
         const obj = JSON.parse(raw);
         this.type = obj.type;
         

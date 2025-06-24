@@ -38,7 +38,6 @@ export default class GameOverComponent extends FrontendyComponent {
     }
 
     private updatePlayers(info:PlayersInfo | undefined) {
-        console.log("GameOverComponent: updatePlayers called with info:", info);
         if (!info) {
             return ;
         }
@@ -52,7 +51,6 @@ export default class GameOverComponent extends FrontendyComponent {
     }
 
     private updateUserID(userId:number | undefined) {
-        console.log("GameOverComponent: updateUserID called with userId:", userId);
         if (!userId) {
             return ;
         }

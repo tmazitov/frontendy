@@ -24,9 +24,7 @@ export default class GameWebSocket {
 
         GameWebSocket.conn = new WebSocketClient<ServerAction>(`${API.ws()}://${params.serverAddr}/api/ws`, {
             onOpenCallback: () => {
-                console.log("GameWebSocket connection opened.");
                 this.activeListeners.forEach((callback, action) => {
-                    console.log("Registering action listener from queue for:", action);
                     GameWebSocket.conn?.on(action, callback);
                 });
 
@@ -35,7 +33,6 @@ export default class GameWebSocket {
                 }
             },
             onCloseCallback: () => {
-                console.log("GameWebSocket connection closed.", this.params?.onCloseCallback);
                 GameWebSocket.conn = undefined;
                 if (this.params?.onCloseCallback) {
                     this.params.onCloseCallback()
@@ -45,7 +42,6 @@ export default class GameWebSocket {
                 if (this.params?.onErrorCallback) {
                     this.params.onErrorCallback(error)
                 }
-                console.error("GameWebSocket error:", error);
             }
         })
     }
@@ -55,14 +51,12 @@ export default class GameWebSocket {
         if (GameWebSocket.conn !== undefined) {
             // console.warn("WebSocket connection does not exist. Cannot register action listener.");
             GameWebSocket.conn.on(action, callback);
-            console.log("Registering action listener for:", action);
             return;
         }
     }
 
     public static close():void {    
         if (GameWebSocket.conn === undefined) {
-            console.warn("WebSocket connection does not exist.");
             return;
         }
 
@@ -92,7 +86,6 @@ export default class GameWebSocket {
     }
 
     public static join(accessToken: string):void {
-        console.log({accessToken})
         GameWebSocket.send(PLAYER_ACTION.Join, {accessToken})
     }
 }   

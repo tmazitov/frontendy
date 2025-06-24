@@ -67,12 +67,10 @@ export default class GameLauncher {
     }
 
     private static onEstablishConnection(accessToken:string, game: Game) {
-        console.log("GameLauncher : WebSocket connection opened");
         this.client?.send(MMRS_Client_Messages.JOIN, {token: accessToken})
     }
 
     private static onCloseConnection(onCloseCallback?: Function) {
-        console.log("GameLauncher : WebSocket connection closed");
         this.searchGameType = null;
         this.isConfirmed = false;
         this.confirmation = undefined;

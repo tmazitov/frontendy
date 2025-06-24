@@ -45,7 +45,6 @@ export default class MainInfoComponent extends FrontendyComponent {
         ]
         
         if (!this.props.withButtons) {
-            console.log("tag :: ", this.props.user?.isOnline)
             const tag = new TagComponent({
                 label: this.props.user?.isOnline ?
                     'Online' : 'Offline',

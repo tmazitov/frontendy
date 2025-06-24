@@ -36,8 +36,6 @@ export default class WebSocketClient<T> {
 
     public send(type: string, data?: Record<string, any> ) {
 
-        console.log(`SEND WS : ${type}`, this.socket.readyState);
-
         if (this.socket.readyState !== WebSocket.OPEN) {
             console.warn("WebSocketClient error : Cannot send message, WebSocket is not open");
             return;
@@ -47,14 +45,12 @@ export default class WebSocketClient<T> {
     }
 
     private openHandler() {
-        console.log("WebSocketClient info: WebSocket WebSocketClient opened");
         if (this.opts?.onOpenCallback) {
             this.opts.onOpenCallback();
         }
     }
     
     private closeHandler() {
-        console.log("WebSocketClient info : WebSocket WebSocketClient closed");
         if (this.opts?.onCloseCallback) {
             this.opts.onCloseCallback();
         }
@@ -85,7 +81,6 @@ export default class WebSocketClient<T> {
         
         const data = message.getData();
         messageListener(data);
-        console.log(`WebSocketClient info : ${message.getType()}\t|`, data);
     }
  
     private parseMessage(message: Message<T>): ( (data: any) => void ) | undefined{

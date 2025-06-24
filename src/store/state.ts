@@ -7,6 +7,8 @@ import User from "../types/User";
 import StoreField from "./field";
 
 export default class StoreState{
+
+    public leaderboard:StoreField<any> = new StoreField<any>();
     public isReconnect:StoreField<boolean> = new StoreField<boolean>();
     public user:StoreField<User> = new StoreField<User>();
     public freinds:StoreField<User[]> = new StoreField<User[]>();

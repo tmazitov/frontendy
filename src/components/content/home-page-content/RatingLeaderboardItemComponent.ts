@@ -23,8 +23,6 @@ export default class RatingLeaderboardItemComponent extends FrontendyComponent {
 
     template() {
 
-        console.log('RatingLeaderboardItemComponent', this.props);
-
         return elem('tr')
         .setProps({class: 'border-t-1 border-gray-200'})
         .setChild([

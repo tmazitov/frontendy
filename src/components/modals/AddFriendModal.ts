@@ -65,7 +65,6 @@ export default class AddFriendModal extends FrontendyComponent {
             .addChild(`New friend`);
 
         // Body
-        console.log("messages", this.state.successMessage, this.state.errorMessage);
         const message: string = this.state.errorMessage ?? this.state.successMessage ;
         const messageColor: string = this.state.errorMessage ? 'red' : 'green';
         const body = elem("div")

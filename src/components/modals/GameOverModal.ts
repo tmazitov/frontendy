@@ -107,7 +107,6 @@ export default class GameOverModal extends FrontendyComponent {
         const result = this.state.gameResult as MatchResultInfo | undefined
         const resultStatus = result?.matchResult  
 
-        console.log(this.componentName, " is show ", modalIsVisible);
 
         // Header
         const header = elem("h2")

@@ -47,7 +47,6 @@ export default class AppComponent extends Component {
                 return;
             }
             this.state.searchGameType = game;
-            console.log("APP : search bar activated")
         })  
         EventBroker.getInstance().on("deactivate-search-game-bar", () => {
             if (!this.state.searchGameType) {
@@ -56,17 +55,14 @@ export default class AppComponent extends Component {
             }
             TimerStorage.removeTimer("game-search-bar");
             this.state.searchGameType = null;
-            console.log("APP : search bar deactivated")
         })
         EventBroker.getInstance().on("activate-confirmation-modal", (data:{confirmTime: number}) => {
             this.state.showGameConfirmationModal = true;
             this.state.confirmTime = data.confirmTime;
-            console.log("APP : confirmation modal activated", data.confirmTime);
         })
         EventBroker.getInstance().on("deactivate-confirmation-modal", () => {
             TimerStorage.removeTimer("game-confirmation-modal");
             this.state.showGameConfirmationModal = false;
-            console.log("APP : confirmation modal deactivated");
         })
 
         EventBroker.getInstance().on("update-auth", () => {
@@ -83,7 +79,9 @@ export default class AppComponent extends Component {
     protected onCreated(): void {
         Store.setters.setupUser()
         
-         API.ums.refresh().then(() => UMSOnline.connect())
+        if (isAuthorized()) {
+            API.ums.refresh().then(() => UMSOnline.connect())
+        }
     }
 
     onUnmounted(): void {

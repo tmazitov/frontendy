@@ -45,7 +45,6 @@ export default class OAuthCallbackPage extends FrontendyComponent {
                     status: 1,
                 }
             }
-            console.log("Error during OAuth authorization:", error);
         }
     }
 

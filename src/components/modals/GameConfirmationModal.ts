@@ -54,7 +54,6 @@ export default class GameConfirmationModal extends FrontendyComponent {
     private onSubmit() {
         this.state.isLoading = true;
         GameLauncher.confirmGame(() => {
-            console.log("successfully confirmed game");
             this.state.isLoading = false;
             this.state.isConfirmed = true;
         })

@@ -38,7 +38,6 @@ export default class StoreSetters {
         }  
         sceneInfo.result = result;
         this.state.gameSceneInfo.setValue(sceneInfo);
-        console.log("match updated result")
     }
 
     async setupUser() {
@@ -48,7 +47,6 @@ export default class StoreSetters {
         try
         {
             const response = await API.ums.userGetInfo()
-            console.log({response, data :response.data})
             if (!response) {
                 throw new Error("no response");
             }
@@ -79,7 +77,6 @@ export default class StoreSetters {
                     throw new Error("no game stats data in response");
                 }
 
-                console.log("StoreSetters: setupGameStats response:", response.data);
                 const gameStats = response.data.map((stat: any) => new GameStat(stat));
                 this.state.gameStats.setValue(gameStats);
             } else {
@@ -219,7 +216,6 @@ export default class StoreSetters {
             }
 
             const freinds = Array.from(response.data).map((friendData:any) => new User(friendData));
-            console.log("StoreSetters: setupFriends response:", freinds);
             this.state.freinds.setValue(freinds);
         } catch (err) {
             console.error("StoreSetters: setupFriends: error getting friends list :", err);
@@ -352,7 +348,6 @@ export default class StoreSetters {
                 return ;
             }
             const newFriends = friends.filter((friend: User) => friend.id !== userId);
-            console.log("StoreSetters: deleteFriend: newFriends:", newFriends);
             this.state.freinds.setValue(newFriends);
         } catch (err) {
             console.error("StoreSetters: deleteFriend: error deleting friend:", err);
@@ -380,6 +375,18 @@ export default class StoreSetters {
         } catch (e) {
             this.state.isReconnect.setValue(false);
             return ;
+        }
+    }
+
+    async setupLeaderboard() {
+        try {
+            const response = await API.ums.leaderboard()
+            if (response && response.data) {
+                this.state.leaderboard.setValue(response.data);
+            }
+        } catch (error) {
+            this.state.leaderboard.setValue(undefined);
+            console.error("DashboardComponent error : Failed to fetch leaderboard data", error);
         }
     }
 

@@ -21,7 +21,6 @@ function removeNewElement(parent: HTMLElement, index: number) {
 
     const child = parent.childNodes[index]
     if (!child) {
-        // console.log("update vdom erorr: child with index ", index, "not found in parent", parent)
         return
     }
     
@@ -32,14 +31,12 @@ function replaceElement(parent: HTMLElement, newVNode: VNode | FrontendyComponen
 
     const child = parent.childNodes[index]
     if (!child) {
-        // console.log("update vdom erorr: child with index ", index, "not found in parent", parent)
         return
     }
 
     if (newVNode instanceof FrontendyComponent) {
         const element = newVNode.mount(parent)
         if (!element) {
-            // console.log("after render component no element in replace...")
             return
         }
         parent.replaceChild(element, child);
@@ -92,7 +89,6 @@ function updateElement(parent: HTMLElement | Text,
                 parent.replaceWith(elem);
             } else {
                 removeNewElement(parent, index);
-                console.log("after render component no element...")
             }
         }
         return

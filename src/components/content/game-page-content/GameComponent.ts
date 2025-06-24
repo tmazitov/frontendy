@@ -52,10 +52,8 @@ export default class GameComponent extends FrontendyComponent {
 
 
         GameWebSocket.on(SERVER_ACTION.MatchOver, (data: any) => {
-            console.log("render results", this.state.gameResults)
             const results = data.payload as MatchResultInfo
             Store.setters.updateMatchResult(results)
-            console.log("render results - match over")
         })
 
 
@@ -69,7 +67,6 @@ export default class GameComponent extends FrontendyComponent {
         })
 
         const previosMatchResult = localStorage.getItem('start-searching-final-match');
-        console.log("GameComponent: previosMatchResult", localStorage.getItem('start-searching-final-match'));
         if (previosMatchResult) {
             localStorage.removeItem('start-searching-final-match');
             if (!this.state.gameResults) {
@@ -162,7 +159,6 @@ export default class GameComponent extends FrontendyComponent {
 
 
     private onMatchReadyHandler() {
-        console.log("final match ready!")
         API.ums.refresh().then(() => {
             const tokens = getTokens();
 
@@ -208,7 +204,6 @@ export default class GameComponent extends FrontendyComponent {
     }
 
     private onUnauthorizedCallback() {
-        console.log("connection closed --> callback activated", this.state.info.isCallbackActivated);
 
         if (this.state.info.isCallbackActivated) {
             this.state.errorMessage = "Unauthorized access. Please log in again.";
@@ -250,21 +245,12 @@ export default class GameComponent extends FrontendyComponent {
             return ;
         }
         
-        // if (this.state.info.isUnauthorized) {
-        //     console.log("connection closed --> unauthorized");
-        //     this.onUnauthorizedCallback();
-        //     return ;
-        // }
-        
         this.state.errorMessage = "Server disconnected."
     }
     template() {
 
         let content
         
-        console.log("render results", this.state.gameResults)
-        
-        console.log("GameComponent: previosMatchResult", this.state.gameResults);
         if (this.state.errorMessage) {
             content = new GameErrorComponent(this.state.errorMessage)
         } else if (this.state.gameResults) {

@@ -65,7 +65,7 @@ export default class NavBarComponent extends FrontendyComponent {
                         this.props.isAuthorized ?
                             new NavBarItemComponent({
                                 icon: "ti ti-user",
-                                label: this.state.nickname,
+                                label: this.state.nickname ? this.state.nickname : '',
                                 onClick: () => this.navigate("profile")
                             })
                         :

@@ -49,11 +49,9 @@ export default class PersonalContentComponent extends FrontendyComponent {
 
         const response = await API.ums.userUpdateAvatar(file)
         if (response === undefined) {
-            console.log('Error while updating avatar', response);
             return
         }
         if (response.status != 200) {
-            console.log('Error while updating avatar', response);
             return
         }
 

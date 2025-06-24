@@ -28,16 +28,12 @@ function pair(num: number) {
 
 function createRatingChart(elem: HTMLCanvasElement, rates?: Array<RatingChangeItem>) {
     if (!rates || rates.length === 0) {
-        console.log(" createRatingChart No rating data available to display the chart");
         return false;
     }
     
     if (!elem) {
-        console.log(" createRatingChart Rating chart element is not defined");
         return false;
     }
-
-    console.log("createRatingChart Creating rating chart with data:", rates, elem);
 
     const myChart = new Chart(elem, {
         type: 'line',
@@ -56,8 +52,6 @@ function createRatingChart(elem: HTMLCanvasElement, rates?: Array<RatingChangeIt
                 responsive: true,
             }
     });
-
-    console.log("createRatingChart Rating chart created successfully", myChart);
 }
 
 export {

@@ -26,7 +26,6 @@ export default class PaddleComponent extends FrontendyComponent {
 
     private updatePosition() {
         const el = this.el as HTMLElement;
-        // console.log(`scene paddle ${this.props.side} elem: `, this.el, 'isHidden:', this.props.isHidden, 'info:', this.props.info);
         if (!el) {
             return ;
         }

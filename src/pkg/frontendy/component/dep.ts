@@ -16,29 +16,28 @@ let activeWatcher: Function | null = null;
 
 function autorun(updateFn: Function) {
 	activeWatcher = updateFn;
-	updateFn(); // Выполняем функцию и записываем зависимости
+	updateFn(); 
 	activeWatcher = null;
 }
 
-// Создаём реактивное свойство
+
 const dep = new Dep();
 const state = {
 	_count: 0,
 	get count() {
-		dep.depend(); // Запоминаем, кто использует `count`
+		dep.depend(); 
 		return this._count;
 	},
 	set count(value) {
 		this._count = value;
-		dep.notify(); // Оповещаем подписчиков
+		dep.notify(); 
 	}
 };
 
-// Используем реактивную переменную
 autorun(() => {
-	console.log("🔄 Ререндер:", state.count);
+	console.log("🔄 Rerender:", state.count);
 });
 
-state.count = 5; // 🔄 Ререндер: 5
-state.count = 10; // 🔄 Ререндер: 10
+state.count = 5; 
+state.count = 10; 
 	

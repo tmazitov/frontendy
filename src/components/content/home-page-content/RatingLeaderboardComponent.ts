@@ -1,10 +1,8 @@
-import API from "../../../api/api";
 import LoadingLayout from "../../../layouts/loading/LoadingLayout";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem } from "../../../pkg/frontendy/vdom/constructor";
-import MessageComponent from "../../inputs/MessageComponent";
+import Store from "../../../store/store";
 import RatingLeaderboardEmptyComponent from "./RatingLeaderboardEmptyComponent";
-import RatingLeaderboardItemComponent from "./RatingLeaderboardItemComponent";
 import RatingLeaderboardTableComponet from "./RatingLeaderboardTableComponent";
 
 export default class RatingLeaderboardComponent extends FrontendyComponent {
@@ -19,18 +17,14 @@ export default class RatingLeaderboardComponent extends FrontendyComponent {
 
     protected async onMounted() {
         this.state.isLoading = true;
-        try {
-            const response = await API.ums.leaderboard()
-            if (response && response.data) {
-                console.log('data', response.data)
-                this.state.leaderboard = response.data;
-            }
-
-        } catch (error) {
-            console.error("DashboardComponent error : Failed to fetch leaderboard data", error);
-        } finally {
+        Store.getters.leaderboard().then((leaderboard: any | undefined) => {
             this.state.isLoading = false;
-        }
+            if (!leaderboard) {
+                this.state.leaderboard = [];
+                return ;
+            }
+            this.state.leaderboard = leaderboard;
+        })
     }
 
     template() {

@@ -48,7 +48,6 @@ class AxiosClient {
 				'Access-Control-Allow-Origin': '*',
 			},
 		})
-		// Перехватчик для всех запросов
 		this.axiosInstance.interceptors.request.use(
 			(config) => {
 				const controller = new AbortController();
@@ -70,7 +69,6 @@ class AxiosClient {
 			(error) => Promise.reject(error)
 		);
 	
-		// Перехватчик для всех ответов
 		this.axiosInstance.interceptors.response.use(
 			(response: AxiosResponse) => response,
 			async (error) => {
@@ -82,7 +80,6 @@ class AxiosClient {
 				&& !originalRequest._retry) {
 				originalRequest._retry = true;
 
-				// Если процесс обновления токенов уже идет, добавляем запрос в очередь
 				if (AxiosClient.isRefreshing === true) {
 					return new Promise((resolve, reject) => {
 						AxiosClient.requestQueue.push((token: string) => {
@@ -97,17 +94,14 @@ class AxiosClient {
 					return this.axiosInstance(originalRequest);
 				}
 
-				// Начинаем процесс обновления токенов
 				AxiosClient.isRefreshing = true;
 
 				try {
 					const newTokens = await this.refreshTokens();
 
-					// Выполняем все запросы из очереди с новым токеном
 					AxiosClient.requestQueue.forEach((callback) => callback(newTokens.accessToken));
 					AxiosClient.requestQueue = [];
 
-					// Возвращаем исходный запрос с новым токеном
 					originalRequest.headers['Authorization'] = newTokens.accessToken;
 					return this.axiosInstance(originalRequest);
 				} catch (refreshError) {
@@ -130,9 +124,7 @@ class AxiosClient {
 		return true;
 	}
   
-	// Функция для обновления токенов
 	private async refreshTokens(): Promise<TokenPair> {
-		// Сделайте запрос на обновление токенов здесь (замените на реальный эндпоинт)
 
 
 		const response = await this.refresh();
@@ -140,26 +132,18 @@ class AxiosClient {
 		return response.data as TokenPair;
 	}
   
-	// Функция для выполнения запросов через клиент
 	public async request(config: AxiosRequestConfig): Promise<AxiosResponse> {
 		try {
 			return await this.axiosInstance(config);
 		} catch (error: any) {
-			// AxiosClient.toast?.add({
-			// 	severity: "error",
-			// 	summary: "Ошибка соединения",
-			// 	detail: "Сервер не отвечает. Попробуйте позже.",
-			// });
 			return Promise.reject(error);
 		}
 	}
 
 
 	public async getFreshAccessToken(): Promise<string> {
-		// 1. Если процесс уже запущен, ждём, когда он закончится.
 		if (AxiosClient.isRefreshing) {
 			return new Promise<string>((resolve, reject) => {
-				//   ⚠️  используем ту же очередь, что и перехватчик
 				this.addRefreshQueueItem((token: string) => {
 					if (token) {
 						resolve(token);
@@ -173,26 +157,22 @@ class AxiosClient {
 		const now = new Date()
 		const lastUpdate = getTokens().lastUpdate;
 		if (now.getTime() - lastUpdate.getTime() < 1000 * 5) {
-			console.log("Token was updated recently, using cached token");
 			const tokens = getTokens();
 			return tokens.accessToken;
 		}
 	
-		// 2. Начинаем собственное обновление
 		AxiosClient.isRefreshing = true;
 		try {
 			const newPair = await this.refreshTokens();           // = { accessToken, refreshToken }
-			// отдадим токен всем, кто ждал:
 			AxiosClient.requestQueue.forEach(cb => cb(newPair.accessToken));
-			AxiosClient.requestQueue = [];                        // очередь обработана
+			AxiosClient.requestQueue = [];                       
 			return newPair.accessToken;
 		} catch (err) {
-			// если не вышло — сообщаем тем, кто ждал
 			AxiosClient.requestQueue.forEach(cb => cb(''));
 			AxiosClient.requestQueue = [];
 			throw err;
 		} finally {
-			AxiosClient.isRefreshing = false;                     // сбрасываем флаг
+			AxiosClient.isRefreshing = false;                    
 		}
 	}
 	
@@ -216,10 +196,8 @@ class AxiosClient {
 			if (response && response.data) {
 				cacheTokens(response.data)
 			}
-			console.log('new tokens :>> ', response.data);
 			return response
 		} catch (error: any) {
-			console.log('refresh error :>> ', error);
 			if (error.response && error.response.status == 401) {
 				setTimeout(async () => {
 

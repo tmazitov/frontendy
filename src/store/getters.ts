@@ -102,4 +102,9 @@ export default class StoreGetters {
         const callback = (value: boolean | undefined) => onUpdateCallback?.(value);
         return this.state.isReconnect.getValue(callback);
     }
+
+    public async leaderboard(onUpdateCallback?:(value:any|undefined) => void): Promise<any | undefined> {
+        const callback = (value: any | undefined) => onUpdateCallback?.(value);
+        return this.state.leaderboard.getValue(callback);
+    }
 }
