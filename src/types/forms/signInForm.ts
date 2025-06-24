@@ -12,7 +12,11 @@ export default class SignInForm implements Form {
     validate(): string | undefined {
 
         if (!this.nickname.length) {
-            return "Invalid email address.";
+            return "Enter nickname.";
+        }
+
+        if (this.nickname.length < 3) {
+            return "Nickname must be at least 3 characters long";
         }
 
         if (!this.password.length) {
