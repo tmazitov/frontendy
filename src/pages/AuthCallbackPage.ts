@@ -7,6 +7,7 @@ import Config from "../config";
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem } from "../pkg/frontendy/vdom/constructor";
 import router from "./router";
+import { copyFileSync } from "fs";
 
 export default class OAuthCallbackPage extends FrontendyComponent {
     componentName: string = 'oauth-callback-page';
@@ -39,17 +40,11 @@ export default class OAuthCallbackPage extends FrontendyComponent {
                     message: errorMessage,
                     status: error.status || 1,
                 }
-            } else {
-                this.state.error = {
-                    message: "An unexpected error occurred. Please try again.",
-                    status: 1,
-                }
             }
         }
     }
 
     template() {
-
         return elem('div')
             .setProps({ 
                 id: "oauth-callback-page", 
