@@ -2,6 +2,7 @@ import API from "../../../api/api";
 import { isAuthorized } from "../../../api/client";
 import FrontendyComponent from "../../../pkg/frontendy/component/component";
 import { elem, text } from "../../../pkg/frontendy/vdom/constructor";
+import Store from "../../../store/store";
 import InfoParagraphComponent from "../../inputs/InfoParagraphComponent";
 import PlayButtonComponent from "./PlayButtonComponent";
 import RatingLeaderboardComponent from "./RatingLeaderboardComponent";
@@ -17,11 +18,16 @@ export default class DashboardComponent extends FrontendyComponent {
     }
 
     protected onCreated(): void {
-        API.mmrs.userReconnect().then((res) => {
-            if (res.status === 200) {
-                this.state.isReconnect = true;
-            }
-        })
+        Store.setters.setupReconnect()
+        Store.getters.userIsReconnect((isReconnect: boolean | undefined) => this.setIsReconnect(isReconnect))
+            .then((isReconnect: boolean | undefined) => this.setIsReconnect(isReconnect))
+    }
+
+    private setIsReconnect(isReconnect: boolean | undefined) {
+        if (isReconnect === undefined) {
+            return ;
+        }
+        this.state.isReconnect = isReconnect;
     }
 
     template() {

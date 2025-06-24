@@ -13,8 +13,10 @@ type GameWebSocketParams = {
 export default class GameWebSocket {
     private static conn: WebSocketClient<ServerAction> | undefined;
     private static activeListeners: Map<ServerAction, (data: any) => void> = new Map();
+    private static params?: GameWebSocketParams;
 
     public static connect(params:GameWebSocketParams):void {
+        this.params = params;
         if (GameWebSocket.conn !== undefined) {
             console.warn("WebSocket connection already exists.");
             return;
@@ -28,20 +30,20 @@ export default class GameWebSocket {
                     GameWebSocket.conn?.on(action, callback);
                 });
 
-                if (params.onOpenCallback) {
-                    params.onOpenCallback()
+                if (this.params?.onOpenCallback) {
+                    this.params.onOpenCallback()
                 }
             },
             onCloseCallback: () => {
-                console.log("GameWebSocket connection closed.");
+                console.log("GameWebSocket connection closed.", this.params?.onCloseCallback);
                 GameWebSocket.conn = undefined;
-                if (params.onCloseCallback) {
-                    params.onCloseCallback()
+                if (this.params?.onCloseCallback) {
+                    this.params.onCloseCallback()
                 }
             },
             onErrorCallback: (error: Event) => {
-                if (params.onErrorCallback) {
-                    params.onErrorCallback(error)
+                if (this.params?.onErrorCallback) {
+                    this.params.onErrorCallback(error)
                 }
                 console.error("GameWebSocket error:", error);
             }

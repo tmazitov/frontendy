@@ -8,6 +8,8 @@ import PasswordUpdateForm from "../types/forms/updatePasswordForm";
 import router from "../pages/router";
 import EventBroker from "../pkg/event-broker/eventBroker";
 import { resolve } from "path";
+import Store from "../store/store";
+import API from "./api";
 
 export default class UMS {
 	private client: AxiosClient
@@ -89,6 +91,15 @@ export default class UMS {
     }
 
     public async userDelete() {
+
+        try {
+            const response = await API.mmrs.userReconnect()
+            if (response.status === 200) {
+                return false;
+            }
+        } catch (error) {
+                        
+        }
 
         const refreshToken = getTokens().refreshToken
 

@@ -82,7 +82,8 @@ export default class AppComponent extends Component {
 
     protected onCreated(): void {
         Store.setters.setupUser()
-    API.ums.refresh().then(() => UMSOnline.connect())
+        
+         API.ums.refresh().then(() => UMSOnline.connect())
     }
 
     onUnmounted(): void {

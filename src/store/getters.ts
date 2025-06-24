@@ -97,4 +97,9 @@ export default class StoreGetters {
         const callback = (value: MatchSceneInfo | undefined) => onUpdateCallback?.(value);
         return this.state.gameSceneInfo.getValue(callback);
     }
+
+    public async userIsReconnect(onUpdateCallback?:(value:boolean|undefined) => void): Promise<boolean | undefined> {
+        const callback = (value: boolean | undefined) => onUpdateCallback?.(value);
+        return this.state.isReconnect.getValue(callback);
+    }
 }

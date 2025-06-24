@@ -56,6 +56,7 @@ export default class StoreSetters {
                 throw new Error("no user data in response");
             }
             this.state.user.setValue(new User(response.data));
+            await this.setupReconnect()
         } catch (e) {
             console.error("Store error: can't get user data :", e);
         }
@@ -367,6 +368,20 @@ export default class StoreSetters {
         this.state.gamePlayersInfo.clearValue();
     }
 
+
+    async setupReconnect(){
+        try {
+            const response = await API.mmrs.userReconnect()
+            if (response.status === 200) {
+                this.state.isReconnect.setValue(true);
+            } else if (response.status === 204) {
+                this.state.isReconnect.setValue(false);
+            }
+        } catch (e) {
+            this.state.isReconnect.setValue(false);
+            return ;
+        }
+    }
 
 }
 

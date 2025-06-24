@@ -33,8 +33,12 @@ export default class DeleteAccountModal extends FrontendyComponent {
 
     private async onSubmit() {
 
+
         try {
-            await API.ums.userDelete()
+            const response = await API.ums.userDelete()
+            if (response === false) {
+                return ;
+            }
         } catch (error) {
             console.error("Error during account deletion:", error);
             return

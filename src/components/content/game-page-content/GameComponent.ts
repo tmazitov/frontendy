@@ -35,11 +35,6 @@ export default class GameComponent extends FrontendyComponent {
     }
 
     protected onCreated(): void {
-        console.log("Component created: GameComponent")
-
-        
-
-
         GameWebSocket.on(SERVER_ACTION.Error, (data: any) => {
             const errorMessage = data.payload.message || "Unknown error";
             this.state.errorMessage = errorMessage;
@@ -49,11 +44,9 @@ export default class GameComponent extends FrontendyComponent {
             
             const timeLeft = Math.floor((data.payload.timeoutStamp - Date.now()) / 1000);
 
-            // Store.setters.updateMatchOpponentDisconnected(timeLeft);
             this.state.gameWaitingConf = {timeLeft, isReady: false};
         })
         GameWebSocket.on(SERVER_ACTION.MatchOpponentConnected, () => {
-            // Store.setters.updateMatchOpponentConnected()
             this.state.gameWaitingConf = {timeLeft: 0, isReady: true};
         })
 
@@ -77,6 +70,7 @@ export default class GameComponent extends FrontendyComponent {
 
         const searching = localStorage.getItem('start-searching-final-match') === 'true';
         if (searching) {
+            localStorage.removeItem('start-searching-final-match');
             this.subscibeOnNextMatch();
         } else {
             API.ums.refresh().then(() => {
@@ -84,7 +78,9 @@ export default class GameComponent extends FrontendyComponent {
                 Player.setup(tokens.accessToken, {
                     onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
                     onUnauthorized: () => this.state.info.isUnauthorized = true,
-                    onCloseCallback: this.onCloseConnection.bind(this),
+                    onCloseCallback: () => {
+                        this.onCloseConnection()
+                    },
                 });
             })
         }
@@ -94,24 +90,7 @@ export default class GameComponent extends FrontendyComponent {
     }
 
     private async updateMatchResults(value: MatchResultInfo | undefined){
-        let isTournamentFinished = false;
-        if (value && localStorage.getItem('final-match-found') === 'true') {
-            localStorage.removeItem('final-match-found');
-            isTournamentFinished = true;
-        }
-
         this.state.gameResults = value;
-
-        if (!value) {
-            return ;
-        }
-
-        const isTournament = value.isTournament;
-        const isWinner = await this.isWinner(value.matchResult)
-
-        if (isTournament && isWinner && !isTournamentFinished) {
-            this.subscibeOnNextMatch();
-        }
     }
 
     async isWinner(status: MatchResultStatus | undefined) {
@@ -167,7 +146,6 @@ export default class GameComponent extends FrontendyComponent {
                 withoutModals: true,
                 onCloseCallback: () => {
                     localStorage.removeItem('start-searching-final-match');
-                    this.onUnauthorizedSearch()
                 },
                 onUnauthorizedCallback: () => this.state.mmrsInfo.isUnauthorized = true,
                 onMatchReadyCallback: this.onMatchReadyHandler.bind(this),
@@ -187,10 +165,9 @@ export default class GameComponent extends FrontendyComponent {
             Player.setup(tokens.accessToken, {
                 onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
                 onUnauthorized: () => this.state.info.isUnauthorized = true,
-                onCloseCallback: () => {
-                    setTimeout(() => localStorage.removeItem('final-match-found'), 200);
-                    this.onCloseConnection.bind(this)
-                },
+                // onCloseCallback: () => {
+                //     this.onCloseConnection.bind(this)
+                // },
             });
         })
     }
@@ -235,19 +212,17 @@ export default class GameComponent extends FrontendyComponent {
         
         API.ums.refresh().then(() => {
             const newTokens = getTokens();
-            console.log("connection closed --> tokens refreshed", newTokens.accessToken);
             if (!newTokens || !newTokens.accessToken) {
                 this.state.errorMessage = "Failed to update access. Please log in again.";
                 return ;
             }
 
             this.state.errorMessage = undefined;
-            console.log("connection closed --> player setup", newTokens.accessToken);
             
             Player.setup(newTokens.accessToken, {
                 onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
                 onUnauthorized: () => this.state.info.isUnauthorized = true,
-                onCloseCallback: this.onCloseConnection.bind(this),
+                // onCloseCallback: this.onCloseConnection.bind(this),
             })
         })
     }
@@ -260,16 +235,22 @@ export default class GameComponent extends FrontendyComponent {
         
         Player.cleanup();
 
+        console.log("FINAL :", this.state.gameResults, this.state.gameResults?.isTournament, localStorage.getItem('final-match-found'), localStorage.getItem('final-match-found') === 'true' )
         if (this.state.gameResults) {
+            const isWinner = await this.isWinner(this.state.gameResults.matchResult);
+            if (isWinner && this.state.gameResults.isTournament && !localStorage.getItem('final-match-found')) {
+                this.subscibeOnNextMatch();
+            } else if (this.state.gameResults.isTournament && localStorage.getItem('final-match-found') == 'true') {
+                localStorage.removeItem('final-match-found');
+            }
             return ;
         }
         
-        console.log("connection closed");
-        if (this.state.info.isUnauthorized) {
-            console.log("connection closed --> unauthorized");
-            this.onUnauthorizedCallback();
-            return ;
-        }
+        // if (this.state.info.isUnauthorized) {
+        //     console.log("connection closed --> unauthorized");
+        //     this.onUnauthorizedCallback();
+        //     return ;
+        // }
 
         this.state.errorMessage = "Server disconnected."
     }
