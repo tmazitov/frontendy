@@ -164,7 +164,7 @@ class AxiosClient {
 					if (token) {
 						resolve(token);
 					} else {
-						reject(new Error("Не удалось обновить access-token"));
+						reject(new Error("Access-token refresh failed"));
 					}
 				});
 			});

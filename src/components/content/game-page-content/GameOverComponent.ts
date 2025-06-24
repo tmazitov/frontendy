@@ -71,6 +71,7 @@ export default class GameOverComponent extends FrontendyComponent {
         TimerStorage.removeTimer(`game-paddle-left`);
         TimerStorage.removeTimer(`game-paddle-right`);
         TimerStorage.removeTimer(`game-ball`);
+        TimerStorage.removeTimer("game-waiting");
 
         Store.getters.gamePlayersInfo((info:PlayersInfo|undefined) => this.updatePlayers(info))
             .then((info:PlayersInfo|undefined) => this.updatePlayers(info))

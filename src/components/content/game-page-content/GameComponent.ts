@@ -94,9 +94,10 @@ export default class GameComponent extends FrontendyComponent {
     }
 
     private async updateMatchResults(value: MatchResultInfo | undefined){
+        let isTournamentFinished = false;
         if (value && localStorage.getItem('final-match-found') === 'true') {
             localStorage.removeItem('final-match-found');
-            value.isTournament = false;
+            isTournamentFinished = true;
         }
 
         this.state.gameResults = value;
@@ -108,7 +109,7 @@ export default class GameComponent extends FrontendyComponent {
         const isTournament = value.isTournament;
         const isWinner = await this.isWinner(value.matchResult)
 
-        if (isTournament && isWinner) {
+        if (isTournament && isWinner && !isTournamentFinished) {
             this.subscibeOnNextMatch();
         }
     }
@@ -164,7 +165,10 @@ export default class GameComponent extends FrontendyComponent {
             GameLauncher.startGameSearching(tokens.accessToken, games[2], {
                 serverAddr: Config.mmrsAddr,
                 withoutModals: true,
-                onCloseCallback: () => this.onUnauthorizedSearch(),
+                onCloseCallback: () => {
+                    localStorage.removeItem('start-searching-final-match');
+                    this.onUnauthorizedSearch()
+                },
                 onUnauthorizedCallback: () => this.state.mmrsInfo.isUnauthorized = true,
                 onMatchReadyCallback: this.onMatchReadyHandler.bind(this),
             });
@@ -178,13 +182,15 @@ export default class GameComponent extends FrontendyComponent {
             const tokens = getTokens();
 
             localStorage.setItem('final-match-found', 'true');
-            localStorage.removeItem('start-searching-final-match');
     
             GameLauncher.stopGameSearching()
             Player.setup(tokens.accessToken, {
                 onAuthorized: (data:MatchInfo) => this.onAuthorizedCallback(data),
                 onUnauthorized: () => this.state.info.isUnauthorized = true,
-                onCloseCallback: this.onCloseConnection.bind(this),
+                onCloseCallback: () => {
+                    setTimeout(() => localStorage.removeItem('final-match-found'), 200);
+                    this.onCloseConnection.bind(this)
+                },
             });
         })
     }

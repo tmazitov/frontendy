@@ -2,6 +2,7 @@ import GameComponent from "../components/content/game-page-content/GameComponent
 import EventBroker from "../pkg/event-broker/eventBroker";
 import FrontendyComponent from "../pkg/frontendy/component/component";
 import { elem, text } from "../pkg/frontendy/vdom/constructor";
+import GameLauncher from "../pkg/game/launcher/gameLauncher";
 import Player from "../pkg/game/play/player";
 import GameWebSocket from "../pkg/game/play/ws";
 import TimerStorage from "../pkg/timer";
@@ -22,6 +23,7 @@ export default class GamePage extends FrontendyComponent {
 
     protected onUnmounted(): void {
         GameWebSocket.close();
+        GameLauncher.stopGameSearching();
         Store.setters.setupUser();
         EventBroker.getInstance().off("game:page:rerender");
         
