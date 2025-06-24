@@ -97,7 +97,7 @@ export default class GameOverComponent extends FrontendyComponent {
             case 'FAIL':
                 return "Game failed";
             case 'P1WIN':
-                if (isTournament && publicInfo.player1.id == userId) {   
+                if (isTournament && publicInfo.player1.id == userId && localStorage.getItem("start-searching-final-match") !== null) {   
                     return "You won! Proceed to the next round.";
                 } else if (publicInfo.player1.id == userId) {
                     return "You won!"
@@ -105,7 +105,7 @@ export default class GameOverComponent extends FrontendyComponent {
                     return "You lost."
                 }
             case 'P2WIN':
-                if (isTournament && publicInfo.player2.id == userId) {
+                if (isTournament && publicInfo.player2.id == userId && localStorage.getItem("start-searching-final-match") !== null) {
                     return "You won! Proceed to the next round."
                 } else if (publicInfo.player2.id == userId) {
                     return "You won!"
@@ -161,7 +161,7 @@ export default class GameOverComponent extends FrontendyComponent {
         const buttons = []
         const isWinner = this.isWinner(this.props.results.matchResult)
 
-        if (this.props.results.isTournament && isWinner) {
+        if (this.props.results.isTournament && isWinner && localStorage.getItem("start-searching-final-match") !== null) {
             buttons.push(new MessageComponent("Wait for the next round!", {color: "blue"}))
         } else {
             buttons.push(new ButtonComponent({

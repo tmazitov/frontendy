@@ -68,11 +68,19 @@ export default class GameComponent extends FrontendyComponent {
             Store.setters.updateMatchScore(result.player1Score, result.player2Score);
         })
 
-        const searching = localStorage.getItem('start-searching-final-match') === 'true';
-        if (searching) {
+        const previosMatchResult = localStorage.getItem('start-searching-final-match');
+        console.log("GameComponent: previosMatchResult", localStorage.getItem('start-searching-final-match'));
+        if (previosMatchResult) {
             localStorage.removeItem('start-searching-final-match');
+            if (!this.state.gameResults) {
+                this.state.gameResults = {
+                    matchResult: previosMatchResult,
+                    isTournament: true,
+                }
+            }
             this.subscibeOnNextMatch();
         } else {
+            localStorage.removeItem("final-match-found");
             API.ums.refresh().then(() => {
                 const tokens = getTokens();
                 Player.setup(tokens.accessToken, {
@@ -135,10 +143,9 @@ export default class GameComponent extends FrontendyComponent {
     }
 
     private subscibeOnNextMatch() {
+        localStorage.setItem('start-searching-final-match', this.state.gameResults?.matchResult);
         API.ums.refresh().then(() => {
             const tokens = getTokens()
-    
-            localStorage.setItem('start-searching-final-match', 'true');
     
             GameLauncher.stopGameSearching()
             GameLauncher.startGameSearching(tokens.accessToken, games[2], {
@@ -235,13 +242,10 @@ export default class GameComponent extends FrontendyComponent {
         
         Player.cleanup();
 
-        console.log("FINAL :", this.state.gameResults, this.state.gameResults?.isTournament, localStorage.getItem('final-match-found'), localStorage.getItem('final-match-found') === 'true' )
         if (this.state.gameResults) {
             const isWinner = await this.isWinner(this.state.gameResults.matchResult);
             if (isWinner && this.state.gameResults.isTournament && !localStorage.getItem('final-match-found')) {
                 this.subscibeOnNextMatch();
-            } else if (this.state.gameResults.isTournament && localStorage.getItem('final-match-found') == 'true') {
-                localStorage.removeItem('final-match-found');
             }
             return ;
         }
@@ -251,7 +255,7 @@ export default class GameComponent extends FrontendyComponent {
         //     this.onUnauthorizedCallback();
         //     return ;
         // }
-
+        
         this.state.errorMessage = "Server disconnected."
     }
     template() {
@@ -259,7 +263,8 @@ export default class GameComponent extends FrontendyComponent {
         let content
         
         console.log("render results", this.state.gameResults)
-
+        
+        console.log("GameComponent: previosMatchResult", this.state.gameResults);
         if (this.state.errorMessage) {
             content = new GameErrorComponent(this.state.errorMessage)
         } else if (this.state.gameResults) {
@@ -270,7 +275,6 @@ export default class GameComponent extends FrontendyComponent {
             content = new SceneComponent()
         }
         
-
         return elem('div')
             .setProps({class : "flex items-center flex-col"})
             .setChild([

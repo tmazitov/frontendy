@@ -26,7 +26,9 @@ export default class GamePage extends FrontendyComponent {
         GameLauncher.stopGameSearching();
         Store.setters.setupUser();
         EventBroker.getInstance().off("game:page:rerender");
-        
+        localStorage.removeItem("final-match-found");
+        localStorage.removeItem("start-searching-final-match")
+
         Store.setters.removeGameSceneInfo();
         Store.setters.removeGamePlayersInfo();
 
